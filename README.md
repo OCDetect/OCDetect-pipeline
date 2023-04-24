@@ -41,3 +41,6 @@
             - TBD with Karina what to do
             - how to acknowledge: define min. fixed time (e.g. 10s) between 2 hw activities
   
+- relabel
+    - on basis of inital hw time
+    - fixed timespan
