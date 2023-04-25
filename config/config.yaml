@@ -1,0 +1,14 @@
+- robin-pc:
+    hostname: Robin-PC-Ubuntu
+    data_folder : ../../../../OCDetect/
+
+- robin-laptop:
+    hostname: thinkbook
+    data_folder: ../../../../Datasets/OCDetect_DATA/
+    evals_subfolder: allEvaluations
+    dailies_subfolder: dailyQuestionnaire
+    annotations_subfolder: annotations
+
+- kristina-mac:
+    hostname: ""
+    data_folder: ../../../OCDetect/data/
