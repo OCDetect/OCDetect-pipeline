@@ -5,9 +5,10 @@
 - robin-laptop:
     hostname: thinkbook
     data_folder: ../../../../Datasets/OCDetect_DATA/
-    evals_subfolder: allEvaluations
-    dailies_subfolder: dailyQuestionnaire
-    annotations_subfolder: annotations
+    meta_subfolder: metadata/
+    evals_subfolder: allEvaluations/
+    dailies_subfolder: dailyQuestionnaire/
+    annotations_subfolder: annotations/
 
 - kristina-mac:
     hostname: ""

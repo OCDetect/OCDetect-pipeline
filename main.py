@@ -7,8 +7,15 @@ from typing import Union
 from modules.csv_loader import load_subject
 
 
-def main(config: dict = None) -> int:
-    print(config)
+def main(config: dict) -> int:
+    """
+    Function to run the entire preprocessing pipeline, from data loading to cleaning to relabeling etc.
+    :param config: dict containing configuration information, e.g. folders, filenames or other settings
+    :return: int: Exit code
+    """
+    r = load_subject("01", config)
+    print(r[0].datetime)
+    return 0
 
 
 if __name__ == "__main__":
