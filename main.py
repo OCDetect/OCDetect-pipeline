@@ -24,6 +24,7 @@ if __name__ == "__main__":
         print(f"Running with config file: {config_file_name}")
     else:
         config_file_name = "config/config.yaml"
+        print(f"No config defined, running with default")
     try:
         with open(config_file_name, "r") as config_stream:
             configs = yaml.safe_load(config_stream)
