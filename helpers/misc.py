@@ -81,9 +81,9 @@ def get_metadata(subject: str, recording: str, config: dict) -> Tuple[Union[date
     return date, json_vals
 
 
-def calc_magnitude(data: pd.DataFrame, sensor: Sensor):
+def calc_magnitude(data: pd.DataFrame, sensor: Sensor) -> pd.DataFrame:
     """
-    Caluculates the magnitude for a given sensor
+    Calculates the magnitude for a given sensor
     :param data: the dataframe with the sensor data to calculate magnitude for
     :param sensor: the sensor (accelerometer or gyroscope) to calculate the magnitude
     :return: the dataframe with an additional column for the magnitude
