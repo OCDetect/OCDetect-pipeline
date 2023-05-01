@@ -3,9 +3,9 @@ import os
 import yaml
 import socket
 from typing import Union
-
 from modules.csv_loader import load_subject
-
+from helpers.misc import calc_magnitude
+from helpers.definitions import Sensor
 
 def main(config: dict) -> int:
     """
@@ -13,8 +13,10 @@ def main(config: dict) -> int:
     :param config: dict containing configuration information, e.g. folders, filenames or other settings
     :return: int: Exit code
     """
-    r = load_subject("01", config)
+    r = load_subject("03", config)
     print(r[0].datetime)
+    data = calc_magnitude(r[0], Sensor.ACCELEROMETER)
+    print(data)
     return 0
 
 
