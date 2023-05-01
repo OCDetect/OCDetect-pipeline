@@ -14,3 +14,5 @@
     hostname: atlas
     data_folder: ../../datasets/OCDetect/
     meta_subfolder: metadata/
+    first_hw_subfolder: labels_first_handwashes/
+    prefix: OCDetect_
