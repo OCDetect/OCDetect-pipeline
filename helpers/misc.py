@@ -4,7 +4,8 @@ import json
 from pathlib import Path
 import os
 import pandas as pd
-
+import numpy as np
+from helpers.definitions import Sensor
 
 def initial_handwash_time(subject: str, config: dict) -> int:
     """
@@ -78,3 +79,16 @@ def get_metadata(subject: str, recording: str, config: dict) -> Tuple[Union[date
         print("Metadata-file not found: ", filename)
 
     return date, json_vals
+
+
+def calc_magnitude(data: pd.DataFrame, sensor: Sensor):
+    """
+    Caluculates the magnitude for a given sensor
+    :param data: the dataframe with the sensor data to calculate magnitude for
+    :param sensor: the sensor (accelerometer or gyroscope) to calculate the magnitude
+    :return: the dataframe with an additional column for the magnitude
+    """
+    mag = np.sqrt(data[f"{sensor.value} x"] ** 2 + data[f"{sensor.value} y"] ** 2 + data[f"{sensor.value} z"] ** 2)
+    data[f"mag {sensor.value}"] = mag
+
+    return data
