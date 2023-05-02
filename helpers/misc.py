@@ -6,7 +6,7 @@ import os
 import pandas as pd
 import numpy as np
 from helpers.definitions import Sensor
-
+from modules.csv_loader import load_recording
 
 def get_file_name_initial_hw(subject: str, config: dict) -> str:
     """
@@ -43,8 +43,8 @@ def initial_handwash_time(subject: str, config: dict) -> int:
     first_hw_csv_name = get_file_name_initial_hw(subject, config)
 
     if first_hw_csv_name is not None:
-        csv = pd.read_csv(config["data_folder"] + config["prefix"] + subject + "/" + first_hw_csv_name, sep="\t")
-        first_hw_csv = pd.read_csv(first_hw_path + "/labels_" + first_hw_csv_name)
+        csv = load_recording(config["data_folder"] + config["prefix"] + subject + "/" + first_hw_csv_name)
+        first_hw_csv = load_recording(first_hw_path + "/labels_" + first_hw_csv_name)
         # since first hw csv is a csv with only one line, it comes as a series, so we need .values[0]
         begin_ts = csv.iloc[first_hw_csv['start'].values[0]]['timestamp']
         end_ts = csv.iloc[first_hw_csv['end'].values[0]]['timestamp']
@@ -63,8 +63,8 @@ def get_initial_hw_datetime(subject: str, config: dict) -> pd.DateTime:
     """
     first_hw_csv_name = get_file_name_initial_hw(subject, config)
     if first_hw_csv_name is not None:
-        csv = pd.read_csv(config["data_folder"] + config["prefix"] + subject + "/" + first_hw_csv_name, sep="\t")
-        return pd.to_datetime(csv.iloc[0]["timestamp"])
+        date, _ = get_metadata(subject, first_hw_csv_name, config)
+        return date
 
     return None
 
