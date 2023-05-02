@@ -6,7 +6,8 @@ import os
 import pandas as pd
 import numpy as np
 from helpers.definitions import Sensor
-from modules.csv_loader import load_recording
+import modules.csv_loader as loader
+
 
 def get_file_name_initial_hw(subject: str, config: dict) -> str:
     """
@@ -15,7 +16,7 @@ def get_file_name_initial_hw(subject: str, config: dict) -> str:
     csv recordings file lists.
     :param subject: The subject to be loaded
     :param config: dict containing configuration information, e.g. folders, filenames or other settings
-    :return: the file name if initial hand washing recording was found, None otherwise
+    :return: the file name if initial hand washing recording was found, empty string otherwise
     """
     first_hw_path = config["data_folder"] + config["first_hw_subfolder"]
     first_hw_csv_names = [first_hw[7:] for first_hw in os.listdir(first_hw_path) if first_hw.endswith(".csv")]
@@ -24,9 +25,9 @@ def get_file_name_initial_hw(subject: str, config: dict) -> str:
                              f.endswith('.csv')]
     for first_hw_csv_name in first_hw_csv_names:
         if first_hw_csv_name in csv_name_from_subject:
-            return first_hw_csv_name
+            return first_hw_csv_name[:-4]
 
-    return None
+    return ""
 
 
 def initial_handwash_time(subject: str, config: dict) -> int:
@@ -43,8 +44,8 @@ def initial_handwash_time(subject: str, config: dict) -> int:
     first_hw_csv_name = get_file_name_initial_hw(subject, config)
 
     if first_hw_csv_name is not None:
-        csv = load_recording(config["data_folder"] + config["prefix"] + subject + "/" + first_hw_csv_name)
-        first_hw_csv = load_recording(first_hw_path + "/labels_" + first_hw_csv_name)
+        csv = loader.load_recording(config["data_folder"] + config["prefix"] + subject + "/" + first_hw_csv_name + ".csv")
+        first_hw_csv = loader.load_recording(first_hw_path + "/labels_" + first_hw_csv_name + ".csv", sep=",")
         # since first hw csv is a csv with only one line, it comes as a series, so we need .values[0]
         begin_ts = csv.iloc[first_hw_csv['start'].values[0]]['timestamp']
         end_ts = csv.iloc[first_hw_csv['end'].values[0]]['timestamp']
@@ -62,7 +63,7 @@ def get_initial_hw_datetime(subject: str, config: dict) -> datetime.datetime:
     :return: the datetime if initial hand washing recording was found, None otherwise
     """
     first_hw_csv_name = get_file_name_initial_hw(subject, config)
-    if first_hw_csv_name is not None:
+    if first_hw_csv_name:
         date, _ = get_metadata(subject, first_hw_csv_name, config)
         return date
 

@@ -3,7 +3,7 @@ import datetime
 from glob import glob
 from typing import List, Union, Dict
 from pathlib import Path
-import helpers.misc as misc
+from helpers.misc import get_metadata, add_timezone_and_summertime
 from tqdm import tqdm
 
 
@@ -27,19 +27,19 @@ def load_subject(subject_id: str, config: dict) -> List[pd.DataFrame]:
     subject_filelist = get_subject_filelist(subject_id, config)
 
     for filename in tqdm(subject_filelist, smoothing=0.5):
-        recording_df = load_recording(filename, config)
+        recording_df = load_recording(filename)
         recording = Path(filename).stem
-        date, _ = misc.get_metadata(subject_id, recording, config)
-        date_base = misc.add_timezone_and_summertime(date)
+        date, _ = get_metadata(subject_id, recording, config)
+        date_base = add_timezone_and_summertime(date)
         recording_df["datetime"] = recording_df.timestamp.apply(lambda x: date_base + datetime.timedelta(seconds=x/1e9))
         recording_df.drop_duplicates(keep=False, inplace=True)
         recordings.append(recording_df)
     return recordings
 
 
-def load_recording(filename: str) -> pd.DataFrame:
+def load_recording(filename: str, sep="\t") -> pd.DataFrame:
     filepath = Path(filename)
-    rec_df = pd.read_csv(filepath, sep="\t")
+    rec_df = pd.read_csv(filepath, sep=sep)
     return rec_df
 
 

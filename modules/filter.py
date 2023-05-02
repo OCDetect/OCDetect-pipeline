@@ -1,7 +1,58 @@
 import numpy as np
 import pandas as pd
 from helpers.definitions import Sensor
-from helpers.misc import get_initial_hw_datetime
+from helpers.misc import get_initial_hw_datetime, initial_handwash_time, calc_magnitude
+from typing import List
+from tqdm import tqdm
+
+
+def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config: dict, sensor: Sensor) -> list[pd.DataFrame]:
+    """
+
+    :param sensor: which sensor to be used for calculating idle regions (gyroscope or accelerometer)
+    :param recordings_list: all original recordings from one subject
+    :param subject: the subject from the recordings
+    :param config: the loaded config
+    :return: a list of DataFrames with the recordings that passed the filter rules
+    """
+
+    cleaned_recordings_list = []
+    filtered_out_files = 0
+
+    initial_hw_time = initial_handwash_time(subject, config)
+    for recording in recordings_list:
+        # Filter out complete recordings
+
+        # 1. check if file has content at all
+        if not check_file_corrupt(recording):
+            cleaned_recordings_list.append(recording)
+        else:
+            filtered_out_files += 1
+
+        # 2. check if recording time is smaller the person specific initial hand washing time
+        if not check_insufficient_file_length(recording, initial_hw_time):
+            cleaned_recordings_list.append(recording)
+        else:
+            filtered_out_files += 1
+
+        # 3. check if recording date is before initial hw recording
+        if not check_recording_before_initial_hw(recording, subject, config):
+            cleaned_recordings_list.append(recording)
+        else:
+            filtered_out_files += 1
+
+        # 4. check if has no movement at all (delete when remaining windows are smaller than initial hw time)
+        recording = calc_magnitude(recording, sensor)
+        recording = calc_idle_time(recording, sensor)
+        if not check_insufficient_remaining_data_points(recording, initial_hw_time):
+            cleaned_recordings_list.append(recording)
+        else:
+            filtered_out_files += 1
+
+    percentage_filtered_out = (filtered_out_files * 100)/len(recordings_list)
+    print(f"Complete recordings filtered out: {filtered_out_files} ({percentage_filtered_out:.2f}%)")
+
+    return cleaned_recordings_list
 
 
 def calc_idle_time(data: pd.DataFrame, sensor: Sensor, threshold=0.5, window_size=50, overlap=0.5) -> pd.DataFrame:
@@ -17,17 +68,17 @@ def calc_idle_time(data: pd.DataFrame, sensor: Sensor, threshold=0.5, window_siz
     """
 
     if f"mag {sensor.value}" not in data.columns:
-        print("please calculate idle time before") # TODO add logger for giving feedback instead of prints
+        print("please calculate magnitude before")  # TODO add logger for giving feedback instead of prints
         return data
 
     data["idle"] = np.nan
     stride = int(window_size * overlap)
 
-    for i in range(0, len(data) - window_size + 1, stride):
-        cur_win = data.iloc[i:i+window_size]
-        std = cur_win[f"{sensor.value} acc"].std()
+    for i in tqdm(range(0, len(data) - window_size + 1, stride)):
+        cur_win = data.iloc[i:i + window_size]
+        std = cur_win[f"mag {sensor.value}"].std()
         if std <= threshold:
-            data.loc[i:i+window_size, "idle"] = 1.0
+            data.loc[i:i + window_size, "idle"] = 1.0
 
     return data
 
@@ -40,6 +91,19 @@ def check_file_corrupt(data: pd.DataFrame) -> bool:
     """
 
     return data.empty
+
+
+def check_insufficient_remaining_data_points(recording_w_idle: pd.DataFrame, initial_hw_time: int) -> bool:
+    """
+    Checks if the amount of data points that are labelled as not idle has still enough information.
+    This is the case if at least a recording remains that is as long as the initial hand washing.
+    :param recording_w_idle: the recording with calculated idle regions
+    :param initial_hw_time: the time in seconds for the initial hand washing recording
+    :return: true if recording has enough non-idle regions, false otherwise
+    """
+    amount = len(recording_w_idle[recording_w_idle["idle"] == 1.0])
+    # sampling frequency == 50 Hz -> amount of non-idle data points divided by 50 equals remaining time
+    return int(amount / 50) > initial_hw_time
 
 
 def check_insufficient_file_length(data: pd.DataFrame, initial_hw_time: int) -> bool:
@@ -63,5 +127,4 @@ def check_recording_before_initial_hw(data: pd.DataFrame, subject: str, config: 
     :return: true if recording was before initial lab session, false otherwise
     """
 
-    return data.iloc[0]["datetime"].date() < get_initial_hw_datetime(subject, config)
-
+    return data.iloc[0]["datetime"].date() < get_initial_hw_datetime(subject, config).date()
