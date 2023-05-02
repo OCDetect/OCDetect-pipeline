@@ -15,7 +15,7 @@ def calc_idle_time(data: pd.DataFrame, sensor: Sensor, threshold=0.5, window_siz
     :return: the dataframe with an additional column for idle regions
     """
 
-    if f"{sensor.value} acc" not in data.columns:
+    if f"mag {sensor.value}" not in data.columns:
         print("please calculate idle time before") # TODO add logger for giving feedback instead of prints
         return data
 
