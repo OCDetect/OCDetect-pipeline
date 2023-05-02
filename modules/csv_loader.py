@@ -37,9 +37,8 @@ def load_subject(subject_id: str, config: dict) -> List[pd.DataFrame]:
     return recordings
 
 
-def load_recording(filename: str, config: dict) -> pd.DataFrame:
+def load_recording(filename: str) -> pd.DataFrame:
     filepath = Path(filename)
-    file_name_short = filepath.name
     rec_df = pd.read_csv(filepath, sep="\t")
     return rec_df
 
