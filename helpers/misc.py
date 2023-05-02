@@ -7,25 +7,42 @@ import pandas as pd
 import numpy as np
 from helpers.definitions import Sensor
 
-def initial_handwash_time(subject: str, config: dict) -> int:
-    """
-    Calculates the initial hand washing time from the observed recording in the lab by taking the defined
-    start and end index from the first_hw_subfolder and searching for the file name string in the subject's
-    csv recordings file lists. If no initial hand washing was recorded, the mean time of 39s from all other
-    initial hw recordings is returned.
-    :param subject_id: The subject to be loaded
-    :param config: dict containing configuration information, e.g. folders, filenames or other settings
-    :return: the initial hand washing time in seconds if given, 39 as default otherwise
-    """
-    avg_hand_wash_time = 39
 
+def get_file_name_inital_hw(subject: str, config: dict) -> str:
+    """
+    Returns the file name for the CSV file containing the initial hand washing activity in the lab by taking the defined
+    start and end index from the first_hw_subfolder and searching for the file name string in the subject's
+    csv recordings file lists.
+    :param subject: The subject to be loaded
+    :param config: dict containing configuration information, e.g. folders, filenames or other settings
+    :return: the file name if initial hand washing recording was found, None otherwise
+    """
     first_hw_path = config["data_folder"] + config["first_hw_subfolder"]
     first_hw_csv_names = [first_hw[7:] for first_hw in os.listdir(first_hw_path) if first_hw.endswith(".csv")]
 
     csv_name_from_subject = [f for f in os.listdir(config["data_folder"] + config["prefix"] + subject) if f.endswith('.csv')]
-
     for first_hw_csv_name in first_hw_csv_names:
         if first_hw_csv_name in csv_name_from_subject:
+            return first_hw_csv_name
+
+    return None
+
+
+def initial_handwash_time(subject: str, config: dict) -> int:
+    """
+    Calculates the initial hand washing time from the observed recording in the lab.
+    If no initial hand washing was recorded, the mean time of 39s from all other
+    initial hw recordings is returned.
+    :param subject: The subject to be loaded
+    :param config: dict containing configuration information, e.g. folders, filenames or other settings
+    :return: the initial hand washing time in seconds if given, 39 as default otherwise
+    """
+    avg_hand_wash_time = 39
+    first_hw_path = config["data_folder"] + config["first_hw_subfolder"]
+
+    first_hw_csv_name = get_file_name_inital_hw(subject, config)
+
+    if not first_hw_csv_name is None:
             csv = pd.read_csv(config["data_folder"] + config["prefix"] + subject + "/" + first_hw_csv_name, sep="\t")
             first_hw_csv = pd.read_csv(first_hw_path + "/labels_" + first_hw_csv_name)
             # since first hw csv is a csv with only one line, it comes as a series, so we need .values[0]
@@ -35,6 +52,7 @@ def initial_handwash_time(subject: str, config: dict) -> int:
 
     # take the average hand washing time if no initial recording was found
     return avg_hand_wash_time
+
 
 
 def is_summertime_in2022(date: datetime.datetime, verbose: bool = False) -> bool:
