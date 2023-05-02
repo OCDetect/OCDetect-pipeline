@@ -54,7 +54,7 @@ def initial_handwash_time(subject: str, config: dict) -> int:
     return avg_hand_wash_time
 
 
-def get_initial_hw_datetime(subject: str, config: dict) -> pd.DateTime:
+def get_initial_hw_datetime(subject: str, config: dict) -> datetime.datetime:
     """
     Calculates the date for the initial hand washing recording session in the lab.
     :param subject: The subject to be loaded
