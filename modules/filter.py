@@ -33,9 +33,21 @@ def calc_idle_time(data: pd.DataFrame, sensor: Sensor, threshold=0.5, window_siz
 
 def check_file_corrupt(data: pd.DataFrame) -> bool:
     """
-    Checks if data is empty or contains the header only
+    Checks if file is empty or contains the header only
     :param data: the dataframe from the csv recording file
     :return: true if corrupt and to be ignored, false otherwise
     """
 
     return data.empty
+
+
+def check_insufficient_file_length(data: pd.DataFrame, initial_hw_time: int) -> bool:
+    """
+    Checks if file length is too small to contain relevant information. Since we focus on hand washing and do not want
+    to miss that the file length has to be at least as long as the inital hand washing time.
+    :param data: the dataframe from the csv recording file
+    :param initial_hw_time: the time in seconds for the initial hand washing recording
+    :return: true if file is too short, false otherwise
+    """
+
+    return int(data.iloc[-1]["timestamp"] / 1000000000) < initial_hw_time
