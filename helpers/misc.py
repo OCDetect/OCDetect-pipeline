@@ -40,7 +40,7 @@ def initial_handwash_time(subject: str, config: dict) -> int:
     """
     avg_hand_wash_time = 39
     first_hw_path = config["data_folder"] + config["first_hw_subfolder"]
-    first_hw_csv_name = get_file_name_inital_hw(subject, config)
+    first_hw_csv_name = get_file_name_initial_hw(subject, config)
 
     if first_hw_csv_name is not None:
         csv = pd.read_csv(config["data_folder"] + config["prefix"] + subject + "/" + first_hw_csv_name, sep="\t")
