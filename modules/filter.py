@@ -29,3 +29,13 @@ def calc_idle_time(data: pd.DataFrame, sensor: Sensor, threshold=0.5, window_siz
             data.loc[i:i+window_size, "idle"] = 1.0
 
     return data
+
+
+def check_file_corrupt(data: pd.DataFrame) -> bool:
+    """
+    Checks if data is empty or contains the header only
+    :param data: the dataframe from the csv recording file
+    :return: true if corrupt and to be ignored, false otherwise
+    """
+
+    return data.empty
