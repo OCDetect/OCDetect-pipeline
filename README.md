@@ -12,9 +12,10 @@
       - per subject: list of dataframes (single recordings)
    - do not forget to take care of:
       - drop duplicates (to delete corrupt file endings) -> also drop the inital value that was duplicated (set parameter keep==false)
-       
+   - add test flag / int , s.t. some files are loaded only (HOW MANY? & random selection)
 - misc
    - initial hand washing time calculation
+   - logger that can be used from everywhere
 
 - filter 
   - Input: single dataframe 
@@ -41,6 +42,10 @@
             - TBD with Karina what to do
             - how to acknowledge: define min. fixed time (e.g. 10s) between 2 hw activities
   
+  - visualization:
+    - plots, plots, plots (everything we have and check if it / what we need)
+
+
 - relabel
-    - on basis of inital hw time
+    - on basis of initial hw time
     - fixed timespan
