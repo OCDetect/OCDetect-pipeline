@@ -20,7 +20,8 @@ def get_file_name_inital_hw(subject: str, config: dict) -> str:
     first_hw_path = config["data_folder"] + config["first_hw_subfolder"]
     first_hw_csv_names = [first_hw[7:] for first_hw in os.listdir(first_hw_path) if first_hw.endswith(".csv")]
 
-    csv_name_from_subject = [f for f in os.listdir(config["data_folder"] + config["prefix"] + subject) if f.endswith('.csv')]
+    csv_name_from_subject = [f for f in os.listdir(config["data_folder"] + config["prefix"] + subject) if
+                             f.endswith('.csv')]
     for first_hw_csv_name in first_hw_csv_names:
         if first_hw_csv_name in csv_name_from_subject:
             return first_hw_csv_name
@@ -39,19 +40,19 @@ def initial_handwash_time(subject: str, config: dict) -> int:
     """
     avg_hand_wash_time = 39
     first_hw_path = config["data_folder"] + config["first_hw_subfolder"]
-
     first_hw_csv_name = get_file_name_inital_hw(subject, config)
 
-    if not first_hw_csv_name is None:
-            csv = pd.read_csv(config["data_folder"] + config["prefix"] + subject + "/" + first_hw_csv_name, sep="\t")
-            first_hw_csv = pd.read_csv(first_hw_path + "/labels_" + first_hw_csv_name)
-            # since first hw csv is a csv with only one line, it comes as a series, so we need .values[0]
-            begin_ts = csv.iloc[first_hw_csv['start'].values[0]]['timestamp']
-            end_ts = csv.iloc[first_hw_csv['end'].values[0]]['timestamp']
-            return int((end_ts / 1000000000) - (begin_ts / 1000000000))
+    if first_hw_csv_name is not None:
+        csv = pd.read_csv(config["data_folder"] + config["prefix"] + subject + "/" + first_hw_csv_name, sep="\t")
+        first_hw_csv = pd.read_csv(first_hw_path + "/labels_" + first_hw_csv_name)
+        # since first hw csv is a csv with only one line, it comes as a series, so we need .values[0]
+        begin_ts = csv.iloc[first_hw_csv['start'].values[0]]['timestamp']
+        end_ts = csv.iloc[first_hw_csv['end'].values[0]]['timestamp']
+        return int((end_ts / 1000000000) - (begin_ts / 1000000000))
 
     # take the average hand washing time if no initial recording was found
     return avg_hand_wash_time
+
 
 
 
