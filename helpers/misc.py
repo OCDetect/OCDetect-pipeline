@@ -8,7 +8,7 @@ import numpy as np
 from helpers.definitions import Sensor
 
 
-def get_file_name_inital_hw(subject: str, config: dict) -> str:
+def get_file_name_initial_hw(subject: str, config: dict) -> str:
     """
     Returns the file name for the CSV file containing the initial hand washing activity in the lab by taking the defined
     start and end index from the first_hw_subfolder and searching for the file name string in the subject's
@@ -54,6 +54,19 @@ def initial_handwash_time(subject: str, config: dict) -> int:
     return avg_hand_wash_time
 
 
+def get_initial_hw_datetime(subject: str, config: dict) -> pd.DateTime:
+    """
+    Calculates the date for the initial hand washing recording session in the lab.
+    :param subject: The subject to be loaded
+    :param config: dict containing configuration information, e.g. folders, filenames or other settings
+    :return: the datetime if initial hand washing recording was found, None otherwise
+    """
+    first_hw_csv_name = get_file_name_initial_hw(subject, config)
+    if first_hw_csv_name is not None:
+        csv = pd.read_csv(config["data_folder"] + config["prefix"] + subject + "/" + first_hw_csv_name, sep="\t")
+        return pd.to_datetime(csv.iloc[0]["timestamp"])
+
+    return None
 
 
 def is_summertime_in2022(date: datetime.datetime, verbose: bool = False) -> bool:
