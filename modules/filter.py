@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from helpers.definitions import Sensor
+from helpers.misc import get_initial_hw_datetime
 
 
 def calc_idle_time(data: pd.DataFrame, sensor: Sensor, threshold=0.5, window_size=50, overlap=0.5) -> pd.DataFrame:
@@ -51,3 +52,16 @@ def check_insufficient_file_length(data: pd.DataFrame, initial_hw_time: int) -> 
     """
 
     return int(data.iloc[-1]["timestamp"] / 1000000000) < initial_hw_time
+
+
+def check_recording_before_initial_hw(data: pd.DataFrame, subject: str, config: dict) -> bool:
+    """
+    Checks if the given recording happened before the initial lab session.
+    :param data: the dataframe from the csv recording file
+    :param subject: the subject from the recording
+    :param config: the loaded config file
+    :return: true if recording was before initial lab session, false otherwise
+    """
+
+    return data.iloc[0]["datetime"].date() < get_initial_hw_datetime(subject, config)
+
