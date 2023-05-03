@@ -37,9 +37,12 @@
          - label was set too early in file that was cannot be hand washing before
       - how to treat labels:
          - after applying filter rules -> filling out ignore column
-         - invalid label when movement before happened only for a certain time (tbd, initially 5s) --> and before that ignore col == true
+         - invalid label when movement before happened only for a certain time (tbd, initially 5s) --> and before that ignore col == true [paper with duration times](https://www.jstor.org/stable/26329601 )
          - multiple labels set in short succession 
-            - TBD with Karina what to do
+            - ~~TBD with Karina what to do~~
+            - correction if very short time and different answer values? (<= min hw duration)
+            - TODO: calculate how often this occurs (per person) (kristina has it in older code?), in order to check risk if wrong decision has been made.
+            - 
             - how to acknowledge: define min. fixed time (e.g. 10s) between 2 hw activities
   
   - visualization:
