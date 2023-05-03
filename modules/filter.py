@@ -6,7 +6,7 @@ from typing import List
 from tqdm import tqdm
 
 
-def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config: dict, sensor: Sensor) -> list[pd.DataFrame]:
+def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config: dict, sensor: Sensor) -> List[pd.DataFrame]:
     """
 
     :param sensor: which sensor to be used for calculating idle regions (gyroscope or accelerometer)

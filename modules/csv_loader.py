@@ -1,7 +1,9 @@
+import os
 import pandas as pd
 import datetime
+import logging
 from glob import glob
-from typing import List, Union, Dict
+from typing import List, Dict, Tuple
 from pathlib import Path
 from helpers.misc import get_metadata, add_timezone_and_summertime
 from tqdm import tqdm
@@ -56,12 +58,15 @@ def load_subjects(subjects: List[str], config: dict) -> List[List[pd.DataFrame]]
     return out_list
 
 
-def load_all_subjects(config: dict) -> Union[Dict[str, int], List[List[pd.DataFrame]]]:
+def load_all_subjects(config: dict) -> Tuple[Dict[str, int], List[List[pd.DataFrame]]]:
     """
     :param config: dict containing configuration information, e.g. folders, filenames or other settings
     :return: List of Lists with pd.DataFrames. One List per Subject, each containing all recordings of the subject.
     """
-    all_subjects = ["01"]  # TODO recognize automatically by folder names etc.
+    all_subjects = ["01"] #[x.path for x in os.scandir(config["data_folder"]) if x.is_dir() and x.path[-3] == "/"
+                    #and x.path[-1].isdigit() and x.path[-2].isdigit()]
+    #logging.debug(f"found {len(all_subjects)} subjects")
+    #return
 
     out_list = load_subjects(all_subjects, config)
     list_map = {subject: i for i, subject in enumerate(all_subjects)}

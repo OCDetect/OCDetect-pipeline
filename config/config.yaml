@@ -1,6 +1,11 @@
 - robin-pc:
     hostname: Robin-PC-Ubuntu
-    data_folder : ../../../../OCDetect/
+    data_folder: ../../../OCDetect_DATA/
+    meta_subfolder: metadata/
+    evals_subfolder: allEvaluations/
+    dailies_subfolder: dailyQuestionnaire/
+    annotations_subfolder: annotations/
+    first_hw_subfolder: labels_first_handwashes/
 
 - robin-laptop:
     hostname: thinkbook
@@ -9,6 +14,7 @@
     evals_subfolder: allEvaluations/
     dailies_subfolder: dailyQuestionnaire/
     annotations_subfolder: annotations/
+    first_hw_subfolder: labels_first_handwashes/
 
 - kristina-mac:
     hostname: atlas
