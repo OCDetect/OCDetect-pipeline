@@ -8,7 +8,8 @@ from modules.csv_loader import load_subject, load_all_subjects
 from helpers.misc import calc_magnitude
 from helpers.definitions import Sensor
 from modules.filter import run_data_cleansing
-import helpers.logger
+import helpers.logger  # the import statement is enough to initialize the logger
+import numpy as np
 
 
 def main(config: dict) -> int:
@@ -18,11 +19,10 @@ def main(config: dict) -> int:
     :return: int: Exit code
     """
 
-    #load_all_subjects(config)
-    subject = "03"
-    recordings_list = load_subject(subject, config)
+    subject_map, subject_recordings = load_all_subjects(config)
+    subject = np.random.choice(list(subject_map.keys()))
 
-    print(recordings_list[0].datetime)
+    recordings_list = subject_recordings[subject_map[subject]]
 
     cleaned_data = run_data_cleansing(recordings_list, subject, config, Sensor.ACCELEROMETER)
 

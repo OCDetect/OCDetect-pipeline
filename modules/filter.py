@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import pandas as pd
 from helpers.definitions import Sensor
@@ -50,7 +52,7 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
             filtered_out_files += 1
 
     percentage_filtered_out = (filtered_out_files * 100)/len(recordings_list)
-    print(f"Complete recordings filtered out: {filtered_out_files} ({percentage_filtered_out:.2f}%)")
+    logging.info(f"Complete recordings filtered out: {filtered_out_files} ({percentage_filtered_out:.2f}%)")
 
     return cleaned_recordings_list
 
@@ -68,7 +70,7 @@ def calc_idle_time(data: pd.DataFrame, sensor: Sensor, threshold=0.5, window_siz
     """
 
     if f"mag {sensor.value}" not in data.columns:
-        print("please calculate magnitude before")  # TODO add logger for giving feedback instead of prints
+        logging.logerror("please calculate magnitude before")  # TODO add logger for giving feedback instead of prints
         return data
 
     data["idle"] = np.nan

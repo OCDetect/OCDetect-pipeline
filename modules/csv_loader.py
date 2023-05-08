@@ -7,11 +7,16 @@ from typing import List, Dict, Tuple
 from pathlib import Path
 from helpers.misc import get_metadata, add_timezone_and_summertime
 from tqdm import tqdm
+import numpy as np
 
 
 def get_subject_filelist(subject_id: str, config: dict) -> List[str]:
     filelist_all = glob(config["data_folder"] + "*/*.csv")
     subject_filelist = [f for f in filelist_all if subject_id in Path(f).parent.name]
+
+    n_test = int(config.get("test_n_recs", 0))
+    if n_test > 0:
+        subject_filelist = np.random.choice(subject_filelist, n_test, replace=False)
     return subject_filelist
 
 
@@ -63,10 +68,13 @@ def load_all_subjects(config: dict) -> Tuple[Dict[str, int], List[List[pd.DataFr
     :param config: dict containing configuration information, e.g. folders, filenames or other settings
     :return: List of Lists with pd.DataFrames. One List per Subject, each containing all recordings of the subject.
     """
-    all_subjects = ["01"] #[x.path for x in os.scandir(config["data_folder"]) if x.is_dir() and x.path[-3] == "/"
-                    #and x.path[-1].isdigit() and x.path[-2].isdigit()]
-    #logging.debug(f"found {len(all_subjects)} subjects")
-    #return
+    all_subjects = [x.path[-2:] for x in os.scandir(config["data_folder"]) if x.is_dir() and x.path[-3] == "/"
+                    and x.path[-1].isdigit() and x.path[-2].isdigit()]
+    logging.debug(f"found {len(all_subjects)} subjects")
+    test_subs = config.get("test_n_subs", 0)
+    if test_subs > 0:
+        all_subjects = np.random.choice(all_subjects, test_subs, replace=False)
+        logging.debug(f"running on subjects: {all_subjects}")
 
     out_list = load_subjects(all_subjects, config)
     list_map = {subject: i for i, subject in enumerate(all_subjects)}

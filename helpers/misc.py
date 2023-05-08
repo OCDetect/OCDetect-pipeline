@@ -1,4 +1,5 @@
 import datetime
+import logging
 from typing import Tuple, Union
 import json
 from pathlib import Path
@@ -21,7 +22,7 @@ def get_file_name_initial_hw(subject: str, config: dict) -> str:
     first_hw_path = config["data_folder"] + config["first_hw_subfolder"]
     first_hw_csv_names = [first_hw[7:] for first_hw in os.listdir(first_hw_path) if first_hw.endswith(".csv")]
 
-    csv_name_from_subject = [f for f in os.listdir(config["data_folder"] + config["prefix"] + subject) if
+    csv_name_from_subject = [f for f in os.listdir(config["data_folder"] + config.get("prefix", "") + subject) if
                              f.endswith('.csv')]
     for first_hw_csv_name in first_hw_csv_names:
         if first_hw_csv_name in csv_name_from_subject:
@@ -44,7 +45,8 @@ def initial_handwash_time(subject: str, config: dict) -> int:
     first_hw_csv_name = get_file_name_initial_hw(subject, config)
 
     if first_hw_csv_name is not None:
-        csv = loader.load_recording(config["data_folder"] + config["prefix"] + subject + "/" + first_hw_csv_name + ".csv")
+        csv = loader.load_recording(config["data_folder"] + config.get("prefix", "")
+                                    + subject + "/" + first_hw_csv_name + ".csv")
         first_hw_csv = loader.load_recording(first_hw_path + "/labels_" + first_hw_csv_name + ".csv", sep=",")
         # since first hw csv is a csv with only one line, it comes as a series, so we need .values[0]
         begin_ts = csv.iloc[first_hw_csv['start'].values[0]]['timestamp']
@@ -109,7 +111,7 @@ def get_metadata(subject: str, recording: str, config: dict) -> Tuple[Union[date
             json_vals = json.load(json_file)
             date = datetime.datetime.strptime(json_vals["date"][:-5], "%Y-%m-%dT%H:%M:%S")
     except FileNotFoundError:
-        print("Metadata-file not found: ", filename)
+        logging.error("Metadata-file not found: ", filename)
 
     return date, json_vals
 
