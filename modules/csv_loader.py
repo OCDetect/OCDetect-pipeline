@@ -63,15 +63,24 @@ def load_subjects(subjects: List[str], config: dict) -> List[List[pd.DataFrame]]
     return out_list
 
 
-def load_all_subjects(config: dict) -> Tuple[Dict[str, int], List[List[pd.DataFrame]]]:
+def load_all_subjects(config: dict, settings: dict) -> Tuple[Dict[str, int], List[List[pd.DataFrame]]]:
     """
     :param config: dict containing configuration information, e.g. folders, filenames or other settings
     :return: List of Lists with pd.DataFrames. One List per Subject, each containing all recordings of the subject.
     """
-    all_subjects = [x.path[-2:] for x in os.scandir(config["data_folder"]) if x.is_dir() and x.path[-3] == "/"
-                    and x.path[-1].isdigit() and x.path[-2].isdigit()]
-    logging.debug(f"found {len(all_subjects)} subjects")
-    test_subs = config.get("test_n_subs", 0)
+
+    # all_subjects = [x.path[-2:] for x in os.scandir(config["data_folder"]) if x.is_dir() and x.path[-3] == "/"              and x.path[-1].isdigit() and x.path[-2].isdigit()]
+
+    file_names = [f"{config.get('prefix', '')}{ids}" for ids in settings.get("all_subjects")]
+    all_subjects = [x.name[-2:] for x in os.scandir(config["data_folder"]) if x.is_dir() and x.name in file_names]
+
+    if len(all_subjects) != len(settings.get("all_subjects")):
+        missing_subjects = [s for s in file_names if not any(s in f"{config.get('prefix', '')}{sub}" for sub in all_subjects)]
+        logging.warning(f"not all subjects' data could be found, missing subjects: {missing_subjects}")
+    else:
+        logging.debug(f"found all {len(all_subjects)} subjects")
+
+    test_subs = settings.get("test_n_subs", 0)
     if test_subs > 0:
         all_subjects = np.random.choice(all_subjects, test_subs, replace=False)
         logging.debug(f"running on subjects: {all_subjects}")
