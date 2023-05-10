@@ -27,7 +27,7 @@ def main(config: dict, settings: dict) -> int:
     recordings_list = subject_recordings[subject_map[subject]]
 
     # cleaned_data = run_data_cleansing(recordings_list, subject, config, Sensor.ACCELEROMETER)
-    plot_3_axis(recordings_list[0], Sensor.ACCELEROMETER, [43242343243,3242432])
+    plot_3_axis(config, recordings_list[0], Sensor.ACCELEROMETER, start_idx=2000, end_idx=4000, save_fig=True)
     logging.info("Finished running prepocessing")
     return 0
 

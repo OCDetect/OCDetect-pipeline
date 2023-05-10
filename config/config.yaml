@@ -24,7 +24,6 @@
     meta_subfolder: metadata/
     first_hw_subfolder: labels_first_handwashes/
     prefix: OCDetect_
-    test_n_recs: 1
-    test_n_subs: 1
+    output_folder: ../../OCDetect/Analysis/plots/
 
 

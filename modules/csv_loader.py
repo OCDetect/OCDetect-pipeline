@@ -10,17 +10,17 @@ from tqdm import tqdm
 import numpy as np
 
 
-def get_subject_filelist(subject_id: str, config: dict) -> List[str]:
+def get_subject_filelist(subject_id: str, config: dict, settings: dict) -> List[str]:
     filelist_all = glob(config["data_folder"] + "*/*.csv")
     subject_filelist = [f for f in filelist_all if subject_id in Path(f).parent.name]
 
-    n_test = int(config.get("test_n_recs", 0))
+    n_test = int(settings.get("test_n_recs", 0))
     if n_test > 0:
         subject_filelist = np.random.choice(subject_filelist, n_test, replace=False)
     return subject_filelist
 
 
-def load_subject(subject_id: str, config: dict) -> List[pd.DataFrame]:
+def load_subject(subject_id: str, config: dict, settings: dict) -> List[pd.DataFrame]:
     """
     Load a single subject. All recordings are loaded and augmented with relevant information:
         - datetime instead of timestamp, taken from metadata
@@ -31,7 +31,7 @@ def load_subject(subject_id: str, config: dict) -> List[pd.DataFrame]:
     """
     recordings = []
 
-    subject_filelist = get_subject_filelist(subject_id, config)
+    subject_filelist = get_subject_filelist(subject_id, config, settings)
 
     for filename in tqdm(subject_filelist, smoothing=0.5):
         recording_df = load_recording(filename)
@@ -50,7 +50,7 @@ def load_recording(filename: str, sep="\t") -> pd.DataFrame:
     return rec_df
 
 
-def load_subjects(subjects: List[str], config: dict) -> List[List[pd.DataFrame]]:
+def load_subjects(subjects: List[str], config: dict, settings: dict) -> List[List[pd.DataFrame]]:
     """
 
     :param config:
@@ -59,7 +59,7 @@ def load_subjects(subjects: List[str], config: dict) -> List[List[pd.DataFrame]]
     """
     out_list = []
     for subject in subjects:
-        out_list.append(load_subject(subject, config))
+        out_list.append(load_subject(subject, config, settings))
     return out_list
 
 
@@ -85,7 +85,7 @@ def load_all_subjects(config: dict, settings: dict) -> Tuple[Dict[str, int], Lis
         all_subjects = np.random.choice(all_subjects, test_subs, replace=False)
         logging.debug(f"running on subjects: {all_subjects}")
 
-    out_list = load_subjects(all_subjects, config)
+    out_list = load_subjects(all_subjects, config, settings)
     list_map = {subject: i for i, subject in enumerate(all_subjects)}
     return list_map, out_list
 
