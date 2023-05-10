@@ -1,8 +1,7 @@
-import logging
-
 import numpy as np
 import pandas as pd
 from helpers.definitions import Sensor
+from helpers.logger import logger
 from helpers.misc import get_initial_hw_datetime, initial_handwash_time, calc_magnitude
 from typing import List
 from tqdm import tqdm
@@ -52,7 +51,7 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
             filtered_out_files += 1
 
     percentage_filtered_out = (filtered_out_files * 100)/len(recordings_list)
-    logging.info(f"Complete recordings filtered out: {filtered_out_files} ({percentage_filtered_out:.2f}%)")
+    logger.info(f"Complete recordings filtered out: {filtered_out_files} ({percentage_filtered_out:.2f}%)")
 
     return cleaned_recordings_list
 
@@ -70,7 +69,7 @@ def calc_idle_time(data: pd.DataFrame, sensor: Sensor, threshold=0.5, window_siz
     """
 
     if f"mag {sensor.value}" not in data.columns:
-        logging.logerror("please calculate magnitude before")  # TODO add logger for giving feedback instead of prints
+        logger.logerror("please calculate magnitude before")
         return data
 
     data["idle"] = np.nan

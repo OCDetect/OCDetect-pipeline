@@ -1,11 +1,11 @@
 import os
 import pandas as pd
 import datetime
-import logging
 from glob import glob
 from typing import List, Dict, Tuple
 from pathlib import Path
 from helpers.misc import get_metadata, add_timezone_and_summertime
+from helpers.logger import logger
 from tqdm import tqdm
 import numpy as np
 
@@ -76,14 +76,14 @@ def load_all_subjects(config: dict, settings: dict) -> Tuple[Dict[str, int], Lis
 
     if len(all_subjects) != len(settings.get("all_subjects")):
         missing_subjects = [s for s in file_names if not any(s in f"{config.get('prefix', '')}{sub}" for sub in all_subjects)]
-        logging.warning(f"not all subjects' data could be found, missing subjects: {missing_subjects}")
+        logger.warning(f"not all subjects' data could be found, missing subjects: {missing_subjects}")
     else:
-        logging.debug(f"found all {len(all_subjects)} subjects")
+        logger.debug(f"found all {len(all_subjects)} subjects")
 
     test_subs = settings.get("test_n_subs", 0)
     if test_subs > 0:
         all_subjects = np.random.choice(all_subjects, test_subs, replace=False)
-        logging.debug(f"running on subjects: {all_subjects}")
+        logger.debug(f"running on subjects: {all_subjects}")
 
     out_list = load_subjects(all_subjects, config, settings)
     list_map = {subject: i for i, subject in enumerate(all_subjects)}

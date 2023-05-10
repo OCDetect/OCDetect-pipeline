@@ -1,8 +1,7 @@
 import pandas as pd
 from helpers.definitions import Sensor
 import matplotlib.pyplot as plt
-import logging
-
+from helpers.logger import logger
 
 def plot_3_axis(config: None, df: pd.DataFrame, sensor: Sensor, save_fig=False, fig_name="plot_3_axis",
                 title="Line plot for the movement data over time", start_idx=None, end_idx=None) -> None:
@@ -20,16 +19,16 @@ def plot_3_axis(config: None, df: pd.DataFrame, sensor: Sensor, save_fig=False, 
     """
 
     if save_fig and config is None:
-        logging.debug("Provide config with location for saving the figure, exiting...")
+        logger.debug("Provide config with location for saving the figure, exiting...")
         return
 
     if (start_idx and end_idx) is not None:
         if start_idx >= end_idx:
-            logging.debug("The provided start index is not smaller than the end index, exiting...")
+            logger.debug("The provided start index is not smaller than the end index, exiting...")
             return
 
         if not (start_idx or end_idx) in df.index:
-            logging.debug("The given indices are out of range, exiting...")
+            logger.debug("The given indices are out of range, exiting...")
             return
 
     plt.subplots(figsize=(30, 10))
