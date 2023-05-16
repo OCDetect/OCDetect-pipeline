@@ -15,7 +15,7 @@ from visualizations.line_plotter import plot_3_axis
 def main(config: dict, settings: dict) -> int:
     """
     Function to run the entire preprocessing pipeline, from data loading to cleaning to relabeling etc.
-    :param settings:
+    :param settings: dict containing study wide settings
     :param config: dict containing configuration information, e.g. folders, filenames or other settings
     :return: int: Exit code
     """

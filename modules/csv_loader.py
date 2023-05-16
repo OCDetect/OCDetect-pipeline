@@ -52,9 +52,9 @@ def load_recording(filename: str, sep="\t") -> pd.DataFrame:
 
 def load_subjects(subjects: List[str], config: dict, settings: dict) -> List[List[pd.DataFrame]]:
     """
-
     :param config:
     :param subjects: Subject ids to load
+    :param settings: dict containing study wide settings
     :return:
     """
     out_list = []
@@ -66,6 +66,7 @@ def load_subjects(subjects: List[str], config: dict, settings: dict) -> List[Lis
 def load_all_subjects(config: dict, settings: dict) -> Tuple[Dict[str, int], List[List[pd.DataFrame]]]:
     """
     :param config: dict containing configuration information, e.g. folders, filenames or other settings
+    :param settings: dict containing study wide settings
     :return: List of Lists with pd.DataFrames. One List per Subject, each containing all recordings of the subject.
     """
 

@@ -6,8 +6,6 @@
     dailies_subfolder: dailyQuestionnaire/
     annotations_subfolder: annotations/
     first_hw_subfolder: labels_first_handwashes/
-    test_n_recs: 3
-    test_n_subs: 3
 
 - robin-laptop:
     hostname: thinkbook
