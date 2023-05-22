@@ -3,13 +3,13 @@ import os
 import yaml
 import socket
 from typing import Union
-from modules.csv_loader import load_subject, load_all_subjects
+from modules.csv_loader import load_subject, load_all_subjects, load_recording
 from helpers.misc import calc_magnitude
 from helpers.definitions import Sensor
 from modules.filter import run_data_cleansing
 from helpers.logger import logger  # the import statement is enough to initialize the logger KK: I dont think this import statement is needed at all... RB: Well yes it is, but only if i also commit the logger.py file...
 import numpy as np
-from visualizations.line_plotter import plot_3_axis
+from visualizations.line_plotter import plot_3_axis, plot_magnitude_around_label
 
 
 def main(config: dict, settings: dict) -> int:
@@ -20,13 +20,18 @@ def main(config: dict, settings: dict) -> int:
     :return: int: Exit code
     """
 
-    subject_map, subject_recordings = load_all_subjects(config, settings)
-    subject = np.random.choice(list(subject_map.keys()))
+    #subject_map, subject_recordings = load_all_subjects(config, settings)
+    #subject = np.random.choice(list(subject_map.keys()))
 
-    recordings_list = subject_recordings[subject_map[subject]]
+    #recordings_list = subject_recordings[subject_map[subject]]
+
+    # recordings_list = load_subject("01", config, settings)
+    df = load_recording(f"{config['data_folder']}/OCDetect_12/relabeled_user-one/21.csv", ",")
 
     # cleaned_data = run_data_cleansing(recordings_list, subject, config, Sensor.ACCELEROMETER)
-    plot_3_axis(config, recordings_list[0], Sensor.ACCELEROMETER, start_idx=2000, end_idx=4000, save_fig=True)
+    # OCDetect01__376026_12
+    # plot_3_axis(config, recordings_list[0], Sensor.ACCELEROMETER, start_idx=2000, end_idx=4000, save_fig=True)
+    plot_magnitude_around_label(config, df, Sensor.ACCELEROMETER, 565673, 90, 10)
     logger.info("Finished running prepocessing")
     return 0
 
