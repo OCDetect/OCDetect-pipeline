@@ -7,6 +7,7 @@ from typing import List
 from tqdm import tqdm
 
 
+
 def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config: dict, sensor: Sensor) -> List[pd.DataFrame]:
     """
 
@@ -21,39 +22,51 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
     filtered_out_files = 0
 
     initial_hw_time = initial_handwash_time(subject, config)
+
     for recording in recordings_list:
+
+        ################################
         # Filter out complete recordings
+        ################################
 
         # 1. check if file has content at all
-        if not check_file_corrupt(recording):
-            cleaned_recordings_list.append(recording)
-        else:
+        if check_file_corrupt(recording):
             filtered_out_files += 1
+            continue
 
         # 2. check if recording time is smaller the person specific initial hand washing time
-        if not check_insufficient_file_length(recording, initial_hw_time):
-            cleaned_recordings_list.append(recording)
-        else:
+        if check_insufficient_file_length(recording, initial_hw_time):
             filtered_out_files += 1
+            continue
 
         # 3. check if recording date is before initial hw recording
-        if not check_recording_before_initial_hw(recording, subject, config):
-            cleaned_recordings_list.append(recording)
-        else:
+        if check_recording_before_initial_hw(recording, subject, config):
             filtered_out_files += 1
+            continue
 
         # 4. check if has no movement at all (delete when remaining windows are smaller than initial hw time)
         recording = calc_magnitude(recording, sensor)
         recording = calc_idle_time(recording, sensor)
-        if not check_insufficient_remaining_data_points(recording, initial_hw_time):
-            cleaned_recordings_list.append(recording)
-        else:
+        if check_insufficient_remaining_data_points(recording, initial_hw_time):
             filtered_out_files += 1
+            continue
+
+        ##########################################################
+        # Filter regions in recordings by setting an "ignore" flag
+        ##########################################################
+
+        # 1. ignore regions that have no movement
+        recording = set_ignore_no_movement(recording)
 
     percentage_filtered_out = (filtered_out_files * 100)/len(recordings_list)
     logger.info(f"Complete recordings filtered out: {filtered_out_files} ({percentage_filtered_out:.2f}%)")
 
     return cleaned_recordings_list
+
+
+def set_ignore_no_movement(data: pd.DataFrame) -> pd.DataFrame:
+    data['ignore'] = data['idle'].apply(lambda x: True if x == 1.0 else False)
+    return data
 
 
 def calc_idle_time(data: pd.DataFrame, sensor: Sensor, threshold=0.5, window_size=50, overlap=0.5) -> pd.DataFrame:
