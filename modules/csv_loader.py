@@ -100,3 +100,37 @@ def load_all_subjects(config: dict, settings: dict) -> Tuple[Dict[str, int], Lis
     list_map = {subject: i for i, subject in enumerate(all_subjects)}
     return list_map, out_list
 
+
+def load_all_labels(config: dict, settings: dict) -> pd.DataFrame:
+    """
+    Function to load all labels in the files where only the labels are stored ("allEvaluations").
+    :param config: dict containing configuration information, e.g. folders, filenames or other settings
+    :param settings: dict containing study wide settings
+    :return: pandas.Dataframe, containing all evaluations collected in the study
+    """
+    evals_folder = config.get("evals_subfolder", None)
+    if evals_folder is None:
+        logger.error("Evals_subfolder not set in config")
+        return
+    filelist_all = glob(config["data_folder"] + evals_folder + "*/*.csv")
+    evals = []
+    for filename in filelist_all:
+        if os.path.getsize(filename) == 0:
+            continue
+        try:
+            df = pd.read_csv(filename, sep="\t", names=["timestamp", "user yes/no", "compulsive", "tense", "urge"],
+                             header=None)
+            path = Path(filename)
+            filename = path.name
+            subject = path.parent.name
+            df["recording"] = filename[:filename.index('_')]
+            df["subject"] = subject[:2]
+            evals.append(df)
+        except pd.errors.ParserError as e:
+            pass  # logger.error(filename + ": " + str(e))
+    evals = pd.concat(evals)
+    return evals[evals["user yes/no"] == 1]
+
+
+
+

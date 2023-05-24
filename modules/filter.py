@@ -7,72 +7,60 @@ from typing import List
 from tqdm import tqdm
 
 
-
-def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config: dict, sensor: Sensor) -> List[pd.DataFrame]:
+def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config: dict, sensor: Sensor,
+                       settings: dict) -> List[pd.DataFrame]:
     """
 
     :param sensor: which sensor to be used for calculating idle regions (gyroscope or accelerometer)
     :param recordings_list: all original recordings from one subject
     :param subject: the subject from the recordings
     :param config: the loaded config
+    :param settings: the study wide settings dict
     :return: a list of DataFrames with the recordings that passed the filter rules
     """
 
     cleaned_recordings_list = []
     filtered_out_files = 0
+    modified_labels = 0
+    removed_labels = 0
 
     initial_hw_time = initial_handwash_time(subject, config)
-
     for recording in recordings_list:
-
-        ################################
         # Filter out complete recordings
-        ################################
 
         # 1. check if file has content at all
-        if check_file_corrupt(recording):
+        if not check_file_corrupt(recording):
+            cleaned_recordings_list.append(recording)
+        else:
             filtered_out_files += 1
-            continue
 
         # 2. check if recording time is smaller the person specific initial hand washing time
-        if check_insufficient_file_length(recording, initial_hw_time):
+        if not check_insufficient_file_length(recording, initial_hw_time):
+            cleaned_recordings_list.append(recording)
+        else:
             filtered_out_files += 1
-            continue
 
         # 3. check if recording date is before initial hw recording
-        if check_recording_before_initial_hw(recording, subject, config):
+        if not check_recording_before_initial_hw(recording, subject, config):
+            cleaned_recordings_list.append(recording)
+        else:
             filtered_out_files += 1
-            continue
 
         # 4. check if has no movement at all (delete when remaining windows are smaller than initial hw time)
         recording = calc_magnitude(recording, sensor)
         recording = calc_idle_time(recording, sensor)
-        if check_insufficient_remaining_data_points(recording, initial_hw_time):
+        if not check_insufficient_remaining_data_points(recording, initial_hw_time):
+            cleaned_recordings_list.append(recording)
+        else:
             filtered_out_files += 1
-            continue
 
-        ##########################################################
-        # Filter regions in recordings by setting an "ignore" flag
-        ##########################################################
-
-        # 1. ignore regions that have no movement
-        recording = set_ignore_no_movement(recording)
-
-        # 2. when recording includes initial hw, ignore regions that were under supervision
-        # this is already handled when data is read in because this is the only time we still have the connection between data and file
-
-
-
+        # X. find and handle labels placed by the subjects in short succession TODO
+        # recording = short_succession(recording, subject, config, settings)
 
     percentage_filtered_out = (filtered_out_files * 100)/len(recordings_list)
     logger.info(f"Complete recordings filtered out: {filtered_out_files} ({percentage_filtered_out:.2f}%)")
 
     return cleaned_recordings_list
-
-
-def set_ignore_no_movement(data: pd.DataFrame) -> pd.DataFrame:
-    data['ignore'] = data['idle'].apply(lambda x: True if x == 1.0 else False)
-    return data
 
 
 def calc_idle_time(data: pd.DataFrame, sensor: Sensor, threshold=0.5, window_size=50, overlap=0.5) -> pd.DataFrame:
@@ -148,3 +136,30 @@ def check_recording_before_initial_hw(data: pd.DataFrame, subject: str, config: 
     """
 
     return data.iloc[0]["datetime"].date() < get_initial_hw_datetime(subject, config).date()
+
+
+def short_succession(data: pd.DataFrame, subject: str, config: dict, settings: dict) -> pd.DataFrame:
+    """
+    Finds (and corrects, TODO)
+    labels that occur in short succession of each other. Also checks if the feedback values changed
+    :param data: pd.DataFrame of one recording's labels only
+    :param subject: the subject from the recording
+    :param config: dict containing the configuration for this software (file paths etc.)
+    :param settings: dict containing study wide settings
+    :return: stats, cleaned recording TODO
+    """
+    short_succession_time = settings.get("short_succession_time", 0)
+
+    if len(data) <= 1 or short_succession_time <= 0:  # nothing to do here
+        return data
+    counts = [0, 0, 0, 0]  # same, comp to normal, normal to comp
+    for index, row in data.drop(["recording", "subject"], axis=1).reset_index().diff().reset_index().iterrows():
+        timediff = row.timestamp / 1e9  # in seconds
+        if timediff < short_succession_time:
+            if row.compulsive == -1:  # compulsive to routine
+                counts[1] += 1
+            elif row.compulsive == 1:  # routine to compulsive
+                counts[2] += 1
+            else:  # repetition of the previous label (comp->comp or routine->routine)
+                counts[0] += 1
+    return counts
