@@ -20,18 +20,20 @@ def main(config: dict, settings: dict) -> int:
     :return: int: Exit code
     """
 
-    #subject_map, subject_recordings = load_all_subjects(config, settings)
-    #subject = np.random.choice(list(subject_map.keys()))
+    # subject_map, subject_recordings = load_all_subjects(config, settings)
+    # subject = np.random.choice(list(subject_map.keys()))
 
     #recordings_list = subject_recordings[subject_map[subject]]
 
-    # recordings_list = load_subject("01", config, settings)
-    df = load_recording(f"{config['data_folder']}/OCDetect_12/relabeled_user-one/21.csv", ",")
+    recordings_list = load_subject("12", config, settings)
 
-    # cleaned_data = run_data_cleansing(recordings_list, subject, config, Sensor.ACCELEROMETER)
-    # OCDetect01__376026_12
+    cleaned_data = run_data_cleansing(recordings_list, "12", config, Sensor.ACCELEROMETER)
+
+    # Test plotting stuff
     # plot_3_axis(config, recordings_list[0], Sensor.ACCELEROMETER, start_idx=2000, end_idx=4000, save_fig=True)
-    plot_magnitude_around_label(config, df, Sensor.ACCELEROMETER, 565673, 90, 10)
+    # df = load_recording(f"{config['data_folder']}/OCDetect_12/relabeled_user-one/21.csv", ",")
+    # plot_magnitude_around_label(config, df, Sensor.ACCELEROMETER, 565673, 90, 10)
+
     logger.info("Finished running prepocessing")
     return 0
 
