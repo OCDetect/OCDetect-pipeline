@@ -4,7 +4,7 @@ import datetime
 from glob import glob
 from typing import List, Dict, Tuple
 from pathlib import Path
-from helpers.misc import get_metadata, add_timezone_and_summertime
+from helpers.misc import get_metadata, add_timezone_and_summertime, get_file_name_initial_hw
 from helpers.logger import logger
 from tqdm import tqdm
 import numpy as np
@@ -27,8 +27,11 @@ def load_subject(subject_id: str, config: dict, settings: dict) -> List[pd.DataF
         - duplicate lines are dropped (only appeared at the end of some corrupted files)
     :param subject_id: The subject to be loaded
     :param config: dict containing configuration information, e.g. folders, filenames or other settings
-    :return: List with pd.DataFrames, one per recording of the subjects.
+    :return: List with pd.DataFrames, one per recording of the subjects and the position in the list
     """
+
+    first_hw_csv_name = get_file_name_initial_hw(subject_id, config)
+
     recordings = []
 
     subject_filelist = get_subject_filelist(subject_id, config, settings)
@@ -40,7 +43,14 @@ def load_subject(subject_id: str, config: dict, settings: dict) -> List[pd.DataF
         date_base = add_timezone_and_summertime(date)
         recording_df["datetime"] = recording_df.timestamp.apply(lambda x: date_base + datetime.timedelta(seconds=x/1e9))
         recording_df.drop_duplicates(keep=False, inplace=True)
+
+        if recording == first_hw_csv_name:
+            first_hw_path = config["data_folder"] + config["first_hw_subfolder"]
+            first_hw_csv = load_recording(first_hw_path + "/labels_" + first_hw_csv_name + ".csv", sep=",")
+            recording_df['ignore'] = (recording_df.index >= int(first_hw_csv['start'])) & \
+                                     (recording_df.index <= int(first_hw_csv['end']))
         recordings.append(recording_df)
+
     return recordings
 
 

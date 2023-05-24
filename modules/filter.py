@@ -58,6 +58,12 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
         # 1. ignore regions that have no movement
         recording = set_ignore_no_movement(recording)
 
+        # 2. when recording includes initial hw, ignore regions that were under supervision
+        # this is already handled when data is read in because this is the only time we still have the connection between data and file
+
+
+
+
     percentage_filtered_out = (filtered_out_files * 100)/len(recordings_list)
     logger.info(f"Complete recordings filtered out: {filtered_out_files} ({percentage_filtered_out:.2f}%)")
 
