@@ -25,7 +25,6 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
     removed_labels = 0
 
     initial_hw_time = initial_handwash_time(subject, config)
-
     for recording in recordings_list:
 
         ################################
@@ -35,16 +34,19 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
         # 1. check if file has content at all
         if check_file_corrupt(recording):
             filtered_out_files += 1
+            logger.info("File has no content.")
             continue
 
         # 2. check if recording time is smaller the person specific initial hand washing time
         if check_insufficient_file_length(recording, initial_hw_time):
             filtered_out_files += 1
+            logger.info("File is too short.")
             continue
 
         # 3. check if recording date is before initial hw recording
         if check_recording_before_initial_hw(recording, subject, config):
             filtered_out_files += 1
+            logger.info("Recording date is before initial lab session.")
             continue
 
         # 4. check if has no movement at all (delete when remaining windows are smaller than initial hw time)
@@ -52,6 +54,7 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
         recording = calc_idle_time(recording, sensor)
         if check_insufficient_remaining_data_points(recording, initial_hw_time):
             filtered_out_files += 1
+            logger.info("File has too little movement.")
             continue
 
         ##########################################################
@@ -62,22 +65,42 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
         recording = set_ignore_no_movement(recording)
 
         # 2. when recording includes initial hw, ignore regions that were under supervision
-        # this is already handled when data is read in because this is the only time we still have the connection between data and file
+        # this is already handled when data is read in because this is the only time
+        # we still have the connection between data and file
 
+        # 3. label was set too early in file that was cannot be hand washing before
+        recording = check_for_too_early_label(recording, 5)
 
+        recording_ignore_regions = len(recording[recording["ignore"] == True])
+        percentage_ignore_regions = (recording_ignore_regions*100)/len(recording)
 
+        logger.info(f"Percentage of the file to be ignored: {percentage_ignore_regions:.2f}%)")
 
         # X. find and handle labels placed by the subjects in short succession TODO
         # recording = short_succession(recording, subject, config, settings)
 
-    percentage_filtered_out = (filtered_out_files * 100)/len(recordings_list)
-    logger.info(f"Complete recordings filtered out: {filtered_out_files} ({percentage_filtered_out:.2f}%)")
+    percentage_filtered_out = (filtered_out_files * 100) / len(recordings_list)
+    logger.info(
+        f"Complete recordings filtered out: {filtered_out_files} out of {len(recordings_list)} ({percentage_filtered_out:.2f}%)")
 
     return cleaned_recordings_list
 
 
+# TODO add tests for the filter methods
+def check_for_too_early_label(data: pd.DataFrame, min_time: int) -> pd.DataFrame:
+    frequency = 50
+    idx = min_time * frequency
+    label_idx = data.loc[:idx, "user yes/no"][data.loc[:idx, "user yes/no"] == 1.0].index
+
+    if len(label_idx) > 0:
+        data.loc[:label_idx[-1], 'ignore'] = True
+
+    return data
+
+
+# TODO add tests for the filter methods
 def set_ignore_no_movement(data: pd.DataFrame) -> pd.DataFrame:
-    data['ignore'] = data['idle'].apply(lambda x: True if x == 1.0 else False)
+    data.loc[data['idle'] == 1.0, 'ignore'] = True
     return data
 
 
@@ -129,7 +152,7 @@ def check_insufficient_remaining_data_points(recording_w_idle: pd.DataFrame, ini
     """
     amount = len(recording_w_idle[recording_w_idle["idle"] == 1.0])
     # sampling frequency == 50 Hz -> amount of non-idle data points divided by 50 equals remaining time
-    return int(amount / 50) > initial_hw_time
+    return int(amount / 50) < initial_hw_time
 
 
 def check_insufficient_file_length(data: pd.DataFrame, initial_hw_time: int) -> bool:

@@ -44,6 +44,7 @@ def load_subject(subject_id: str, config: dict, settings: dict) -> List[pd.DataF
         recording_df["datetime"] = recording_df.timestamp.apply(lambda x: date_base + datetime.timedelta(seconds=x/1e9))
         recording_df.drop_duplicates(keep=False, inplace=True)
 
+        recording_df['ignore'] = False
         if recording == first_hw_csv_name:
             first_hw_path = config["data_folder"] + config["first_hw_subfolder"]
             first_hw_csv = load_recording(first_hw_path + "/labels_" + first_hw_csv_name + ".csv", sep=",")
