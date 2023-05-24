@@ -118,3 +118,26 @@ def plot_magnitude_around_label(config: None, df: pd.DataFrame, sensor: Sensor, 
     else:
         plt.show()
 
+
+def plot_idle_regions(config: None, df: pd.DataFrame, sensor: Sensor, save_fig=False, fig_name="plot_idle_regions",
+                title="Line plot showing idle regions"):
+
+    # Extract data for ignore = True
+    df_red = df[df['ignore'] == True]
+
+    plt.figure(figsize=(18, 8))
+
+    # Plot the line with different colors based on 'idle' column
+    plt.plot(df.index, df[f'mag {sensor.value}'], color='grey', label='unfiltered')
+    plt.scatter(df_red.index, df_red[f'mag {sensor.value}'], color='red', label='idle region', zorder=10)
+
+    # Add labels, title, and legend
+    plt.xlabel('Index')
+    plt.ylabel('Magnitude')
+    plt.title(title)
+    plt.legend()
+
+    if save_fig:
+        plt.savefig(f"{config.get('output_folder')}{fig_name}.png", bbox_inches='tight')
+    else:
+        plt.show()

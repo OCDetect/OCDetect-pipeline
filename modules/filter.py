@@ -5,6 +5,7 @@ from helpers.logger import logger
 from helpers.misc import get_initial_hw_datetime, initial_handwash_time, calc_magnitude
 from typing import List
 from tqdm import tqdm
+from visualizations.line_plotter import plot_idle_regions
 
 
 def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config: dict, sensor: Sensor,
@@ -76,6 +77,7 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
 
         logger.info(f"Percentage of the file to be ignored: {percentage_ignore_regions:.2f}%)")
 
+        plot_idle_regions(config, recording, Sensor.ACCELEROMETER, title=f"percentage of ignored regions: {percentage_ignore_regions:.2f}%")
         # X. find and handle labels placed by the subjects in short succession TODO
         # recording = short_succession(recording, subject, config, settings)
 
