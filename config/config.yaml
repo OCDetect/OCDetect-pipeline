@@ -24,6 +24,6 @@
     meta_subfolder: metadata/
     first_hw_subfolder: labels_first_handwashes/
     prefix: OCDetect_
-    output_folder: ../../OCDetect/Analysis/plots/
+    output_folder: ../../OCDetect/Analysis/plots/idle_regions/
 
 

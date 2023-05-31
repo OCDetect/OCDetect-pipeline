@@ -4,3 +4,4 @@ modules~=1.0.0
 PyYAML~=6.0
 tqdm~=4.64.1
 matplotlib~=3.5.2
+pytest==7.3.1
