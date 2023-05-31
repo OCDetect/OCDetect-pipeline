@@ -23,11 +23,12 @@ def main(config: dict, settings: dict) -> int:
     # subject_map, subject_recordings = load_all_subjects(config, settings)
     # subject = np.random.choice(list(subject_map.keys()))
 
-    #recordings_list = subject_recordings[subject_map[subject]]
-
+    # recordings_list = subject_recordings[subject_map[subject]]
     recordings_list = load_subject("12", config, settings)
-
     cleaned_data = run_data_cleansing(recordings_list, "12", config, Sensor.ACCELEROMETER, settings)
+
+    #for i, recording in enumerate(subject_recordings):
+        #cleaned_data = run_data_cleansing(recording, subject_map[i], config, Sensor.ACCELEROMETER, settings)
 
     # Test plotting stuff
     # plot_3_axis(config, recordings_list[0], Sensor.ACCELEROMETER, start_idx=2000, end_idx=4000, save_fig=True)

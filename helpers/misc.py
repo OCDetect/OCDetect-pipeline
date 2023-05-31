@@ -44,7 +44,7 @@ def initial_handwash_time(subject: str, config: dict) -> int:
     first_hw_path = config["data_folder"] + config["first_hw_subfolder"]
     first_hw_csv_name = get_file_name_initial_hw(subject, config)
 
-    if first_hw_csv_name is not None:
+    if len(first_hw_csv_name) > 0:
         csv = loader.load_recording(config["data_folder"] + config.get("prefix", "")
                                     + subject + "/" + first_hw_csv_name + ".csv")
         first_hw_csv = loader.load_recording(first_hw_path + "/labels_" + first_hw_csv_name + ".csv", sep=",")

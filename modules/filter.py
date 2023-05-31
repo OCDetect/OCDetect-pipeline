@@ -22,11 +22,13 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
 
     cleaned_recordings_list = []
     filtered_out_files = 0
+    overall_idle_regions = 0
+    overall_regions = 0
     modified_labels = 0
     removed_labels = 0
 
     initial_hw_time = initial_handwash_time(subject, config)
-    for recording in recordings_list:
+    for counter, recording in enumerate(recordings_list):
 
         ################################
         # Filter out complete recordings
@@ -52,7 +54,7 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
 
         # 4. check if has no movement at all (delete when remaining windows are smaller than initial hw time)
         recording = calc_magnitude(recording, sensor)
-        recording = calc_idle_time(recording, sensor)
+        recording = calc_idle_time(recording, sensor, window_size=500, threshold=0.2)
         if check_insufficient_remaining_data_points(recording, initial_hw_time):
             filtered_out_files += 1
             logger.info("File has too little movement.")
@@ -73,17 +75,25 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
         recording = check_for_too_early_label(recording, 5)
 
         recording_ignore_regions = len(recording[recording["ignore"] == True])
+        overall_idle_regions += recording_ignore_regions
+
         percentage_ignore_regions = (recording_ignore_regions*100)/len(recording)
+        overall_regions += len(recording)
 
         logger.info(f"Percentage of the file to be ignored: {percentage_ignore_regions:.2f}%)")
 
-        plot_idle_regions(config, recording, Sensor.ACCELEROMETER, title=f"percentage of ignored regions: {percentage_ignore_regions:.2f}%")
+        plot_idle_regions(config, recording, Sensor.ACCELEROMETER, title=f"percentage of ignored regions: {percentage_ignore_regions:.2f}%", save_fig=True, fig_name=f"{subject}_{counter}")
         # X. find and handle labels placed by the subjects in short succession TODO
-        # recording = short_succession(recording, subject, config, settings)
+        recording = short_succession(recording, subject, config, settings)
 
     percentage_filtered_out = (filtered_out_files * 100) / len(recordings_list)
-    logger.info(
-        f"Complete recordings filtered out: {filtered_out_files} out of {len(recordings_list)} ({percentage_filtered_out:.2f}%)")
+    percentage_ignore_overall_regions = (overall_idle_regions*100)/overall_regions
+
+    logger.info(f"###############################################################")
+    logger.info(f"Data cleaning stats for subject {subject}")
+    logger.info(f"Complete recordings filtered out: {filtered_out_files} out of {len(recordings_list)} ({percentage_filtered_out:.2f}%)")
+    logger.info(f"Overall regions marked as to be ignored: {percentage_ignore_overall_regions:.2f}%")
+    logger.info(f"###############################################################")
 
     return cleaned_recordings_list
 

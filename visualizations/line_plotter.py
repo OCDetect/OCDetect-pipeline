@@ -5,6 +5,7 @@ from helpers.logger import logger
 from helpers.misc import calc_magnitude
 import numpy as np
 
+
 def plot_3_axis(config: None, df: pd.DataFrame, sensor: Sensor, save_fig=False, fig_name="plot_3_axis",
                 title="Line plot for the movement data over time", start_idx=None, end_idx=None) -> None:
     """
