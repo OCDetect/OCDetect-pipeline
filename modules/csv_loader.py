@@ -6,6 +6,7 @@ from typing import List, Dict, Tuple
 from pathlib import Path
 from helpers.misc import get_metadata, add_timezone_and_summertime, get_file_name_initial_hw
 from helpers.logger import logger
+from helpers.definitions import IgnoreReason
 from tqdm import tqdm
 import numpy as np
 
@@ -44,12 +45,14 @@ def load_subject(subject_id: str, config: dict, settings: dict) -> List[pd.DataF
         recording_df["datetime"] = recording_df.timestamp.apply(lambda x: date_base + datetime.timedelta(seconds=x/1e9))
         recording_df.drop_duplicates(keep=False, inplace=True)
 
-        recording_df['ignore'] = False
+        recording_df['ignore'] = IgnoreReason.DontIgnore
         if recording == first_hw_csv_name:
             first_hw_path = config["data_folder"] + config["first_hw_subfolder"]
             first_hw_csv = load_recording(first_hw_path + "/labels_" + first_hw_csv_name + ".csv", sep=",")
-            recording_df['ignore'] = (recording_df.index >= int(first_hw_csv['start'])) & \
+            initial_hw_indices = (recording_df.index >= int(first_hw_csv['start'])) & \
                                      (recording_df.index <= int(first_hw_csv['end']))
+            recording_df[initial_hw_indices] = IgnoreReason.InitialHandWash
+            recording_df[1 - initial_hw_indices] = IgnoreReason.DontIgnore
         recordings.append(recording_df)
 
     return recordings

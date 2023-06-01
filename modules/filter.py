@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from helpers.definitions import Sensor
+from helpers.definitions import Sensor, IgnoreReason
 from helpers.logger import logger
 from helpers.misc import get_initial_hw_datetime, initial_handwash_time, calc_magnitude
 from typing import List
@@ -74,7 +74,7 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
         # 3. label was set too early in file that was cannot be hand washing before
         recording = check_for_too_early_label(recording, 5)
 
-        recording_ignore_regions = len(recording[recording["ignore"] == True])
+        recording_ignore_regions = len(recording[recording["ignore"] == IgnoreReason.DontIgnore])
         overall_idle_regions += recording_ignore_regions
 
         percentage_ignore_regions = (recording_ignore_regions*100)/len(recording)
@@ -105,14 +105,14 @@ def check_for_too_early_label(data: pd.DataFrame, min_time: int) -> pd.DataFrame
     label_idx = data.loc[:idx, "user yes/no"][data.loc[:idx, "user yes/no"] == 1.0].index
 
     if len(label_idx) > 0:
-        data.loc[:label_idx[-1], 'ignore'] = True
+        data.loc[:label_idx[-1], 'ignore'] = IgnoreReason.TooEarlyInRecording
 
     return data
 
 
 # TODO add tests for the filter methods
 def set_ignore_no_movement(data: pd.DataFrame) -> pd.DataFrame:
-    data.loc[data['idle'] == 1.0, 'ignore'] = True
+    data.loc[data['idle'] == 1.0, 'ignore'] = IgnoreReason.NoMovement
     return data
 
 
@@ -191,7 +191,8 @@ def check_recording_before_initial_hw(data: pd.DataFrame, subject: str, config: 
     return data.iloc[0]["datetime"].date() < get_initial_hw_datetime(subject, config).date()
 
 
-def short_succession(data: pd.DataFrame, subject: str, config: dict, settings: dict) -> pd.DataFrame:
+def short_succession(data: pd.DataFrame, subject: str, config: dict, settings: dict, return_counts: bool = False)\
+        -> pd.DataFrame:
     """
     Finds (and corrects, TODO)
     labels that occur in short succession of each other. Also checks if the feedback values changed
@@ -199,14 +200,22 @@ def short_succession(data: pd.DataFrame, subject: str, config: dict, settings: d
     :param subject: the subject from the recording
     :param config: dict containing the configuration for this software (file paths etc.)
     :param settings: dict containing study wide settings
+    :param return_counts: whether to return the counts of the duplicated labels or not.
     :return: stats, cleaned recording TODO
+
     """
     short_succession_time = settings.get("short_succession_time", 0)
 
     if len(data) <= 1 or short_succession_time <= 0:  # nothing to do here
+        if return_counts:
+            return data, 0
         return data
     counts = [0, 0, 0, 0]  # same, comp to normal, normal to comp
-    for index, row in data.drop(["recording", "subject"], axis=1).reset_index().diff().reset_index().iterrows():
+    try:
+        df_copy = data.drop(["recording", "subject"], axis=1).reset_index().diff().reset_index().iterrows()
+    except KeyError:
+        df_copy = data[["compulsive", "timestamp"]].diff().reset_index().iterrows()
+    for index, row in df_copy:
         timediff = row.timestamp / 1e9  # in seconds
         if timediff < short_succession_time:
             if row.compulsive == -1:  # compulsive to routine
@@ -215,4 +224,6 @@ def short_succession(data: pd.DataFrame, subject: str, config: dict, settings: d
                 counts[2] += 1
             else:  # repetition of the previous label (comp->comp or routine->routine)
                 counts[0] += 1
-    return counts
+    if return_counts:
+        return data, counts
+    return data
