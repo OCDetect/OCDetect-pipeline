@@ -150,9 +150,9 @@ def initial_handwash_time(subject: str, config: dict) -> int:
     first_hw_csv_name = get_file_name_initial_hw(subject, config)
 
     if len(first_hw_csv_name) > 0:
-        csv = loader.load_recording(config["data_folder"] + config.get("prefix", "")
+        csv = load_recording(config["data_folder"] + config.get("prefix", "")
                                     + subject + "/" + first_hw_csv_name + ".csv")
-        first_hw_csv = loader.load_recording(first_hw_path + "/labels_" + first_hw_csv_name + ".csv", sep=",")
+        first_hw_csv = load_recording(first_hw_path + "/labels_" + first_hw_csv_name + ".csv", sep=",")
         # since first hw csv is a csv with only one line, it comes as a series, so we need .values[0]
         begin_ts = csv.iloc[first_hw_csv['start'].values[0]]['timestamp']
         end_ts = csv.iloc[first_hw_csv['end'].values[0]]['timestamp']
