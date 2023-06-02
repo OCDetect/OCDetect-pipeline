@@ -11,5 +11,7 @@ class IgnoreReason(Enum):
     InitialHandWash = 1
     NoMovement = 2
     TooEarlyInRecording = 3
-    Repetition = 4
+    RepetitionSame = 4
+    RepetitionCompToRoutine = 5
+    RepetitionRoutineToComp = 6
 

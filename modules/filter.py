@@ -54,7 +54,7 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
 
         # 4. check if has no movement at all (delete when remaining windows are smaller than initial hw time)
         recording = calc_magnitude(recording, sensor)
-        recording = calc_idle_time(recording, sensor, window_size=500, threshold=0.2)
+        recording = calc_idle_time(recording, sensor, settings)
         if check_insufficient_remaining_data_points(recording, initial_hw_time):
             filtered_out_files += 1
             logger.info("File has too little movement.")
@@ -116,13 +116,11 @@ def set_ignore_no_movement(data: pd.DataFrame) -> pd.DataFrame:
     return data
 
 
-def calc_idle_time(data: pd.DataFrame, sensor: Sensor, threshold=0.5, window_size=50, overlap=0.5) -> pd.DataFrame:
+def calc_idle_time(data: pd.DataFrame, sensor: Sensor, settings: dict) -> pd.DataFrame:
     """
     Calculates idle regions in a dataframe with windowing based on the magnitude values and a threshold by using std.
     Adds a column "idle" to the dataframe with NaNs for non-idle regions and 1.0 for idle regions
-    :param overlap: value between 0 and 1 for percentage of window overlap, default 0.5 for 50% overlap
-    :param window_size: amount of samples, default 50, (1s because of 50Hz)
-    :param threshold: value for which regions are marked as idle based on the std
+    :param settings: the study wide settings dict
     :param data: the dataframe to calculate idle time
     :param sensor: the sensor (accelerometer or gyroscope) to use for calculating the idle time
     :return: the dataframe with an additional column for idle regions
@@ -131,6 +129,10 @@ def calc_idle_time(data: pd.DataFrame, sensor: Sensor, threshold=0.5, window_siz
     if f"mag {sensor.value}" not in data.columns:
         logger.logerror("please calculate magnitude before")
         return data
+
+    window_size = settings.get("magnitude_window_size", 500)
+    threshold = settings.get("magnitude_threshold", 0.2)
+    overlap = settings.get("magnitude_overlap", 0.5)
 
     data["idle"] = np.nan
     stride = int(window_size * overlap)
@@ -220,10 +222,13 @@ def short_succession(data: pd.DataFrame, subject: str, config: dict, settings: d
         if timediff < short_succession_time:
             if row.compulsive == -1:  # compulsive to routine
                 counts[1] += 1
+                df_copy.loc[index]['ignore'] = IgnoreReason.RepetitionCompToRoutine
             elif row.compulsive == 1:  # routine to compulsive
                 counts[2] += 1
+                df_copy.loc[index]['ignore'] = IgnoreReason.RepetitionRoutineToComp
             else:  # repetition of the previous label (comp->comp or routine->routine)
                 counts[0] += 1
+                df_copy.loc[index]['ignore'] = IgnoreReason.RepetitionSame
     if return_counts:
         return data, counts
     return data
