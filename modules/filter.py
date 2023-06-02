@@ -2,10 +2,11 @@ import numpy as np
 import pandas as pd
 from helpers.definitions import Sensor, IgnoreReason
 from helpers.logger import logger
-from helpers.misc import get_initial_hw_datetime, initial_handwash_time, calc_magnitude
 from typing import List
 from tqdm import tqdm
 from visualizations.line_plotter import plot_idle_regions
+from helpers.misc import get_initial_hw_datetime, calc_magnitude
+from modules.csv_loader import initial_handwash_time
 
 
 def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config: dict, sensor: Sensor,
