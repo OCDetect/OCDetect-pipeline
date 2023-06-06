@@ -1,5 +1,6 @@
+import pytest
 import pandas as pd
-from modules.filter import check_file_corrupt
+from modules.filter import check_file_corrupt, check_insufficient_file_length, check_insufficient_remaining_data_points
 
 
 def test_check_file_corrupt():
@@ -15,3 +16,56 @@ def test_check_file_corrupt():
     data_valid = pd.DataFrame({'Column1': [1, 2, 3], 'Column2': ['A', 'B', 'C']})
     assert check_file_corrupt(data_valid) is False
 
+
+@pytest.fixture
+def sample_data():
+    # Create a sample DataFrame for testing
+    data = pd.DataFrame({
+        'timestamp': [1000000000, 2000000000, 3000000000],
+        # Add other relevant columns as needed
+    })
+    return data
+
+
+# Test case for when file length is too short
+def test_check_insufficient_file_length_true(sample_data):
+    initial_hw_time = 4
+    assert check_insufficient_file_length(sample_data, initial_hw_time) is True
+
+
+# Test case for when file length is sufficient
+def test_check_insufficient_file_length_false(sample_data):
+    initial_hw_time = 2
+    assert check_insufficient_file_length(sample_data, initial_hw_time) is False
+
+
+def test_check_insufficient_remaining_data_points():
+    # Test case 1: Sufficient remaining data points
+    recording_w_idle = pd.DataFrame({"idle": [0.0, 0.0, 0.0, 1.0, 1.0, 0.0]})
+    initial_hw_time = 2
+    sampling_frequency = 1
+    assert check_insufficient_remaining_data_points(recording_w_idle, initial_hw_time, sampling_frequency) is False
+
+    # Test case 2: Insufficient remaining data points
+    recording_w_idle = pd.DataFrame({"idle": [0.0, 1.0, 1.0, 1.0, 0.0]})
+    initial_hw_time = 3
+    sampling_frequency = 1
+    assert check_insufficient_remaining_data_points(recording_w_idle, initial_hw_time, sampling_frequency) is True
+
+    # Test case 3: No idle data points
+    recording_w_idle = pd.DataFrame({"idle": [0.0, 0.0, 0.0, 0.0]})
+    initial_hw_time = 1
+    sampling_frequency = 1
+    assert check_insufficient_remaining_data_points(recording_w_idle, initial_hw_time, sampling_frequency) is False
+
+    # Test case 4: Empty recording
+    recording_w_idle = pd.DataFrame({"idle": []})
+    initial_hw_time = 0
+    sampling_frequency = 1
+    assert check_insufficient_remaining_data_points(recording_w_idle, initial_hw_time, sampling_frequency) is False
+
+    # Test case 5: Recording with only idle data points
+    recording_w_idle = pd.DataFrame({"idle": [1.0, 1.0, 1.0]})
+    initial_hw_time = 2
+    sampling_frequency = 1
+    assert check_insufficient_remaining_data_points(recording_w_idle, initial_hw_time, sampling_frequency) is True

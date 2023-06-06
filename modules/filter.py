@@ -157,17 +157,19 @@ def check_file_corrupt(data: pd.DataFrame) -> bool:
     return data.empty
 
 
-def check_insufficient_remaining_data_points(recording_w_idle: pd.DataFrame, initial_hw_time: int) -> bool:
+def check_insufficient_remaining_data_points(recording_w_idle: pd.DataFrame, initial_hw_time: int,
+                                             sampling_frequency=50) -> bool:
     """
     Checks if the amount of data points that are labelled as not idle has still enough information.
     This is the case if at least a recording remains that is as long as the initial hand washing.
     :param recording_w_idle: the recording with calculated idle regions
     :param initial_hw_time: the time in seconds for the initial hand washing recording
+    :param sampling_frequency:  default == 50 Hz -> amount of non-idle data points divided by 50 equals remaining time
     :return: true if recording has enough non-idle regions, false otherwise
+
     """
-    amount = len(recording_w_idle[recording_w_idle["idle"] == 1.0])
-    # sampling frequency == 50 Hz -> amount of non-idle data points divided by 50 equals remaining time
-    return int(amount / 50) < initial_hw_time
+    amount_movement = len(recording_w_idle[recording_w_idle["idle"] == 0.0])
+    return int(amount_movement / sampling_frequency) < initial_hw_time
 
 
 def check_insufficient_file_length(data: pd.DataFrame, initial_hw_time: int) -> bool:
