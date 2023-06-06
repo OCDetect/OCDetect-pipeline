@@ -42,7 +42,8 @@ def load_subject(subject_id: str, config: dict, settings: dict) -> List[pd.DataF
         recording = Path(filename).stem
         date, _ = get_metadata(subject_id, recording, config)
         date_base = add_timezone_and_summertime(date)
-        recording_df["datetime"] = recording_df.timestamp.apply(lambda x: date_base + datetime.timedelta(seconds=x/1e9))
+        recording_df["datetime"] = recording_df.timestamp.apply(
+            lambda x: date_base + datetime.timedelta(seconds=x / 1e9))
         recording_df.drop_duplicates(keep=False, inplace=True)
 
         recording_df['ignore'] = IgnoreReason.DontIgnore
@@ -50,9 +51,9 @@ def load_subject(subject_id: str, config: dict, settings: dict) -> List[pd.DataF
             first_hw_path = config["data_folder"] + config["first_hw_subfolder"]
             first_hw_csv = load_recording(first_hw_path + "/labels_" + first_hw_csv_name + ".csv", sep=",")
             initial_hw_indices = (recording_df.index >= int(first_hw_csv['start'])) & \
-                                     (recording_df.index <= int(first_hw_csv['end']))
-            recording_df[initial_hw_indices] = IgnoreReason.InitialHandWash
-            recording_df[1 - initial_hw_indices] = IgnoreReason.DontIgnore
+                                 (recording_df.index <= int(first_hw_csv['end']))
+            recording_df.loc[initial_hw_indices, 'ignore'] = IgnoreReason.InitialHandWash
+            recording_df.loc[1 - initial_hw_indices, 'ignore'] = IgnoreReason.DontIgnore
         recordings.append(recording_df)
 
     return recordings
@@ -90,7 +91,8 @@ def load_all_subjects(config: dict, settings: dict) -> Tuple[Dict[str, int], Lis
     all_subjects = [x.name[-2:] for x in os.scandir(config["data_folder"]) if x.is_dir() and x.name in file_names]
 
     if len(all_subjects) != len(settings.get("all_subjects")):
-        missing_subjects = [s for s in file_names if not any(s in f"{config.get('prefix', '')}{sub}" for sub in all_subjects)]
+        missing_subjects = [s for s in file_names if
+                            not any(s in f"{config.get('prefix', '')}{sub}" for sub in all_subjects)]
         logger.warning(f"not all subjects' data could be found, missing subjects: {missing_subjects}")
     else:
         logger.debug(f"found all {len(all_subjects)} subjects")
@@ -151,7 +153,7 @@ def initial_handwash_time(subject: str, config: dict) -> int:
 
     if len(first_hw_csv_name) > 0:
         csv = load_recording(config["data_folder"] + config.get("prefix", "")
-                                    + subject + "/" + first_hw_csv_name + ".csv")
+                             + subject + "/" + first_hw_csv_name + ".csv")
         first_hw_csv = load_recording(first_hw_path + "/labels_" + first_hw_csv_name + ".csv", sep=",")
         # since first hw csv is a csv with only one line, it comes as a series, so we need .values[0]
         begin_ts = csv.iloc[first_hw_csv['start'].values[0]]['timestamp']

@@ -215,21 +215,21 @@ def short_succession(data: pd.DataFrame, subject: str, config: dict, settings: d
         return data
     counts = [0, 0, 0, 0]  # same, comp to normal, normal to comp
     try:
-        df_copy = data.drop(["recording", "subject"], axis=1).reset_index().diff().reset_index().iterrows()
+        df_copy = data.drop(["recording", "subject"], axis=1).reset_index().diff().reset_index()
     except KeyError:
-        df_copy = data[["compulsive", "timestamp"]].diff().reset_index().iterrows()
-    for index, row in df_copy:
+        df_copy = data[["compulsive", "timestamp"]].diff().reset_index()
+    for index, row in df_copy.iterrows():
         timediff = row.timestamp / 1e9  # in seconds
         if timediff < short_succession_time:
             if row.compulsive == -1:  # compulsive to routine
                 counts[1] += 1
-                df_copy.loc[index]['ignore'] = IgnoreReason.RepetitionCompToRoutine
+                df_copy.loc[index, 'ignore'] = IgnoreReason.RepetitionCompToRoutine
             elif row.compulsive == 1:  # routine to compulsive
                 counts[2] += 1
-                df_copy.loc[index]['ignore'] = IgnoreReason.RepetitionRoutineToComp
+                df_copy.loc[index, 'ignore'] = IgnoreReason.RepetitionRoutineToComp
             else:  # repetition of the previous label (comp->comp or routine->routine)
                 counts[0] += 1
-                df_copy.loc[index]['ignore'] = IgnoreReason.RepetitionSame
+                df_copy.loc[index, 'ignore'] = IgnoreReason.RepetitionSame
     if return_counts:
         return data, counts
     return data
