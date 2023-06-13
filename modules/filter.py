@@ -99,8 +99,14 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
     return cleaned_recordings_list
 
 
-# TODO add tests for the filter methods
 def check_for_too_early_label(data: pd.DataFrame, settings: dict, sampling_frequency=50) -> pd.DataFrame:
+    """
+    Checking a recording for labels that are set too early that they can really indicate a hand washing event
+    :param data: the dataframe to be checked for early labels
+    :param settings: the study wide settings dict
+    :param sampling_frequency: the sampling frequency of the recording, default 50 Hz
+    :return: the dataframe with flags for the ignore column if there was a too early label
+    """
     idx = settings.get("min_time_in_s_before_label", 5) * sampling_frequency
     label_idx = data.loc[:idx, "user yes/no"][data.loc[:idx, "user yes/no"] == 1.0].index
 
