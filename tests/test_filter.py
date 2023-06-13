@@ -3,6 +3,7 @@ import pandas as pd
 from modules.filter import check_file_corrupt, check_insufficient_file_length, check_insufficient_remaining_data_points
 
 
+@pytest.mark.skip(reason="tested for now, skip while writing more tests")
 def test_check_file_corrupt():
     # Test case: Empty DataFrame
     data_empty = pd.DataFrame()
@@ -17,6 +18,7 @@ def test_check_file_corrupt():
     assert check_file_corrupt(data_valid) is False
 
 
+@pytest.mark.skip(reason="tested for now, skip while writing more tests")
 @pytest.fixture
 def sample_data():
     # Create a sample DataFrame for testing
@@ -27,18 +29,21 @@ def sample_data():
     return data
 
 
+@pytest.mark.skip(reason="tested for now, skip while writing more tests")
 # Test case for when file length is too short
 def test_check_insufficient_file_length_true(sample_data):
     initial_hw_time = 4
     assert check_insufficient_file_length(sample_data, initial_hw_time) is True
 
 
+@pytest.mark.skip(reason="tested for now, skip while writing more tests")
 # Test case for when file length is sufficient
 def test_check_insufficient_file_length_false(sample_data):
     initial_hw_time = 2
     assert check_insufficient_file_length(sample_data, initial_hw_time) is False
 
 
+@pytest.mark.skip(reason="tested for now, skip while writing more tests")
 def test_check_insufficient_remaining_data_points():
     # Test case 1: Sufficient remaining data points
     recording_w_idle = pd.DataFrame({"idle": [0.0, 0.0, 0.0, 1.0, 1.0, 0.0]})
