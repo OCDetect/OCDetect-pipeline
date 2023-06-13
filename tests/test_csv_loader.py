@@ -14,6 +14,7 @@ def load_config():
                          list(entry.values())[0].get("hostname", "") == socket.gethostname()][0]
     return active_config
 
+
 @pytest.mark.skip(reason="tested for now, skip while writing more tests")
 @pytest.mark.parametrize("subject, expected_time", [
     ("01", 39), ("02", 39), ("03", 20), ("04", 18), ("05", 47), ("07", 45), ("09", 22), ("10", 39), ("11", 54),

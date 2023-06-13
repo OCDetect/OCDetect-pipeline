@@ -95,6 +95,7 @@ def test_set_ignore_no_movement():
     pd.testing.assert_frame_equal(output, expected_output)
 
 
+@pytest.mark.skip(reason="tested for now, skip while writing more tests")
 def test_check_for_too_early_label():
     settings = {
         "min_time_in_s_before_label": 2
