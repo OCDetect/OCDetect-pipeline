@@ -3,6 +3,7 @@ from helpers.misc import calc_magnitude
 from helpers.definitions import Sensor
 import pytest
 
+
 @pytest.mark.skip(reason="tested for now, skip while writing more tests")
 def test_calc_magnitude():
     # Sample input data
