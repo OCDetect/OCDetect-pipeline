@@ -100,9 +100,8 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
 
 
 # TODO add tests for the filter methods
-def check_for_too_early_label(data: pd.DataFrame, settings: dict) -> pd.DataFrame:
-    frequency = 50
-    idx = settings.get("min_time_in_s_before_label", 5) * frequency
+def check_for_too_early_label(data: pd.DataFrame, settings: dict, sampling_frequency=50) -> pd.DataFrame:
+    idx = settings.get("min_time_in_s_before_label", 5) * sampling_frequency
     label_idx = data.loc[:idx, "user yes/no"][data.loc[:idx, "user yes/no"] == 1.0].index
 
     if len(label_idx) > 0:
