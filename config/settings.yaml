@@ -12,3 +12,4 @@ short_succession_time : 10
 magnitude_window_size : 500
 magnitude_threshold : 0.2
 magnitude_overlap : 0.5
+min_time_in_s_before_label: 5

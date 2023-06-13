@@ -73,7 +73,7 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
         # we still have the connection between data and file
 
         # 3. label was set too early in file that was cannot be hand washing before
-        recording = check_for_too_early_label(recording, 5)
+        recording = check_for_too_early_label(recording, settings)
 
         recording_ignore_regions = len(recording[recording["ignore"] == IgnoreReason.DontIgnore])
         overall_idle_regions += recording_ignore_regions
@@ -100,9 +100,9 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
 
 
 # TODO add tests for the filter methods
-def check_for_too_early_label(data: pd.DataFrame, min_time: int) -> pd.DataFrame:
+def check_for_too_early_label(data: pd.DataFrame, settings: dict) -> pd.DataFrame:
     frequency = 50
-    idx = min_time * frequency
+    idx = settings.get("min_time_in_s_before_label", 5) * frequency
     label_idx = data.loc[:idx, "user yes/no"][data.loc[:idx, "user yes/no"] == 1.0].index
 
     if len(label_idx) > 0:
