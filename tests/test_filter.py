@@ -1,7 +1,9 @@
 import pytest
 import pandas as pd
-from modules.filter import check_file_corrupt, check_insufficient_file_length, check_insufficient_remaining_data_points
-
+import numpy as np
+from modules.filter import check_file_corrupt, check_insufficient_file_length, \
+    check_insufficient_remaining_data_points, set_ignore_no_movement
+from helpers.definitions import IgnoreReason
 
 @pytest.mark.skip(reason="tested for now, skip while writing more tests")
 def test_check_file_corrupt():
@@ -74,3 +76,19 @@ def test_check_insufficient_remaining_data_points():
     initial_hw_time = 2
     sampling_frequency = 1
     assert check_insufficient_remaining_data_points(recording_w_idle, initial_hw_time, sampling_frequency) is True
+
+
+@pytest.mark.skip(reason="tested for now, skip while writing more tests")
+def test_set_ignore_no_movement():
+    # Sample input data
+    data = pd.DataFrame({
+        "idle": [0.0, 1.0, 0.0, 1.0, 0.0],
+        "ignore": [np.nan, np.nan, np.nan, np.nan, np.nan]
+    })
+    expected_output = pd.DataFrame({
+        "idle": [0.0, 1.0, 0.0, 1.0, 0.0],
+        "ignore": [np.nan, IgnoreReason.NoMovement, np.nan, IgnoreReason.NoMovement, np.nan]
+    })
+
+    output = set_ignore_no_movement(data)
+    pd.testing.assert_frame_equal(output, expected_output)
