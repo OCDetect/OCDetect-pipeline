@@ -2,8 +2,9 @@ import pytest
 import pandas as pd
 import numpy as np
 from modules.filter import check_file_corrupt, check_insufficient_file_length, \
-    check_insufficient_remaining_data_points, set_ignore_no_movement
+    check_insufficient_remaining_data_points, set_ignore_no_movement, check_for_too_early_label
 from helpers.definitions import IgnoreReason
+
 
 @pytest.mark.skip(reason="tested for now, skip while writing more tests")
 def test_check_file_corrupt():
@@ -92,3 +93,41 @@ def test_set_ignore_no_movement():
 
     output = set_ignore_no_movement(data)
     pd.testing.assert_frame_equal(output, expected_output)
+
+
+def test_check_for_too_early_label():
+    settings = {
+        "min_time_in_s_before_label": 2
+    }
+    sampling_frequency = 1
+
+    # First case: label is not set too early set in the recording
+    data1 = pd.DataFrame({
+        "user yes/no": [0.0, 0.0, 0.0, 0.0, 0.0],
+        "ignore": [IgnoreReason.DontIgnore, IgnoreReason.DontIgnore, IgnoreReason.DontIgnore,
+                   IgnoreReason.DontIgnore, IgnoreReason.DontIgnore]
+    })
+    expected_output1 = pd.DataFrame({
+        "user yes/no": [0.0, 0.0, 0.0, 0.0, 0.0],
+        "ignore": [IgnoreReason.DontIgnore, IgnoreReason.DontIgnore, IgnoreReason.DontIgnore,
+                   IgnoreReason.DontIgnore, IgnoreReason.DontIgnore]
+    })
+
+    output1 = check_for_too_early_label(data1, settings, sampling_frequency)
+    pd.testing.assert_frame_equal(output1, expected_output1)
+
+    # Second case: label is set too early set in the recording
+    data2 = pd.DataFrame({
+        "user yes/no": [0.0, 1.0, 1.0, 0.0, 1.0],
+        "ignore": [IgnoreReason.DontIgnore, IgnoreReason.DontIgnore, IgnoreReason.DontIgnore,
+                   IgnoreReason.DontIgnore, IgnoreReason.DontIgnore]
+    })
+
+    expected_output2 = pd.DataFrame({
+        "user yes/no": [0.0, 1.0, 1.0, 0.0, 1.0],
+        "ignore": [IgnoreReason.TooEarlyInRecording, IgnoreReason.TooEarlyInRecording, IgnoreReason.TooEarlyInRecording,
+                   IgnoreReason.DontIgnore, IgnoreReason.DontIgnore]
+    })
+
+    output2 = check_for_too_early_label(data2, settings, sampling_frequency)
+    pd.testing.assert_frame_equal(output2, expected_output2)
