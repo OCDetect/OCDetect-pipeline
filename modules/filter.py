@@ -111,8 +111,12 @@ def check_for_too_early_label(data: pd.DataFrame, min_time: int) -> pd.DataFrame
     return data
 
 
-# TODO add tests for the filter methods
 def set_ignore_no_movement(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Uses the idle column to set ignore reason NoMovement
+    :param data: the input data frame including the idle column
+    :return: the dataframe with an additional column ignore and entries where no movement happened
+    """
     data.loc[data['idle'] == 1.0, 'ignore'] = IgnoreReason.NoMovement
     return data
 
