@@ -81,7 +81,7 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
         percentage_ignore_regions = (recording_ignore_regions*100)/len(recording)
         overall_regions += len(recording)
 
-        logger.info(f"Percentage of the file to be ignored: {percentage_ignore_regions:.2f}%)")
+        logger.info(f"Percentage of the file to be ignored: {percentage_ignore_regions:.2f}%")
 
         plot_idle_regions(config, recording, Sensor.ACCELEROMETER, title=f"percentage of ignored regions: {percentage_ignore_regions:.2f}%", save_fig=True, fig_name=f"{subject}_{counter}")
         # X. find and handle labels placed by the subjects in short succession TODO
@@ -144,7 +144,7 @@ def calc_idle_time(data: pd.DataFrame, sensor: Sensor, settings: dict) -> pd.Dat
     threshold = settings.get("magnitude_threshold", 0.2)
     overlap = settings.get("magnitude_overlap", 0.5)
 
-    data["idle"] = np.nan
+    data["idle"] = 0.0
     stride = int(window_size * overlap)
 
     for i in tqdm(range(0, len(data) - window_size + 1, stride)):
