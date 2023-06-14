@@ -38,7 +38,7 @@ def get_initial_hw_datetime(subject: str, config: dict) -> datetime.datetime:
     :return: the datetime if initial hand washing recording was found, None otherwise
     """
     first_hw_csv_name = get_file_name_initial_hw(subject, config)
-    if first_hw_csv_name:
+    if len(first_hw_csv_name) > 0:
         date, _ = get_metadata(subject, first_hw_csv_name, config)
         return date
 

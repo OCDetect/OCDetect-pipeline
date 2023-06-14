@@ -202,7 +202,13 @@ def check_recording_before_initial_hw(data: pd.DataFrame, subject: str, config: 
     :return: true if recording was before initial lab session, false otherwise
     """
 
-    return data.iloc[0]["datetime"].date() < get_initial_hw_datetime(subject, config).date()
+    initial_hw_date = get_initial_hw_datetime(subject, config)
+
+    # no initial hand washing activity was found
+    if initial_hw_date is None:
+        return False
+
+    return data.iloc[0]["datetime"].date() < initial_hw_date.date()
 
 
 def short_succession(data: pd.DataFrame, subject: str, config: dict, settings: dict, return_counts: bool = False)\

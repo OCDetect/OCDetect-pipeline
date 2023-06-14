@@ -24,8 +24,8 @@ def main(config: dict, settings: dict) -> int:
     # subject = np.random.choice(list(subject_map.keys()))
 
     # recordings_list = subject_recordings[subject_map[subject]]
-    recordings_list = load_subject("12", config, settings)
-    cleaned_data = run_data_cleansing(recordings_list, "12", config, Sensor.ACCELEROMETER, settings)
+    recordings_list = load_subject("01", config, settings)
+    cleaned_data = run_data_cleansing(recordings_list, "01", config, Sensor.ACCELEROMETER, settings)
 
     #for i, recording in enumerate(subject_recordings):
         #cleaned_data = run_data_cleansing(recording, subject_map[i], config, Sensor.ACCELEROMETER, settings)
