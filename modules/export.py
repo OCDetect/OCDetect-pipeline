@@ -5,7 +5,7 @@ from typing import List, Dict
 from tqdm import tqdm
 
 
-def export_data(dfs: List[pd.DataFrame], config: Dict, settings: Dict, subject: str) -> None:
+def export_data(dfs: List[pd.DataFrame], config: Dict, settings: Dict, subject: str, filenames : List[str]) -> None:
     """
     Function to export all data in the dfs-List to csv files.
     The export will be saved at the export path: config["export_subfolder"].
@@ -16,12 +16,15 @@ def export_data(dfs: List[pd.DataFrame], config: Dict, settings: Dict, subject: 
     :param config: The global config dict
     :param settings: The global settings dict
     :param subject: The subject to export
+    :param filenames: List of recording filenames, in the same order as the recordings in dfs.
     :return: nothing
     """
 
     export_subfolder = config.get("export_subfolder")
     if not(os.path.isdir(export_subfolder)):
         os.mkdir(export_subfolder)
+    # TODO: dfs = sorted(dfs, key= lambda x: recording_datetime(x), ascending=True)  # sort by date and
+    # TODO: load metadata table and add recording, if it isnt already in there.
 
     for i, recording in tqdm(enumerate(dfs)):
         rec_id = str(i)
@@ -29,3 +32,4 @@ def export_data(dfs: List[pd.DataFrame], config: Dict, settings: Dict, subject: 
             rec_id = "0" + rec_id
 
         recording.to_csv(f"{export_subfolder}OCDetect_{subject}_recording_{rec_id}.csv", index=False)
+
