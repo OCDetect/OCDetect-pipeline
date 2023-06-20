@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Tuple, Union
+from typing import Tuple, Union, List
 import json
 from pathlib import Path
 import os
@@ -87,6 +87,17 @@ def get_metadata(subject: str, recording: str, config: dict) -> Tuple[Union[date
         logging.error("Metadata-file not found: ", filename)
 
     return date, json_vals
+
+
+def export_metadata_to_file(config: dict, only_whitelist: List[str] = None):
+    """
+    This function takes our raw metadata-files and exports them as one big csv.
+    columns: recording, subject, datetime - everything else is irrelevant for now.
+    :param config: the config dict, that contains the values
+    :param only_whitelist:
+    :return:nothing, but save the metadata in a csv file
+    """
+    pass
 
 
 def calc_magnitude(data: pd.DataFrame, sensor: Sensor) -> pd.DataFrame:

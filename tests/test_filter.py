@@ -132,3 +132,7 @@ def test_check_for_too_early_label():
 
     output2 = check_for_too_early_label(data2, settings, sampling_frequency)
     pd.testing.assert_frame_equal(output2, expected_output2)
+
+
+def test_check_for_short_succession_of_labels():
+    pass

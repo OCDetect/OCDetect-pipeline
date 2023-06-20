@@ -85,7 +85,7 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
 
         plot_idle_regions(config, recording, Sensor.ACCELEROMETER, title=f"percentage of ignored regions: {percentage_ignore_regions:.2f}%", save_fig=True, fig_name=f"{subject}_{counter}")
         # X. find and handle labels placed by the subjects in short succession TODO
-        recording = short_succession(recording, subject, config, settings)
+        recording = check_for_short_succession_of_labels(recording, subject, config, settings)
 
     percentage_filtered_out = (filtered_out_files * 100) / len(recordings_list)
     percentage_ignore_overall_regions = (overall_idle_regions*100)/overall_regions
@@ -211,17 +211,18 @@ def check_recording_before_initial_hw(data: pd.DataFrame, subject: str, config: 
     return data.iloc[0]["datetime"].date() < initial_hw_date.date()
 
 
-def short_succession(data: pd.DataFrame, subject: str, config: dict, settings: dict, return_counts: bool = False)\
+def check_for_short_succession_of_labels(data: pd.DataFrame, subject: str, config: dict,
+                                         settings: dict, return_counts: bool = False)\
         -> pd.DataFrame:
     """
-    Finds (and corrects, TODO)
+    Finds (and annotates)
     labels that occur in short succession of each other. Also checks if the feedback values changed
     :param data: pd.DataFrame of one recording's labels only
     :param subject: the subject from the recording
     :param config: dict containing the configuration for this software (file paths etc.)
     :param settings: dict containing study wide settings
     :param return_counts: whether to return the counts of the duplicated labels or not.
-    :return: stats, cleaned recording TODO
+    :return: stats (if return_counts is true), annotated recording
 
     """
     short_succession_time = settings.get("short_succession_time", 0)
