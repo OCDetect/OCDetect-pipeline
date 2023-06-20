@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import datetime
 from glob import glob
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
 from pathlib import Path
 from helpers.misc import get_metadata, add_timezone_and_summertime, get_file_name_initial_hw
 from helpers.logger import logger
@@ -21,14 +21,17 @@ def get_subject_filelist(subject_id: str, config: dict, settings: dict) -> List[
     return subject_filelist
 
 
-def load_subject(subject_id: str, config: dict, settings: dict) -> List[pd.DataFrame]:
+def load_subject(subject_id: str, config: dict, settings: dict, return_dates: bool = False)\
+        -> Union[List[pd.DataFrame], Tuple[List[pd.DataFrame], dict]]:
     """
     Load a single subject. All recordings are loaded and augmented with relevant information:
         - datetime instead of timestamp, taken from metadata
         - duplicate lines are dropped (only appeared at the end of some corrupted files)
     :param subject_id: The subject to be loaded
     :param config: dict containing configuration information, e.g. folders, filenames or other settings
-    :return: List with pd.DataFrames, one per recording of the subjects and the position in the list
+    :param settings: the global settings
+    :param return_dates: Return a dict containing the recordings as well.
+    :return: List with pd.DataFrames, one per recording of the subjects and the position in the list, dates (optional)
     """
 
     first_hw_csv_name = get_file_name_initial_hw(subject_id, config)
@@ -55,7 +58,8 @@ def load_subject(subject_id: str, config: dict, settings: dict) -> List[pd.DataF
             recording_df.loc[initial_hw_indices, 'ignore'] = IgnoreReason.InitialHandWash
             recording_df.loc[1 - initial_hw_indices, 'ignore'] = IgnoreReason.DontIgnore
         recordings.append(recording_df)
-
+    if return_dates:
+        return recordings, dates
     return recordings
 
 

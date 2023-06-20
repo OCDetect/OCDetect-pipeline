@@ -15,3 +15,8 @@ class IgnoreReason(Enum):
     RepetitionCompToRoutine = 5
     RepetitionRoutineToComp = 6
 
+
+class HandWashingType(Enum):
+    NoHandWash = 0
+    Routine = 1
+    Compulsive = 2

@@ -6,6 +6,7 @@
     dailies_subfolder: dailyQuestionnaire/
     annotations_subfolder: annotations/
     first_hw_subfolder: labels_first_handwashes/
+    export_subfolder: ../../../OCDetect_Export/
     test_n_recs: 3
     test_n_subs: 3
 
@@ -17,6 +18,7 @@
     dailies_subfolder: dailyQuestionnaire/
     annotations_subfolder: annotations/
     first_hw_subfolder: labels_first_handwashes/
+    export_subfolder: ../../../../Datasets/OCDetect_Export/
 
 - kristina-mac:
     hostname: atlas
@@ -25,5 +27,4 @@
     first_hw_subfolder: labels_first_handwashes/
     prefix: OCDetect_
     output_folder: ../../OCDetect/Analysis/plots/idle_regions/
-
-
+    export_subfolder: ../../datasets/OCDetect_Export/  # @kristina you may want to change this :)

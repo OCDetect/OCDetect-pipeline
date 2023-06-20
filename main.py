@@ -7,7 +7,9 @@ from modules.csv_loader import load_subject, load_all_subjects, load_recording
 from helpers.misc import calc_magnitude
 from helpers.definitions import Sensor
 from modules.filter import run_data_cleansing
+from modules.relabel import relabel
 from helpers.logger import logger  # the import statement is enough to initialize the logger KK: I dont think this import statement is needed at all... RB: Well yes it is, but only if i also commit the logger.py file...
+from modules.export import export_data
 import numpy as np
 from visualizations.line_plotter import plot_3_axis, plot_magnitude_around_label
 
@@ -25,10 +27,12 @@ def main(config: dict, settings: dict) -> int:
 
     # recordings_list = subject_recordings[subject_map[subject]]
     recordings_list = load_subject("01", config, settings)
-    cleaned_data = run_data_cleansing(recordings_list, "01", config, Sensor.ACCELEROMETER, settings)
+    cleaned_data = recordings_list  # = run_data_cleansing(recordings_list, "01", config, Sensor.ACCELEROMETER, settings)
+    labeled_data = relabel(cleaned_data, config, settings, "01")
+    export_data(labeled_data, config, settings, "01")
 
-    #for i, recording in enumerate(subject_recordings):
-        #cleaned_data = run_data_cleansing(recording, subject_map[i], config, Sensor.ACCELEROMETER, settings)
+    # for i, recording in enumerate(subject_recordings):
+    # cleaned_data = run_data_cleansing(recording, subject_map[i], config, Sensor.ACCELEROMETER, settings)
 
     # Test plotting stuff
     # plot_3_axis(config, recordings_list[0], Sensor.ACCELEROMETER, start_idx=2000, end_idx=4000, save_fig=True)
