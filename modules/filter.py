@@ -211,15 +211,12 @@ def check_recording_before_initial_hw(data: pd.DataFrame, subject: str, config: 
     return data.iloc[0]["datetime"].date() < initial_hw_date.date()
 
 
-def check_for_short_succession_of_labels(data: pd.DataFrame, subject: str, config: dict,
-                                         settings: dict, return_counts: bool = False)\
+def check_for_short_succession_of_labels(data: pd.DataFrame, settings: dict, return_counts: bool = False)\
         -> pd.DataFrame:
     """
     Finds (and annotates)
     labels that occur in short succession of each other. Also checks if the feedback values changed
     :param data: pd.DataFrame of one recording's labels only
-    :param subject: the subject from the recording
-    :param config: dict containing the configuration for this software (file paths etc.)
     :param settings: dict containing study wide settings
     :param return_counts: whether to return the counts of the duplicated labels or not.
     :return: stats (if return_counts is true), annotated recording
@@ -232,22 +229,24 @@ def check_for_short_succession_of_labels(data: pd.DataFrame, subject: str, confi
             return data, 0
         return data
     counts = [0, 0, 0, 0]  # same, comp to normal, normal to comp
+    data_hw = data[data["user yes/no"] == 1]
     try:
-        df_copy = data.drop(["recording", "subject"], axis=1).reset_index().diff().reset_index()
+        df_copy = data_hw.drop(["recording", "subject"], axis=1).reset_index().diff()
     except KeyError:
-        df_copy = data[["compulsive", "timestamp"]].diff().reset_index()
+        df_copy = data_hw[["compulsive", "timestamp"]].diff()
+    print(df_copy)
     for index, row in df_copy.iterrows():
         timediff = row.timestamp / 1e9  # in seconds
         if timediff < short_succession_time:
             if row.compulsive == -1:  # compulsive to routine
                 counts[1] += 1
-                df_copy.loc[index, 'ignore'] = IgnoreReason.RepetitionCompToRoutine
+                data.loc[index, 'ignore'] = IgnoreReason.RepetitionCompToRoutine
             elif row.compulsive == 1:  # routine to compulsive
                 counts[2] += 1
-                df_copy.loc[index, 'ignore'] = IgnoreReason.RepetitionRoutineToComp
+                data.loc[index, 'ignore'] = IgnoreReason.RepetitionRoutineToComp
             else:  # repetition of the previous label (comp->comp or routine->routine)
                 counts[0] += 1
-                df_copy.loc[index, 'ignore'] = IgnoreReason.RepetitionSame
+                data.loc[index, 'ignore'] = IgnoreReason.RepetitionSame
     if return_counts:
         return data, counts
     return data

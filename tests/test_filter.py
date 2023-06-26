@@ -2,7 +2,8 @@ import pytest
 import pandas as pd
 import numpy as np
 from modules.filter import check_file_corrupt, check_insufficient_file_length, \
-    check_insufficient_remaining_data_points, set_ignore_no_movement, check_for_too_early_label
+    check_insufficient_remaining_data_points, set_ignore_no_movement, check_for_too_early_label, \
+    check_for_short_succession_of_labels
 from helpers.definitions import IgnoreReason
 
 
@@ -134,5 +135,30 @@ def test_check_for_too_early_label():
     pd.testing.assert_frame_equal(output2, expected_output2)
 
 
+@pytest.mark.skip(reason="Tested for now")
 def test_check_for_short_succession_of_labels():
-    pass
+    settings = {
+        "short_succession_time": 10
+    }
+    data = pd.DataFrame({"timestamp": [0.0, 20000000.0, 40000000.0, 60000000.0, 80000000.0, 100000000.0],
+                         "user yes/no": [0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+                         "ignore": [IgnoreReason.DontIgnore] * 6,
+                         "compulsive": [0.0, 0.0, 0.0, 0.0, 1.0, 0.0]})
+    expected_output = pd.DataFrame({"timestamp": [0.0, 20000000.0, 40000000.0, 60000000.0, 80000000.0, 100000000.0],
+                                    "user yes/no": [0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+                                    "ignore": [IgnoreReason.DontIgnore, IgnoreReason.DontIgnore,
+                                               IgnoreReason.DontIgnore, IgnoreReason.DontIgnore,
+                                               IgnoreReason.RepetitionRoutineToComp, IgnoreReason.DontIgnore],
+                                    "compulsive": [0.0, 0.0, 0.0, 0.0, 1.0, 0.0]})
+    pd.testing.assert_frame_equal(expected_output, check_for_short_succession_of_labels(data, settings))
+
+    data.loc[1, "compulsive"] = 1.0
+    expected_output.loc[1, "compulsive"] = 1.0
+    expected_output.loc[4, "ignore"] = IgnoreReason.RepetitionSame
+    pd.testing.assert_frame_equal(expected_output, check_for_short_succession_of_labels(data, settings))
+
+    data.loc[4, "compulsive"] = 0.0
+    expected_output.loc[4, "compulsive"] = 0.0
+    expected_output.loc[4, "ignore"] = IgnoreReason.RepetitionCompToRoutine
+    pd.testing.assert_frame_equal(expected_output, check_for_short_succession_of_labels(data, settings))
+

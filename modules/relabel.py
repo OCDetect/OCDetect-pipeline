@@ -33,7 +33,7 @@ def relabel(dfs: List[pd.DataFrame], config: dict, settings: dict, subject: str,
         hand_wash_df = df[df["user yes/no"] == 1]
         if use_ignore:
             hand_wash_df = hand_wash_df[hand_wash_df["ignore"] == IgnoreReason.DontIgnore]
-        df["relabel"] = HandWashingType.NoHandWash
+        df["relabeled"] = HandWashingType.NoHandWash
         offset_samples = settings.get("relabel_offset", 5) * 50
         if strategy == RelabelStrategy.TimeSpan:
             duration_samples = settings.get("relabel_duration", 38) * 50
