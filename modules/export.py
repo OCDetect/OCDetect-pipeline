@@ -4,8 +4,10 @@ import pandas as pd
 from typing import List, Dict
 from tqdm import tqdm
 
+from helpers.logger import logger
 
-def export_data(dfs: List[pd.DataFrame], config: Dict, settings: Dict, subject: str, filenames : List[str]) -> None:
+
+def export_data(dfs: List[pd.DataFrame], config: Dict, settings: Dict, subject: str) -> None:
     """
     Function to export all data in the dfs-List to csv files.
     The export will be saved at the export path: config["export_subfolder"].
@@ -16,20 +18,40 @@ def export_data(dfs: List[pd.DataFrame], config: Dict, settings: Dict, subject: 
     :param config: The global config dict
     :param settings: The global settings dict
     :param subject: The subject to export
-    :param filenames: List of recording filenames, in the same order as the recordings in dfs.
     :return: nothing
     """
 
     export_subfolder = config.get("export_subfolder")
     if not(os.path.isdir(export_subfolder)):
         os.mkdir(export_subfolder)
-    # TODO: dfs = sorted(dfs, key= lambda x: recording_datetime(x), ascending=True)  # sort by date and
-    # TODO: load metadata table and add recording, if it isnt already in there.
+    dfs = sorted(dfs, key=lambda x: x.datetime.iloc[0])  # sort by date ascending
 
-    for i, recording in tqdm(enumerate(dfs)):
-        rec_id = str(i)
-        while len(rec_id) < 2:
-            rec_id = "0" + rec_id
+    column_whitelist = ["timestamp", "datetime", "acc x", "acc y", "acc z", "gyro x", "gyro y", "gyro z", "user yes/no",
+                        "compulsive", "urge", "tense", "ignore", "relabeled"]
 
-        recording.to_csv(f"{export_subfolder}OCDetect_{subject}_recording_{rec_id}.csv", index=False)
+    meta_list = []
+    for i, recording in tqdm(enumerate(dfs), total=len(dfs)):
+        recording_id = recording.recording
+        rec_number = str(i)
 
+        while len(rec_number) < 2:
+            rec_number = "0" + rec_number
+        meta_list.append([subject, rec_number, recording_id, recording.datetime.iloc[0], len(recording) / 50])
+
+        recording = recording[column_whitelist].copy()
+        recording.relabeled = recording.relabeled.apply(lambda x: int(x))
+        recording.ignore = recording.ignore.apply(lambda x: int(x))
+        try:
+            recording.to_csv(f"{export_subfolder}OCDetect_{subject}_recording_{rec_number}_{recording_id}.csv",
+                             index=False)
+        except Exception as e:
+            logger.error(f"Error while exporting {recording_id}: {e}\ncontinuing...")
+    new_meta_table = pd.DataFrame(meta_list, columns=["subject", "rec_no", "rec_id", "datetime", "duration"])
+    meta_export_filename = export_subfolder + "recording_metadata_table.csv"
+    if os.path.isfile(meta_export_filename):
+        meta_table = pd.read_csv(meta_export_filename)
+        meta_table = pd.concat([meta_table, new_meta_table]).reset_index(drop=True)
+        meta_table = meta_table.drop_duplicates()  # makes sure running this again will not add the metadata again!
+    else:
+        meta_table = new_meta_table
+    meta_table.to_csv(meta_export_filename, index=False)

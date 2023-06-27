@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 
 
 class Sensor(Enum):
@@ -6,7 +6,7 @@ class Sensor(Enum):
     GYROSCOPE = "gyro"
 
 
-class IgnoreReason(Enum):
+class IgnoreReason(IntEnum):
     DontIgnore = 0
     InitialHandWash = 1
     NoMovement = 2
@@ -16,7 +16,7 @@ class IgnoreReason(Enum):
     RepetitionRoutineToComp = 6
 
 
-class HandWashingType(Enum):
+class HandWashingType(IntEnum):
     NoHandWash = 0
     Routine = 1
     Compulsive = 2

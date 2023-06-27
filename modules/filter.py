@@ -84,8 +84,10 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
         logger.info(f"Percentage of the file to be ignored: {percentage_ignore_regions:.2f}%")
 
         plot_idle_regions(config, recording, Sensor.ACCELEROMETER, title=f"percentage of ignored regions: {percentage_ignore_regions:.2f}%", save_fig=True, fig_name=f"{subject}_{counter}")
-        # X. find and handle labels placed by the subjects in short succession TODO
-        recording = check_for_short_succession_of_labels(recording, subject, config, settings)
+        # 4. find and handle labels placed by the subjects in short succession
+        recording = check_for_short_succession_of_labels(recording, settings)
+
+        cleaned_recordings_list.append(recording)
 
     percentage_filtered_out = (filtered_out_files * 100) / len(recordings_list)
     percentage_ignore_overall_regions = (overall_idle_regions*100)/overall_regions
@@ -234,7 +236,6 @@ def check_for_short_succession_of_labels(data: pd.DataFrame, settings: dict, ret
         df_copy = data_hw.drop(["recording", "subject"], axis=1).reset_index().diff()
     except KeyError:
         df_copy = data_hw[["compulsive", "timestamp"]].diff()
-    print(df_copy)
     for index, row in df_copy.iterrows():
         timediff = row.timestamp / 1e9  # in seconds
         if timediff < short_succession_time:

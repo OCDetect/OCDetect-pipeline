@@ -26,10 +26,16 @@ def main(config: dict, settings: dict) -> int:
     # subject = np.random.choice(list(subject_map.keys()))
 
     # recordings_list = subject_recordings[subject_map[subject]]
-    recordings_list = load_subject("01", config, settings)
-    cleaned_data = recordings_list  # = run_data_cleansing(recordings_list, "01", config, Sensor.ACCELEROMETER, settings)
-    labeled_data = relabel(cleaned_data, config, settings, "01")
-    export_data(labeled_data, config, settings, "01")
+    for subject in settings["all_subjects"]:
+        logger.info(f"########## Starting to run on subject {subject} ##########")
+        logger.info(f"##### Loading subject {subject} #####")
+        recordings_list = load_subject(subject, config, settings)
+        logger.info(f"##### Cleaning subject {subject} #####")
+        cleaned_data = run_data_cleansing(recordings_list, subject, config, Sensor.ACCELEROMETER, settings)
+        labeled_data = relabel(cleaned_data, config, settings, subject)
+        logger.info(f"##### Exporting subject {subject} #####")
+        export_data(labeled_data, config, settings, subject)
+        logger.info(f"########## Finished running on subject {subject} ##########")
 
     # for i, recording in enumerate(subject_recordings):
     # cleaned_data = run_data_cleansing(recording, subject_map[i], config, Sensor.ACCELEROMETER, settings)
