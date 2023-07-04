@@ -41,6 +41,8 @@ def load_subject(subject_id: str, config: dict, settings: dict)\
 
     for filename in tqdm(subject_filelist, smoothing=0.5):
         recording_df = load_recording(filename)
+        if recording_df is None:
+            continue
         recording = Path(filename).stem
         date, _ = get_metadata(subject_id, recording, config)
         date_base = add_timezone_and_summertime(date)
@@ -63,7 +65,10 @@ def load_subject(subject_id: str, config: dict, settings: dict)\
 
 def load_recording(filename: str, sep="\t") -> pd.DataFrame:
     filepath = Path(filename)
-    rec_df = pd.read_csv(filepath, sep=sep)
+    try:
+        rec_df = pd.read_csv(filepath, sep=sep)
+    except pd.errors.EmptyDataError:
+        return
     return rec_df
 
 

@@ -24,6 +24,15 @@ def export_data(dfs: List[pd.DataFrame], config: Dict, settings: Dict, subject: 
     export_subfolder = config.get("export_subfolder")
     if not(os.path.isdir(export_subfolder)):
         os.mkdir(export_subfolder)
+    if os.path.isfile(export_subfolder + "exported.txt"):
+        with open(export_subfolder + "exported.txt", "r") as f:
+            for line in f:
+                if line == subject:
+                    return
+    else:
+        with open(export_subfolder + "exported.txt", "w") as f:
+            pass
+
     dfs = sorted(dfs, key=lambda x: x.datetime.iloc[0])  # sort by date ascending
 
     column_whitelist = ["timestamp", "datetime", "acc x", "acc y", "acc z", "gyro x", "gyro y", "gyro z", "user yes/no",
@@ -55,3 +64,6 @@ def export_data(dfs: List[pd.DataFrame], config: Dict, settings: Dict, subject: 
     else:
         meta_table = new_meta_table
     meta_table.to_csv(meta_export_filename, index=False)
+
+    with open(export_subfolder + "exported.txt", "a") as f:
+        f.write(subject + "\n")

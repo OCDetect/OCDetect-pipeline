@@ -12,6 +12,7 @@ from helpers.logger import logger  # the import statement is enough to initializ
 from modules.export import export_data
 import numpy as np
 from visualizations.line_plotter import plot_3_axis, plot_magnitude_around_label
+import gc
 
 
 def main(config: dict, settings: dict) -> int:
@@ -27,6 +28,20 @@ def main(config: dict, settings: dict) -> int:
 
     # recordings_list = subject_recordings[subject_map[subject]]
     for subject in settings["all_subjects"]:
+        export_subfolder = config.get("export_subfolder")
+        if not (os.path.isdir(export_subfolder)):
+            os.mkdir(export_subfolder)
+        if os.path.isfile(export_subfolder + "exported.txt"):
+            with open(export_subfolder + "exported.txt", "r") as f:
+                out = False
+                for line in f:
+                    if line.strip() == subject:
+                        out = True
+            if out:
+                continue
+        else:
+            with open(export_subfolder + "exported.txt", "w") as f:
+                pass
         logger.info(f"########## Starting to run on subject {subject} ##########")
         logger.info(f"##### Loading subject {subject} #####")
         recordings_list = load_subject(subject, config, settings)
@@ -36,6 +51,8 @@ def main(config: dict, settings: dict) -> int:
         logger.info(f"##### Exporting subject {subject} #####")
         export_data(labeled_data, config, settings, subject)
         logger.info(f"########## Finished running on subject {subject} ##########")
+        del recordings_list, cleaned_data, labeled_data  # hopefully fix memory-caused sigkill...
+        gc.collect()
 
     # for i, recording in enumerate(subject_recordings):
     # cleaned_data = run_data_cleansing(recording, subject_map[i], config, Sensor.ACCELEROMETER, settings)
