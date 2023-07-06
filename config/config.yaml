@@ -27,4 +27,4 @@
     first_hw_subfolder: labels_first_handwashes/
     prefix: OCDetect_
     output_folder: ../../OCDetect/Analysis/plots/idle_regions/
-    export_subfolder: ../../datasets/OCDetect_Export/  # @kristina you may want to change this :)
+    export_subfolder: ../../datasets/OCDetect/Export/  # @kristina you may want to change this :)
