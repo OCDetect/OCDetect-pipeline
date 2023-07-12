@@ -1,9 +1,6 @@
-import numpy as np
 import pandas as pd
 from enum import Enum
 from typing import List
-
-import helpers.misc
 from helpers.definitions import IgnoreReason, HandWashingType
 from modules.csv_loader import initial_handwash_time
 

@@ -16,7 +16,7 @@ class IgnoreReason(IntEnum):
     RepetitionRoutineToComp = 6
 
 
-class HandWashingType(IntEnum):
+class HandWashingType(Enum):
     NoHandWash = 0
     Routine = 1
     Compulsive = 2

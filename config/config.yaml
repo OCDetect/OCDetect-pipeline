@@ -7,6 +7,7 @@
     annotations_subfolder: annotations/
     first_hw_subfolder: labels_first_handwashes/
     export_subfolder: ../../../OCDetect_Export/
+    export_subfolder_ml_prepared: ../../../OCDetect_Export/windowed/  # @robin you may want to change this :)
     test_n_recs: 3
     test_n_subs: 3
 
@@ -27,4 +28,5 @@
     first_hw_subfolder: labels_first_handwashes/
     prefix: OCDetect_
     output_folder: ../../OCDetect/Analysis/plots/idle_regions/
-    export_subfolder: ../../datasets/OCDetect/Export/  # @kristina you may want to change this :)
+    export_subfolder: ../../datasets/OCDetect/preprocessed/OCDetect_Export/
+    export_subfolder_ml_prepared: ../../datasets/OCDetect/windowed/

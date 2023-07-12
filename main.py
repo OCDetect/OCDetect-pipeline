@@ -1,18 +1,20 @@
-import sys
 import os
+import gc
 import yaml
+import sys
 import socket
-from typing import Union
-from modules.csv_loader import load_subject, load_all_subjects, load_recording
-from helpers.misc import calc_magnitude
+import re
+import pandas as pd
+from modules.csv_loader import load_subject
 from helpers.definitions import Sensor
 from modules.filter import run_data_cleansing
-from modules.relabel import relabel
-from helpers.logger import logger  # the import statement is enough to initialize the logger KK: I dont think this import statement is needed at all... RB: Well yes it is, but only if i also commit the logger.py file...
+from helpers.logger import logger
 from modules.export import export_data
-import numpy as np
-from visualizations.line_plotter import plot_3_axis, plot_magnitude_around_label
-import gc
+from machine_learning.ml_main import do_ml
+from modules.relabel import relabel
+
+preprocessing = False
+machine_learning = True
 
 
 def main(config: dict, settings: dict) -> int:
@@ -22,47 +24,65 @@ def main(config: dict, settings: dict) -> int:
     :param config: dict containing configuration information, e.g. folders, filenames or other settings
     :return: int: Exit code
     """
+    if preprocessing:
+        for subject in settings["all_subjects"]:
+            export_subfolder = config.get("export_subfolder")
+            if not (os.path.isdir(export_subfolder)):
+                os.mkdir(export_subfolder)
+            if os.path.isfile(export_subfolder + "exported.txt"):
+                with open(export_subfolder + "exported.txt", "r") as f:
+                    out = False
+                    for line in f:
+                        if line.strip() == subject:
+                            out = True
+                if out:
+                    continue
+            else:
+                with open(export_subfolder + "exported.txt", "w") as f:
+                    pass
+            logger.info(f"########## Starting to run on subject {subject} ##########")
+            logger.info(f"##### Loading subject {subject} #####")
+            recordings_list = load_subject(subject, config, settings)
+            logger.info(f"##### Cleaning subject {subject} #####")
+            cleaned_data = run_data_cleansing(recordings_list, subject, config, Sensor.ACCELEROMETER, settings)
+            labeled_data = relabel(cleaned_data, config, settings, subject)
+            logger.info(f"##### Exporting subject {subject} #####")
+            export_data(labeled_data, config, settings, subject)
+            logger.info(f"########## Finished running on subject {subject} ##########")
+            del recordings_list, cleaned_data, labeled_data  # hopefully fix memory-caused sigkill...
+            gc.collect()
 
-    # subject_map, subject_recordings = load_all_subjects(config, settings)
-    # subject = np.random.choice(list(subject_map.keys()))
+        logger.info("Finished running prepocessing")
 
-    # recordings_list = subject_recordings[subject_map[subject]]
-    for subject in settings["all_subjects"]:
-        export_subfolder = config.get("export_subfolder")
-        if not (os.path.isdir(export_subfolder)):
-            os.mkdir(export_subfolder)
-        if os.path.isfile(export_subfolder + "exported.txt"):
-            with open(export_subfolder + "exported.txt", "r") as f:
-                out = False
-                for line in f:
-                    if line.strip() == subject:
-                        out = True
-            if out:
-                continue
-        else:
-            with open(export_subfolder + "exported.txt", "w") as f:
-                pass
-        logger.info(f"########## Starting to run on subject {subject} ##########")
-        logger.info(f"##### Loading subject {subject} #####")
-        recordings_list = load_subject(subject, config, settings)
-        logger.info(f"##### Cleaning subject {subject} #####")
-        cleaned_data = run_data_cleansing(recordings_list, subject, config, Sensor.ACCELEROMETER, settings)
-        labeled_data = relabel(cleaned_data, config, settings, subject)
-        logger.info(f"##### Exporting subject {subject} #####")
-        export_data(labeled_data, config, settings, subject)
-        logger.info(f"########## Finished running on subject {subject} ##########")
-        del recordings_list, cleaned_data, labeled_data  # hopefully fix memory-caused sigkill...
-        gc.collect()
+    if machine_learning:
+        folder_path = config.get("export_subfolder")
+        pattern = r'OCDetect_(\d+)'
 
-    # for i, recording in enumerate(subject_recordings):
-    # cleaned_data = run_data_cleansing(recording, subject_map[i], config, Sensor.ACCELEROMETER, settings)
+        dataframes = {}
 
-    # Test plotting stuff
-    # plot_3_axis(config, recordings_list[0], Sensor.ACCELEROMETER, start_idx=2000, end_idx=4000, save_fig=True)
-    # df = load_recording(f"{config['data_folder']}/OCDetect_12/relabeled_user-one/21.csv", ",")
-    # plot_magnitude_around_label(config, df, Sensor.ACCELEROMETER, 565673, 90, 10)
+        subject_numbers = [9, 12]
 
-    logger.info("Finished running prepocessing")
+        for file_name in os.listdir(folder_path):
+            if file_name.endswith('.csv'):
+                match = re.search(pattern, file_name)
+                if match:
+                    subject_number = int(match.group(1))
+
+                    if subject_number in subject_numbers:
+                        file_path = os.path.join(folder_path, file_name)
+                        df = pd.read_csv(file_path, )
+
+                        if subject_number in dataframes:
+                            dataframes[subject_number].append(df)
+                        else:
+                            dataframes[subject_number] = [df]
+
+        #data = pd.DataFrame(dataframes)
+        subjects = dataframes.keys()
+        data = list(dataframes.values())
+
+        do_ml(data, subjects, config, settings)
+
     return 0
 
 

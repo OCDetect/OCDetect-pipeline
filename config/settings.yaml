@@ -1,3 +1,7 @@
+### fixed values due to data collection settings
+sampling_frequency : 50
+
+
 testing: !!bool true
 #test_n_recs: 10
 #test_n_subs: 10
@@ -18,3 +22,35 @@ min_time_in_s_before_label: 5
 relabel_duration : 38
 relabel_offset : 5   # how many seconds before the label did the hand washing end?
 # strategy, strategy parameters could be added here!
+
+###################################################################
+# MACHINE LEARNING SETTINGS
+###################################################################
+
+### Settings for conventional machine learning data preparation
+window_size : 5 # value in seconds
+overlap : 0.5
+labelling_algorithm : "Majority"
+
+### Settings for butterworth filter
+upper_threshold : 18
+lower_threshold : 1
+order : 3
+columns : ['acc x', 'acc y', 'acc z', 'gyro x', 'gyro y', 'gyro z']
+
+### Settings for feature extraction
+id : "tsfresh_id"
+
+features :
+  mean: None
+  standard_deviation: None
+  maximum: None
+  minimum": None
+  mean_abs_change: None
+  skewness: None
+  kurtosis: None
+
+jobs : 32
+
+### Settings for feature scaling
+scaler : "standard"
