@@ -56,6 +56,11 @@ def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: di
             # copy to avoid warning that original dataset is changed
             curr_window = recording.iloc[w:w + window_size].copy()
             curr_window = curr_window.fillna(0)
+
+            # if current window only has entries that are labelled as to be ignored, do not consider this window any further
+            if check_ignore(curr_window):
+                continue
+
             # Choose label
             if labelling_algorithm == 'Majority':
                 majority_label = perform_majority_voting(curr_window)
@@ -70,6 +75,14 @@ def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: di
             window_list.append(curr_window)
 
     return pd.concat(window_list), pd.Series(window_labels, index=None), pd.Series(user_list, index=None)
+
+
+def check_ignore(current_window):
+    counts = current_window['ignore'].value_counts()
+    if counts.get(0, 0) > 0 or counts.get(1, 0) > 0:  # Todo: @ Robin, is that check sufficient?
+        return False
+    else:
+        return True
 
 
 def perform_majority_voting(current_window, hw_general=True):
