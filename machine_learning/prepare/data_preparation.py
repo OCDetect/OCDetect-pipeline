@@ -58,17 +58,9 @@ def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: di
             curr_window = curr_window.fillna(0)
             # Choose label
             if labelling_algorithm == 'Majority':
-                # value_counts = curr_window['hw region'].value_counts(dropna=False)
-                value_counts = curr_window['relabeled'].value_counts(dropna=False)
-                if 1.0 in value_counts:
-                    if value_counts[1.0] >= (window_size / 2):
-                        majority_label = 1
-                    else:
-                        majority_label = 0
-                else:
-                    majority_label = 0
-
+                majority_label = perform_majority_voting(curr_window)
                 window_labels.append(majority_label)
+
                 user_list.append(subject_id)
             curr_window['tsfresh_id'] = unique_id
 
@@ -78,6 +70,33 @@ def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: di
             window_list.append(curr_window)
 
     return pd.concat(window_list), pd.Series(window_labels, index=None), pd.Series(user_list, index=None)
+
+
+def perform_majority_voting(current_window, hw_general=True):
+    counts = current_window['relabeled'].value_counts()
+
+    if hw_general:
+        null_class = counts.get(0, 0)
+        routine_hw = counts.get(1, 0)
+        compulsive_hw = counts.get(2, 0)
+
+        if routine_hw + compulsive_hw > null_class:
+            majority_label = 1
+        else:
+            majority_label = 0
+    else:
+        null_class = counts.get(0, 0)
+        routine_hw = counts.get(1, 0)
+        compulsive_hw = counts.get(2, 0)
+
+        if routine_hw > compulsive_hw and routine_hw > null_class:
+            majority_label = 1  # routine hand washing present
+        elif compulsive_hw > routine_hw and compulsive_hw > null_class:
+            majority_label = 2  # compulsive hand washing present
+        else:
+            majority_label = 0  # null class
+
+    return majority_label
 
 
 def feature_extraction(subject_windows: pd.DataFrame, settings):

@@ -10,7 +10,7 @@ from machine_learning.prepare.data_preparation import butter_filter_data, window
 
 
 # todo: @ robin -> do you think we should put these conditions into a setup/settings file?
-prepare_data = False
+prepare_data = True
 save_data = True
 
 use_filter = True

@@ -60,7 +60,7 @@ def main(config: dict, settings: dict) -> int:
 
         dataframes = {}
 
-        subject_numbers = [9, 12]
+        subject_numbers = [12]
 
         for file_name in os.listdir(folder_path):
             if file_name.endswith('.csv'):
