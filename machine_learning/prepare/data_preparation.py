@@ -57,7 +57,8 @@ def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: di
             curr_window = recording.iloc[w:w + window_size].copy()
             curr_window = curr_window.fillna(0)
 
-            # if current window only has entries that are labelled as to be ignored, do not consider this window any further
+            # if current window only has entries that are labelled as to be ignored,
+            # do not consider this window any further
             if check_ignore(curr_window):
                 continue
 

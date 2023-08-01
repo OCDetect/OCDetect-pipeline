@@ -3,8 +3,6 @@ import gc
 import yaml
 import sys
 import socket
-import re
-import pandas as pd
 from modules.csv_loader import load_subject
 from helpers.definitions import Sensor
 from modules.filter import run_data_cleansing
@@ -20,6 +18,7 @@ machine_learning = True
 def main(config: dict, settings: dict) -> int:
     """
     Function to run the entire preprocessing pipeline, from data loading to cleaning to relabeling etc.
+    AND/OR run the data cleansing and machine learning pipeline, respectively.
     :param settings: dict containing study wide settings
     :param config: dict containing configuration information, e.g. folders, filenames or other settings
     :return: int: Exit code
@@ -55,33 +54,7 @@ def main(config: dict, settings: dict) -> int:
         logger.info("Finished running prepocessing")
 
     if machine_learning:
-        folder_path = config.get("export_subfolder")
-        pattern = r'OCDetect_(\d+)'
-
-        dataframes = {}
-
-        subject_numbers = [12]
-
-        for file_name in os.listdir(folder_path):
-            if file_name.endswith('.csv'):
-                match = re.search(pattern, file_name)
-                if match:
-                    subject_number = int(match.group(1))
-
-                    if subject_number in subject_numbers:
-                        file_path = os.path.join(folder_path, file_name)
-                        df = pd.read_csv(file_path, )
-
-                        if subject_number in dataframes:
-                            dataframes[subject_number].append(df)
-                        else:
-                            dataframes[subject_number] = [df]
-
-        #data = pd.DataFrame(dataframes)
-        subjects = dataframes.keys()
-        data = list(dataframes.values())
-
-        do_ml(data, subjects, config, settings)
+        do_ml(config, settings, prepare_data=False, machine_learning=True)
 
     return 0
 
