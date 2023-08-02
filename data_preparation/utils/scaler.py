@@ -1,6 +1,7 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from helpers.logger import logger
+from misc import logger
+
 
 def std_scaling_data(features_list, settings):
     logger.info("Scaling Features")

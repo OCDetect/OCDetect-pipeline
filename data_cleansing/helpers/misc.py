@@ -6,7 +6,7 @@ from pathlib import Path
 import os
 import pandas as pd
 import numpy as np
-from helpers.definitions import Sensor
+from data_cleansing.helpers.definitions import Sensor
 
 
 def get_file_name_initial_hw(subject: str, config: dict) -> str:

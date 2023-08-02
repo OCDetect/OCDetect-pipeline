@@ -1,8 +1,8 @@
 import pandas as pd
 from enum import Enum
 from typing import List
-from helpers.definitions import IgnoreReason, HandWashingType
-from modules.csv_loader import initial_handwash_time
+from data_cleansing.helpers.definitions import IgnoreReason, HandWashingType
+from misc.csv_loader import initial_handwash_time
 
 
 class RelabelStrategy(Enum):

@@ -3,13 +3,13 @@ import gc
 import yaml
 import sys
 import socket
-from modules.csv_loader import load_subject
-from helpers.definitions import Sensor
-from modules.filter import run_data_cleansing
-from helpers.logger import logger
-from modules.export import export_data
-from machine_learning.ml_main import do_ml
-from modules.relabel import relabel
+from data_cleansing.modules import load_subject
+from data_cleansing.helpers.definitions import Sensor
+from data_cleansing.modules import run_data_cleansing
+from misc import logger
+from misc.export import export_data
+from ml_main import do_ml
+from data_cleansing.modules import relabel
 
 preprocessing = False
 machine_learning = True
@@ -64,14 +64,14 @@ if __name__ == "__main__":
         config_file_name = sys.argv[1]
         logger.debug(f"Running with config file: '{config_file_name}'")
     else:
-        config_file_name = "config/config.yaml"
+        config_file_name = "misc/config/config.yaml"
         logger.debug(f"No config passed via parameters, running with default: '{config_file_name}'")
     try:
         with open(config_file_name, "r") as config_stream:
             configs = yaml.safe_load(config_stream)
             active_config = [list(entry.values())[0] for entry in configs if
                              list(entry.values())[0].get("hostname", "") == socket.gethostname()][0]
-        with open("config/settings.yaml", "r") as settings_stream:
+        with open("misc/config/settings.yaml", "r") as settings_stream:
             # settings = list(yaml.load_all(settings_stream, Loader=yaml.SafeLoader))
             settings = yaml.safe_load(settings_stream)
     except FileNotFoundError:

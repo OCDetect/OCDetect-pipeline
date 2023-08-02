@@ -1,10 +1,10 @@
 import pytest
 import pandas as pd
 import numpy as np
-from modules.filter import check_file_corrupt, check_insufficient_file_length, \
+from data_cleansing.modules import check_file_corrupt, check_insufficient_file_length, \
     check_insufficient_remaining_data_points, set_ignore_no_movement, check_for_too_early_label, \
     check_for_short_succession_of_labels
-from helpers.definitions import IgnoreReason
+from data_cleansing.helpers.definitions import IgnoreReason
 
 
 @pytest.mark.skip(reason="tested for now, skip while writing more tests")

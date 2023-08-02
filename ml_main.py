@@ -3,13 +3,13 @@ import re
 import time
 import yaml
 import pandas as pd
-from helpers.logger import logger
+from misc import logger
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
-from machine_learning.prepare.utils.scaler import std_scaling_data
-from machine_learning.prepare.utils.filter import butter_filter
+from data_preparation.utils import std_scaling_data
+from data_preparation.utils.filter import butter_filter
 from collections import Counter
-from machine_learning.prepare.data_preparation import window_data, feature_extraction
+from data_preparation.data_preparation import window_data, feature_extraction
 from machine_learning.classify.random_forest import random_forest_classifier
 from datetime import date
 
@@ -21,6 +21,7 @@ def do_ml(config: dict, settings: dict, prepare_data, machine_learning):
     logger.info("Starting machine learning pipeline")
 
     use_filter, use_scaling, resample, use_undersampling, use_oversampling = load_ml_settings(settings)
+    all_subjects = True if not settings.get("use_ocd_only") else False
 
     # if data is not prepared yet, do windowing etc. first
     if prepare_data:
@@ -31,7 +32,6 @@ def do_ml(config: dict, settings: dict, prepare_data, machine_learning):
 
         dataframes = {}
 
-        all_subjects = True if not settings.get("use_ocd_only") else False
         subject_numbers = settings.get("all_subjects") if all_subjects else settings.get("ocd_diagnosed_subjects")
 
         for file_name in os.listdir(folder_path):
@@ -141,18 +141,20 @@ def do_ml(config: dict, settings: dict, prepare_data, machine_learning):
         logger.info(f"Using path: {export_path}{sub_folder_path}")
         logger.info(f"Scaled data: {scaling}; Filtered data: {filtering}")
 
-        print(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}.csv")
-
-        features = pd.read_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}.csv")
-        labels = pd.read_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}.csv")
-        users = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}.csv")
-        feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}.csv")
+        # todo: remove column "unnamed: 0" while writing to file instead of when reading in
+        features = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}.csv", usecols=lambda col: col != "Unnamed: 0")
+        labels = pd.read_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}.csv", usecols=lambda col: col != "Unnamed: 0")
+        users = pd.read_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}.csv", usecols=lambda col: col != "Unnamed: 0")
+        feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}.csv", usecols=lambda col: col != "Unnamed: 0")
 
     if machine_learning:
         if resample:
-            X = features
-            X['user'] = users
+            # todo test this for case that data is not prepared
+            users.rename(columns={'0': 'user'}, inplace=True)
+            X = pd.merge(features, users, left_index=True, right_index=True)
             X.columns = X.columns.astype(str)
+
+            labels = labels.iloc[:, 0]
 
             if use_oversampling:
                 logger.info("Oversampling")
@@ -173,13 +175,7 @@ def do_ml(config: dict, settings: dict, prepare_data, machine_learning):
             X_res = features
             y_res = labels
 
-        best_model, best_param, best_score = random_forest_classifier(X_res, y_res, users)
-
-    # Use the best model for prediction or other tasks
-    # y_pred = best_model.predict(X_test)
-
-    # Create a confusion matrix
-    # cm = confusion_matrix(y_true, y_pred)
+        best_model, best_param, best_score = random_forest_classifier(X_res, y_res, users, config.get("plots_folder"), config.get("ml_results_folder"), all_subjects=all_subjects)
 
 
 def load_ml_settings(settings: dict): # Todo: make sure that not over- AND undersampling are True

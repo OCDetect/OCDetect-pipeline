@@ -1,6 +1,6 @@
 import pandas as pd
-from helpers.misc import calc_magnitude
-from helpers.definitions import Sensor
+from data_cleansing.helpers import calc_magnitude
+from data_cleansing.helpers.definitions import Sensor
 import pytest
 
 

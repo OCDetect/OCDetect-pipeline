@@ -1,8 +1,7 @@
-import pytest
 import pandas as pd
 import numpy as np
-from modules.relabel import relabel, RelabelStrategy
-from helpers.definitions import IgnoreReason, HandWashingType
+from data_cleansing.modules import relabel, RelabelStrategy
+from data_cleansing.helpers.definitions import IgnoreReason, HandWashingType
 
 
 def test_relabel():

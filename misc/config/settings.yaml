@@ -17,8 +17,8 @@ use_ocd_only: True
 
 ### General settings
 resample: True
-use_oversampling: False
-use_undersampling: True # do not set over- AND undersampling to True
+use_oversampling: True
+use_undersampling: False # do not set over- AND undersampling to True
 use_filter: True
 use_scaling: True
 
@@ -41,7 +41,7 @@ relabel_offset : 5   # how many seconds before the label did the hand washing en
 ###################################################################
 
 ### Settings for data windowing
-window_size : 10 # value in seconds
+window_size : 5 # value in seconds
 overlap : 0.5
 labelling_algorithm : "Majority"
 

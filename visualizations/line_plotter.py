@@ -1,8 +1,8 @@
 import pandas as pd
-from helpers.definitions import Sensor
+from data_cleansing.helpers.definitions import Sensor
 import matplotlib.pyplot as plt
-from helpers.logger import logger
-from helpers.misc import calc_magnitude
+from misc import logger
+from data_cleansing.helpers import calc_magnitude
 import numpy as np
 
 

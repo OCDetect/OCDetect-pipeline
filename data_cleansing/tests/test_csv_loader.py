@@ -1,5 +1,5 @@
 import pytest
-from modules.csv_loader import initial_handwash_time
+from data_cleansing.modules import initial_handwash_time
 import yaml
 import socket
 

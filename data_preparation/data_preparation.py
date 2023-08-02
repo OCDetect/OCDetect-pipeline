@@ -1,28 +1,8 @@
 import pandas as pd
 from typing import List
 from tqdm import tqdm
-from helpers.logger import logger
-from machine_learning.prepare.utils.filter import butter_filter
+from misc import logger
 from tsfresh.feature_extraction import extract_features, MinimalFCParameters
-
-
-# todo outdated
-def butter_filter_data(subject_recordings: List[pd.DataFrame], settings: dict) -> List[pd.DataFrame]:
-    """
-    Applies butterworth filter to the data
-    :param subject_recordings: A list with single recordings for a subject
-    :param settings: the overall settings
-    :return: the filtered data
-    """
-    # todo make method generic (filter instead of butter filter) to be able to use different filter methods
-
-    subject_recordings_filtered = []
-
-    logger.info("Filter Data")
-    for recording in subject_recordings:
-        subject_recordings_filtered.append(butter_filter(recording, settings))
-
-    return subject_recordings_filtered
 
 
 def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: dict):
@@ -122,11 +102,6 @@ def feature_extraction(subject_windows: pd.DataFrame, settings):
     """
 
     logger.info("Extracting Features")
-
-   # features_list = extract_features(subject_windows, column_id=settings.get("id"),
-    #                                          default_fc_parameters=settings.get("features"),
-     #                                         n_jobs=settings.get("jobs"))
-
     features_list = extract_features(subject_windows, column_id=settings.get("id"),
                                               default_fc_parameters=MinimalFCParameters(),
                                               n_jobs=settings.get("jobs"))

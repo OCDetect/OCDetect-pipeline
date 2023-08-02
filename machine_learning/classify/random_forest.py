@@ -1,16 +1,14 @@
+import os
+import time
+import numpy as np
+from misc import logger
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import LeaveOneGroupOut
-import random
-import numpy as np
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score, classification_report
-import time
-from helpers.logger import logger
 
 
-def random_forest_classifier(X_res, y_res, users):
-
-    # the following grid did not finish after 3 days
+def random_forest_classifier(X_res, y_res, users, folder_path_plots, folder_path_results, all_subjects):
     # grid = {
     #     'n_estimators': [50, 150],
     #     'criterion': ['gini', 'entropy'],
@@ -22,9 +20,8 @@ def random_forest_classifier(X_res, y_res, users):
     #     'random_state': [42]
     # }
 
-    # Define the parameter grid
     grid = {
-        'n_estimators': [500],
+        'n_estimators': [150],
         'criterion': ['gini'],
         'max_depth': [None],  # None means no maximum depth
         'min_samples_split': [2],
@@ -34,9 +31,6 @@ def random_forest_classifier(X_res, y_res, users):
         'random_state': [42]
     }
 
-
-
-    # test_subject = np.random.choice(list(users.unique()))
     users_outer_cv = list(users.unique())
     for test_subject in users_outer_cv:
         X_test = X_res[users == test_subject]
@@ -63,7 +57,7 @@ def random_forest_classifier(X_res, y_res, users):
         best_model = grid_search.best_estimator_
 
         y_pred = best_model.predict(X_test)
-        # y_pred = best_model.predict_proba(X_test)[:,1]
+        # y_pred_proba = best_model.predict_proba(X_test)[:,1]
         f1_test = f1_score(y_test, y_pred)
         precision_test = precision_score(y_test, y_pred)
         recall_test = recall_score(y_test, y_pred)
@@ -71,7 +65,10 @@ def random_forest_classifier(X_res, y_res, users):
         report = classification_report(y_test, y_pred)
 
         logger.info("Writing results to file")
-        with open('output.txt', 'a') as f:
+        os.makedirs(f"{folder_path_results}", exist_ok=True)
+        os.makedirs(f"{folder_path_plots}", exist_ok=True)
+
+        with open(f'{folder_path_results}output_oversampling.txt', 'a') as f:
             f.write("\n")
             f.write(f"test subject: {test_subject}")
             f.write("\n")
@@ -85,5 +82,11 @@ def random_forest_classifier(X_res, y_res, users):
             f.write("\n")
             f.write(f"Training time: {training_time_seconds:.2f} seconds ({training_time_minutes:.2f} minutes)")
             f.write("\n")
+
+        # Create a confusion matrix
+        subjects = "all subjects" if all_subjects else "ocd subjects only"
+        title = f"({subjects}) Results: f1: {f1_test}; precision: {precision_test}; recall: {recall_test}; " \
+                f"test_subject: {test_subject}"
+        make_cm(y_test, y_pred, folder_path_plots, title, test_subject)
 
     return best_model, best_params, best_score
