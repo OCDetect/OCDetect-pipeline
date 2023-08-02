@@ -3,15 +3,18 @@ import gc
 import yaml
 import sys
 import socket
-from data_cleansing.modules import load_subject
+from data_preparation.data_preparation import prepare_data, get_data_path_variables, load_data_preparation_settings
+from misc.csv_loader import load_subject
 from data_cleansing.helpers.definitions import Sensor
-from data_cleansing.modules import run_data_cleansing
+from data_cleansing.modules.filter import run_data_cleansing
 from misc import logger
 from misc.export import export_data
-from ml_main import do_ml
 from data_cleansing.modules import relabel
+import pandas as pd
+from machine_learning.ml_main import ml_pipeline
 
-preprocessing = False
+data_cleansing = False
+data_preparation = False
 machine_learning = True
 
 
@@ -23,7 +26,7 @@ def main(config: dict, settings: dict) -> int:
     :param config: dict containing configuration information, e.g. folders, filenames or other settings
     :return: int: Exit code
     """
-    if preprocessing:
+    if data_cleansing:
         for subject in settings["all_subjects"]:
             export_subfolder = config.get("export_subfolder")
             if not (os.path.isdir(export_subfolder)):
@@ -52,9 +55,34 @@ def main(config: dict, settings: dict) -> int:
             gc.collect()
 
         logger.info("Finished running prepocessing")
-
+    if data_preparation:
+        labels, features, users, feature_names = prepare_data(settings, config)
     if machine_learning:
-        do_ml(config, settings, prepare_data=False, machine_learning=True)
+        if not data_preparation:
+            # load prepared data
+            logger.info("Read in prepared data")
+
+            use_filter, use_scaling, resample, use_undersampling, use_oversampling = load_data_preparation_settings(
+                settings)
+
+            window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering = get_data_path_variables(
+                use_scaling, use_filter, config, settings)
+
+            logger.info(f"Using path: {export_path}{sub_folder_path}")
+            logger.info(f"Scaled data: {scaling}; Filtered data: {filtering}")
+
+            # todo: remove column "unnamed: 0" while writing to file instead of when reading in
+            features = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}.csv",
+                                   usecols=lambda col: col != "Unnamed: 0")
+            labels = pd.read_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}.csv",
+                                 usecols=lambda col: col != "Unnamed: 0")
+            users = pd.read_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}.csv",
+                                usecols=lambda col: col != "Unnamed: 0")
+            feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}.csv",
+                                        usecols=lambda col: col != "Unnamed: 0")
+
+        all_subjects = True if not settings.get("use_ocd_only") else False
+        ml_pipeline(features, users, labels, feature_names, all_subjects, resample, use_oversampling, use_undersampling, config)
 
     return 0
 
