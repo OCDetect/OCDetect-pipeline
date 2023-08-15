@@ -6,6 +6,7 @@ from collections import Counter
 from machine_learning.classify.models import get_classification_model_grid
 from machine_learning.classify.evaluate import evaluate_single_model
 
+
 def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, config: dict):
 
     # if resample:
