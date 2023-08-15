@@ -8,35 +8,6 @@ from machine_learning.classify.evaluate import evaluate_single_model
 
 
 def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, config: dict):
-
-    # if resample:
-    #     # todo test this for case that data is not prepared
-    #     users.rename(columns={'0': 'user'}, inplace=True)
-    #     X = pd.merge(features, users, left_index=True, right_index=True)
-    #     X.columns = X.columns.astype(str)
-    #
-    #     labels = labels.iloc[:, 0]
-    #
-    #     if use_oversampling:
-    #         logger.info("Oversampling")
-    #         logger.info(f"Before oversampling: {Counter(labels)}")
-    #         sm = SMOTE(random_state=42)
-    #         X_res, y = sm.fit_resample(X, labels)
-    #         logger.info(f"After oversampling: {Counter(y)}")
-    #     elif use_undersampling:
-    #         logger.info("Undersampling")
-    #         logger.info(f"Before undersampling: {Counter(labels)}")
-    #         undersample = RandomUnderSampler(sampling_strategy='majority')
-    #         X_res, y = undersample.fit_resample(X, labels)
-    #         logger.info(f"After undersampling: {Counter(y)}")
-    #
-    #     users = X_res['user']
-    #     X = X_res.drop(columns=["user"])
-    # else:
-    #     # todo: test this when no resampling is enabled
-    #     X = features
-    #     y = labels
-
     # todo test this for case that data is not prepared
     users.rename(columns={'0': 'user'}, inplace=True)
     X = pd.merge(features, users, left_index=True, right_index=True)
