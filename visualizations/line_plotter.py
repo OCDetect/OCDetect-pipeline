@@ -2,7 +2,7 @@ import pandas as pd
 from data_cleansing.helpers.definitions import Sensor
 import matplotlib.pyplot as plt
 from misc import logger
-from data_cleansing.helpers import calc_magnitude
+from data_cleansing.helpers.misc import calc_magnitude
 import numpy as np
 
 

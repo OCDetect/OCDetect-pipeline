@@ -8,13 +8,12 @@ from tqdm import tqdm
 from misc import logger
 from tsfresh.feature_extraction import extract_features, MinimalFCParameters
 from datetime import date
-from data_preparation.utils.scaler import std_scaling_data
 from data_preparation.utils.filter import butter_filter
-from data_preparation.data_preparation import window_data, feature_extraction
-
+from data_preparation.utils.scaler import std_scaling_data
 
 save_data = True
 overwrite_data = True
+
 
 def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: dict):
     """

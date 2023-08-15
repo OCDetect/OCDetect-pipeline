@@ -3,35 +3,66 @@ from imblearn.under_sampling import RandomUnderSampler
 from misc import logger
 import pandas as pd
 from collections import Counter
-from machine_learning.classify.random_forest import random_forest_classifier
+from machine_learning.classify.models import get_classification_model_grid
+from machine_learning.classify.evaluate import evaluate_single_model
 
+def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, config: dict):
 
-def ml_pipeline(features, users, labels, feature_names, all_subjects, resample, use_oversampling, use_undersampling, config: dict):
-    if resample:
-        # todo test this for case that data is not prepared
-        users.rename(columns={'0': 'user'}, inplace=True)
-        X = pd.merge(features, users, left_index=True, right_index=True)
-        X.columns = X.columns.astype(str)
+    # if resample:
+    #     # todo test this for case that data is not prepared
+    #     users.rename(columns={'0': 'user'}, inplace=True)
+    #     X = pd.merge(features, users, left_index=True, right_index=True)
+    #     X.columns = X.columns.astype(str)
+    #
+    #     labels = labels.iloc[:, 0]
+    #
+    #     if use_oversampling:
+    #         logger.info("Oversampling")
+    #         logger.info(f"Before oversampling: {Counter(labels)}")
+    #         sm = SMOTE(random_state=42)
+    #         X_res, y = sm.fit_resample(X, labels)
+    #         logger.info(f"After oversampling: {Counter(y)}")
+    #     elif use_undersampling:
+    #         logger.info("Undersampling")
+    #         logger.info(f"Before undersampling: {Counter(labels)}")
+    #         undersample = RandomUnderSampler(sampling_strategy='majority')
+    #         X_res, y = undersample.fit_resample(X, labels)
+    #         logger.info(f"After undersampling: {Counter(y)}")
+    #
+    #     users = X_res['user']
+    #     X = X_res.drop(columns=["user"])
+    # else:
+    #     # todo: test this when no resampling is enabled
+    #     X = features
+    #     y = labels
 
-        labels = labels.iloc[:, 0]
+    # todo test this for case that data is not prepared
+    users.rename(columns={'0': 'user'}, inplace=True)
+    X = pd.merge(features, users, left_index=True, right_index=True)
+    X.columns = X.columns.astype(str)
+    labels = labels.iloc[:, 0]
 
-        if use_oversampling:
-            logger.info("Oversampling")
-            logger.info(f"Before oversampling: {Counter(labels)}")
-            sm = SMOTE(random_state=42)
-            X_res, y_res = sm.fit_resample(X, labels)
-            logger.info(f"After oversampling: {Counter(y_res)}")
-        elif use_undersampling:
-            logger.info("Undersampling")
-            logger.info(f"Before undersampling: {Counter(labels)}")
-            undersample = RandomUnderSampler(sampling_strategy='majority')
-            X_res, y_res = undersample.fit_resample(X, labels)
-            logger.info(f"After undersampling: {Counter(y_res)}")
+    all_subjects = True if not settings.get("use_ocd_only") else False
+    balancing_option = settings.get("balancing_option")
 
-        users = X_res['user']
-        X_res = X_res.drop(columns=["user"])
-    else:
-        X_res = features
-        y_res = labels
+    out_dir = config.get("ml_results_folder")
+    # TODO add models to settings and read out which model(s) should be used if not all
+    users = users["user"]
+    users_outer_cv = list(users.unique())
+    for test_subject in users_outer_cv:
+        X_test = X[users == test_subject]
+        y_test = labels[users == test_subject]
+        X_train = X[users != test_subject]
+        y_train = labels[users != test_subject]
 
-    best_model, best_param, best_score = random_forest_classifier(X_res, y_res, users, config.get("plots_folder"), config.get("ml_results_folder"), all_subjects=all_subjects)
+        all_model_metrics = {}
+
+        # model grid
+        model_grid = get_classification_model_grid('balanced' if balancing_option == 'class_weight' else None, seed=seed)
+        for j, (model, param_grid) in enumerate(model_grid):
+            val_metrics, test_metrics, curves = evaluate_single_model(model, param_grid,
+                                                                      X_train, y_train, X_test, y_test,
+                                                                      out_dir=out_dir,
+                                                                      sample_balancing=balancing_option,
+                                                                      seed=seed)
+            all_model_metrics[str(model.__class__.__name__)] = (val_metrics, test_metrics, curves)

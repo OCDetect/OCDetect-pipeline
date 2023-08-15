@@ -3,7 +3,7 @@ import gc
 import yaml
 import sys
 import socket
-from data_preparation.data_preparation import prepare_data, get_data_path_variables, load_data_preparation_settings
+from data_preparation.prepare import prepare_data, get_data_path_variables, load_data_preparation_settings
 from misc.csv_loader import load_subject
 from data_cleansing.helpers.definitions import Sensor
 from data_cleansing.modules.filter import run_data_cleansing
@@ -81,8 +81,8 @@ def main(config: dict, settings: dict) -> int:
             feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}.csv",
                                         usecols=lambda col: col != "Unnamed: 0")
 
-        all_subjects = True if not settings.get("use_ocd_only") else False
-        ml_pipeline(features, users, labels, feature_names, all_subjects, resample, use_oversampling, use_undersampling, config)
+        seed = settings.get("seed")
+        ml_pipeline(features, users, labels, feature_names, seed, settings, config)
 
     return 0
 
