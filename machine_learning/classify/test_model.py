@@ -57,6 +57,6 @@ def test_classification_model(model, X_train, y_train, X_test, y_test, model_nam
         feature_importance.to_csv(f'{out_dir}/{y_test.name.replace(" ", "_")}/{model_name}_feature_importance.csv')
         plot_coefficients(out_dir, feature_importances, feature_names, model_name, y_test.name)
 
-    interp_tpr = np.interp(thresholds, roc_plot.fpr, roc_plot.tpr, left=0.0)
+    # interp_tpr = np.interp(thresholds, roc_plot.fpr, roc_plot.tpr, left=0.0) TODO: see ROC above (also for return)
 
-    return test_metrics, (interp_tpr, prc_plot.precision, prc_plot.recall)
+    return test_metrics, None # , (interp_tpr, prc_plot.precision, prc_plot.recall)

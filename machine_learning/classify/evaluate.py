@@ -7,7 +7,7 @@ import numpy as np
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn.feature_selection import SelectFromModel, SelectKBest
-from sklearn.model_selection import GridSearchCV, LeaveOneOut
+from sklearn.model_selection import GridSearchCV, LeaveOneGroupOut
 from imblearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
@@ -21,7 +21,7 @@ def evaluate_single_model(model, param_grid,
     os.makedirs(f'{out_dir}/{y_train.name.replace(" ", "_")}/test/', exist_ok=True)
     model_name = str(model.__class__.__name__)
 
-    cv = LeaveOneOut()
+    cv = LeaveOneGroupOut()
 
     # Define list with steps for the pipeline
     pipeline_steps = []
@@ -98,6 +98,7 @@ def evaluate_single_model(model, param_grid,
 
 
     # =================== Final Model Testing ===============
+    X_test = X_test.drop(columns=["user"])
     test_metrics, test_curves = test_classification_model(best_model, X_train, y_train, X_test, y_test,
                                                           model_name, select_features, out_dir)
     return test_metrics, test_curves

@@ -11,6 +11,7 @@ from misc import logger
 from misc.export import export_data
 from data_cleansing.modules import relabel
 import pandas as pd
+import getpass
 from machine_learning.ml_main import ml_pipeline
 
 data_cleansing = False
@@ -94,11 +95,13 @@ if __name__ == "__main__":
     else:
         config_file_name = "misc/config/config.yaml"
         logger.debug(f"No config passed via parameters, running with default: '{config_file_name}'")
+    username = getpass.getuser()
     try:
         with open(config_file_name, "r") as config_stream:
             configs = yaml.safe_load(config_stream)
-            active_config = [list(entry.values())[0] for entry in configs if
-                             list(entry.values())[0].get("hostname", "") == socket.gethostname()][0]
+            possible_configs = [list(entry.values())[0] for entry in configs if
+                             list(entry.values())[0].get("hostname", "") == socket.gethostname()]
+            active_config = [x for x in possible_configs if x.get("username",0) == username][0] if len(possible_configs) > 1 else possible_configs[0]
         with open("misc/config/settings.yaml", "r") as settings_stream:
             # settings = list(yaml.load_all(settings_stream, Loader=yaml.SafeLoader))
             settings = yaml.safe_load(settings_stream)

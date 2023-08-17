@@ -1,4 +1,4 @@
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from sklearn.metrics import ConfusionMatrixDisplay, PrecisionRecallDisplay
 import numpy as np
 
@@ -52,5 +52,5 @@ def plot_coefficients(out_dir, coefs, feature_names, model_name, label_name, top
     plt.bar(np.arange(len(coefs)), coefs, color=colors)
     plt.xticks(np.arange(len(coefs)), feature_names, rotation=60, ha='right')
     plt.tight_layout()
-    plt.savefig(f'{out_dir}/{label_name.replace(" ", "_")}/test/{model_name}_feature_importance', dpi=dpi)
+    plt.savefig(f'{out_dir}/{label_name.replace(" ", "_")}/test/{model_name}_feature_importance', dpi=300)
     plt.close()
