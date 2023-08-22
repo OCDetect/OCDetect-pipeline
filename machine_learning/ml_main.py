@@ -5,6 +5,8 @@ import pandas as pd
 from collections import Counter
 from machine_learning.classify.models import get_classification_model_grid
 from machine_learning.classify.evaluate import evaluate_single_model
+import yaml
+import shutil
 
 
 def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, config: dict):
@@ -14,10 +16,13 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
     X.columns = X.columns.astype(str)
     labels = labels.iloc[:, 0]
 
-    all_subjects = True if not settings.get("use_ocd_only") else False
+    subject_groups_folder_name = "all_subjects" if not settings.get("use_ocd_only") else "ocd_diagnosed_only"
+    ws_folder_name = f"ws_{settings.get('window_size')}"
+    # output folder in form like, e.g.: ml_results/all_subjects/ws_10/
+    out_dir = f"{config.get('ml_results_folder')}/{subject_groups_folder_name}/{ws_folder_name}"
+
     balancing_option = settings.get("balancing_option")
 
-    out_dir = config.get("ml_results_folder")
     # TODO add models to settings and read out which model(s) should be used if not all
     users = users["user"]
     users_outer_cv = list(users.unique())
@@ -40,3 +45,16 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
                                                                       seed=seed)
             # all_model_metrics[str(model.__class__.__name__)] = (val_metrics, test_metrics, curves)
             all_model_metrics[str(model.__class__.__name__)] = (test_metrics, curves)
+
+    export_path = config.get("export_subfolder_ml_prepared")
+    window_size = settings.get("window_size")
+
+    source_file = f"{export_path}/ws_{window_size}_s/{subject_groups_folder_name}/meta_info.txt"
+    destination_file = f"{out_dir}/meta_info.txt"
+
+    try:
+        shutil.copy(source_file, destination_file)
+    except FileNotFoundError:
+        print("Meta settings file not found.")
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")

@@ -73,13 +73,13 @@ def main(config: dict, settings: dict) -> int:
             logger.info(f"Scaled data: {scaling}; Filtered data: {filtering}")
 
             # todo: remove column "unnamed: 0" while writing to file instead of when reading in
-            features = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}.csv",
+            features = pd.read_csv(f"{export_path}/{sub_folder_path}/features_{filtering}_{scaling}.csv",
                                    usecols=lambda col: col != "Unnamed: 0")
-            labels = pd.read_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}.csv",
+            labels = pd.read_csv(f"{export_path}/{sub_folder_path}/labels_{filtering}_{scaling}.csv",
                                  usecols=lambda col: col != "Unnamed: 0")
-            users = pd.read_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}.csv",
+            users = pd.read_csv(f"{export_path}/{sub_folder_path}/users_{filtering}_{scaling}.csv",
                                 usecols=lambda col: col != "Unnamed: 0")
-            feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}.csv",
+            feature_names = pd.read_csv(f"{export_path}/{sub_folder_path}/feature_names_{filtering}_{scaling}.csv",
                                         usecols=lambda col: col != "Unnamed: 0")
 
         seed = settings.get("seed")

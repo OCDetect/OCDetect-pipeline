@@ -251,9 +251,8 @@ def prepare_data(settings: dict, config: dict):
 
         settings_data = yaml.dump(settings)
 
-        meta_file = f"meta_info_{file_date}.txt"
+        meta_file = "meta_info.txt"
         with open(f"{export_path}/{sub_folder_path}/{meta_file}", 'w') as file:
-            file.write("Used settings file: \n")
             file.write(meta_info)
             file.write("Used following settings file: \n")
             file.write(settings_data)

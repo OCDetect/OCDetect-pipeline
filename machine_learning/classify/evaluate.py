@@ -17,8 +17,8 @@ def evaluate_single_model(model, param_grid,
                           cv_splits=8, cv_scoring=None, select_features=False,
                           out_dir='results/default', sample_balancing=None, seed=42):
 
-    os.makedirs(f'{out_dir}/{y_train.name.replace(" ", "_")}/val/', exist_ok=True)
-    os.makedirs(f'{out_dir}/{y_train.name.replace(" ", "_")}/test/', exist_ok=True)
+    os.makedirs(f'{out_dir}/val/', exist_ok=True)
+    os.makedirs(f'{out_dir}/test/', exist_ok=True)
     model_name = str(model.__class__.__name__)
 
     cv = LeaveOneGroupOut()
@@ -30,7 +30,7 @@ def evaluate_single_model(model, param_grid,
     if sample_balancing in ['random_undersampling', 'SMOTE']:
         logger.info(f'n samples before: {len(y_train[y_train == 0])} vs. {len(y_train[y_train == 1])}')
         if sample_balancing == 'random_undersampling':
-            resampler = RandomUnderSampler(sampling_strategy='majority')
+            resampler = RandomUnderSampler()
         else:  # 'SMOTE'
             resampler = SMOTE(n_jobs=-1, sampling_strategy=0.2689, random_state=seed)
 
@@ -44,7 +44,6 @@ def evaluate_single_model(model, param_grid,
     if select_features:
         param_grid['selector'] = [SelectKBest(k='all'), SelectKBest(k=25),
                                   SelectFromModel(LinearSVC(C=1, penalty="l1", dual=False, max_iter=5000))]
-
         pipeline_steps.extend([('selector', 'passthrough'), ('model', model)])
     else:
         pipeline_steps.append(('model', model))
@@ -67,7 +66,8 @@ def evaluate_single_model(model, param_grid,
     start_time = time.time()
 
     # n_jobs=-1 -> all CPUs are used to perform parallel tasks
-    grid_model = GridSearchCV(pipeline, param_grid=param_grid, scoring=cv_scoring, verbose=False, cv=cv, n_jobs=-1, error_score=0)
+    grid_model = GridSearchCV(pipeline, param_grid=param_grid, scoring=cv_scoring, cv=cv, n_jobs=-1)
+
     grid_model.fit(X_train, y_train, groups=users)
 
     end_time = time.time()
