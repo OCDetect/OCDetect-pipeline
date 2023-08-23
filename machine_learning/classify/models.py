@@ -6,7 +6,7 @@ from sklearn.svm import SVC
 
 def get_classification_model_grid(class_weighting=None, seed=42):
     return [(RandomForestClassifier(class_weight="balanced", random_state=seed),
-             {'n_estimators': [5],
+             {'n_estimators': [100],
               'criterion': ['gini'],
               'max_depth': [5],
               'max_features': ['sqrt']})]

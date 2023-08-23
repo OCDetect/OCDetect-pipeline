@@ -39,7 +39,7 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
         for j, (model, param_grid) in enumerate(model_grid):
             # val_metrics, test_metrics, curves = evaluate_single_model(model, param_grid,
             test_metrics, curves = evaluate_single_model(model, param_grid,
-                                                                      X_train, y_train, X_test, y_test,
+                                                                      X_train, y_train, X_test, y_test, feature_names,
                                                                       out_dir=out_dir,
                                                                       sample_balancing=balancing_option,
                                                                       seed=seed)

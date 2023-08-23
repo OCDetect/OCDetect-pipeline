@@ -13,7 +13,7 @@ from sklearn.svm import LinearSVC
 
 
 def evaluate_single_model(model, param_grid,
-                          X_train, y_train, X_test, y_test,
+                          X_train, y_train, X_test, y_test, feature_names,
                           cv_splits=8, cv_scoring=None, select_features=False,
                           out_dir='results/default', sample_balancing=None, seed=42):
 
@@ -96,9 +96,8 @@ def evaluate_single_model(model, param_grid,
     best_model = grid_model.best_estimator_
 
 
-
     # =================== Final Model Testing ===============
     X_test = X_test.drop(columns=["user"])
-    test_metrics, test_curves = test_classification_model(best_model, X_train, y_train, X_test, y_test,
+    test_metrics, test_curves = test_classification_model(best_model, X_train, y_train, X_test, y_test, feature_names,
                                                           model_name, select_features, out_dir)
     return test_metrics, test_curves
