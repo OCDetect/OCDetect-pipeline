@@ -36,12 +36,13 @@
 
 - robin-atlas:
       username: robin.burchard
-      hostname: atlas
-      data_folder: ../NotHere
-      meta_subfolder: metadata/
-      first_hw_subfolder: labels_first_handwashes/
-      output_folder: ../OCDetect/Analysis/plots/idle_regions/
-      export_subfolder: ../NotHereEither
+      hostname: [atlas, artemis]
+      data_folder: ../../../groups/ocdetect/orig_data/
+      meta_subfolder: ../metadata/
+      first_hw_subfolder: ../labels_first_handwashes/
+      output_folder: ../OCDetect_results/Analysis/plots/idle_regions/
+      export_subfolder: ../OCDetect_results/preprocessed/
       export_subfolder_ml_prepared: ../OCDetect/
-      plots_folder: ../OCDetect/Analysis/plots
+      plots_folder: ../OCDetect/Analysis/plots/
       ml_results_folder: ../OCDetect/Analysis/ml_results/
+      prefix: OCDetect_

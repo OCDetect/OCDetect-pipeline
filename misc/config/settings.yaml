@@ -17,8 +17,8 @@ seed: 42
 ###################################################################
 
 ### General settings
-resample: True # TODO outdated?
-use_oversampling: True # TODO outdated?
+resample: False # TODO outdated?
+use_oversampling: False # TODO outdated?
 use_undersampling: False # do not set over- AND undersampling to True # TODO outdated?
 balancing_option: "random_undersampling"
 
@@ -28,11 +28,14 @@ use_scaling: True
 
 
 ### Filtering Settings
-short_succession_time : 10
-magnitude_window_size : 500
-magnitude_threshold : 0.2
-magnitude_overlap : 0.5
-min_time_in_s_before_label: 5
+test_filters : True  # if false, the system will use the first value in the list.
+run_export : False  # actually save the results to the disk
+short_succession_time : [1, 5, 10, 30]
+magnitude_window_size : [200, 500, 2000]
+magnitude_threshold : [0.1, 0.2, 0.3, 0.4, 0.5]
+magnitude_overlap : [0, 0.5]
+min_time_in_s_before_label: [5, 10]
+# TODO: band filter settings? (where does it happen?)
 
 ### Relabel settings
 relabel_duration : 38
@@ -45,7 +48,7 @@ relabel_offset : 5   # how many seconds before the label did the hand washing en
 ###################################################################
 
 ### Settings for data windowing
-window_size : 10 # value in seconds
+window_size : 5 # value in seconds
 overlap : 0.5
 labelling_algorithm : "Majority"
 
@@ -60,6 +63,7 @@ scaler : "standard"
 
 ### Settings for feature extraction
 id : "tsfresh_id"
+raw_features : True  # don't extract features, just create windows. Overwrites filter and scaler setting.
 
 features :
   mean: None

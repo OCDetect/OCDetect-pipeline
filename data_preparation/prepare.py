@@ -139,14 +139,17 @@ def get_data_path_variables(use_scaling, use_filter, config:dict, settings: dict
     subjects_folder_name = "all_subjects" if not subjects else "ocd_diagnosed_only"
     sub_folder_path = f"ws_{window_size}_s/{subjects_folder_name}"
 
-    scaling = "scaled" if use_scaling else "not_scaled"
-    filtering = "filtered" if use_filter else "not_filtered"
+    raw = "_raw" if settings.get("raw_features") else ""
 
-    return window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering
+    scaling = "scaled" if use_scaling and not raw else "not_scaled"
+    filtering = "filtered" if use_filter and not raw else "not_filtered"
+
+
+    return window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering, raw
 
 
 # main function for data preparation
-def prepare_data(settings: dict, config: dict):
+def prepare_data(settings: dict, config: dict, raw: bool=False):
     use_filter, use_scaling, resample, use_undersampling, use_oversampling = load_data_preparation_settings(settings)
     all_subjects = True if not settings.get("use_ocd_only") else False
 
@@ -159,7 +162,7 @@ def prepare_data(settings: dict, config: dict):
 
     subject_numbers = settings.get("all_subjects") if all_subjects else settings.get("ocd_diagnosed_subjects")
 
-    for file_name in os.listdir(folder_path):
+    for file_name in tqdm(os.listdir(folder_path)):
         if file_name.endswith('.csv'):
             match = re.search(pattern, file_name)
             if match:
@@ -180,7 +183,7 @@ def prepare_data(settings: dict, config: dict):
     start_time = time.time()
 
     # 1. Filter data if desired
-    if use_filter:
+    if use_filter and not raw:
         filtered_data_all = []
         for subject in data:
             filtered_data_subject = []
@@ -210,7 +213,7 @@ def prepare_data(settings: dict, config: dict):
         logger.info(f"Amount of windows : {windows['tsfresh_id'].iloc[-1]}")
 
         # 4. Extracting features
-        features_user = feature_extraction(windows, settings)
+        features_user = feature_extraction(windows, settings) if not raw else windows
         features.append(features_user)
 
         logger.info(f"Subject: {i}, features: {len(features_user)}, labels: {len(user_labels)}")
@@ -222,7 +225,7 @@ def prepare_data(settings: dict, config: dict):
     feature_names = features.columns.values.tolist()
 
     # 5. Scale data if desired
-    if use_scaling:
+    if use_scaling and not raw:
         features = std_scaling_data(features, settings)
 
     end_time = time.time()
@@ -230,7 +233,7 @@ def prepare_data(settings: dict, config: dict):
     windowing_time_min = windowing_time_s / 60
 
     if save_data:
-        window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering = get_data_path_variables(
+        window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering, raw_str = get_data_path_variables(
             use_scaling, use_filter, config, settings)
 
         today = date.today()
@@ -238,10 +241,10 @@ def prepare_data(settings: dict, config: dict):
 
         os.makedirs(f"{export_path}/{sub_folder_path}", exist_ok=True)
 
-        labels.to_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}.csv")
-        users.to_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}.csv")
-        features.to_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}.csv")
-        pd.DataFrame(feature_names).to_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}.csv")
+        labels.to_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}{raw_str}.csv")
+        users.to_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}{raw_str}.csv")
+        features.to_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}{raw_str}.csv")
+        pd.DataFrame(feature_names).to_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}{raw_str}.csv")
 
         # create file with meta information for the current window setup
         meta_info = f"Meta information for \"{file_date}\":\n"
@@ -258,4 +261,4 @@ def prepare_data(settings: dict, config: dict):
             file.write("Used following settings file: \n")
             file.write(settings_data)
 
-    return labels, users, features, feature_names
+    return labels, features, users, feature_names
