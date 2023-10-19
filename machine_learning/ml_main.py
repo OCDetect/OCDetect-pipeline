@@ -2,19 +2,33 @@ from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
 from misc import logger
 import pandas as pd
+import numpy as np
 from collections import Counter
 from machine_learning.classify.models import get_classification_model_grid
 from machine_learning.classify.evaluate import evaluate_single_model
+from .dl.dl_main import dl_main
+from .dl.OCDetectDataset import OCDetectDataset
 import yaml
 import shutil
 
 
 def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, config: dict):
     # todo test this for case that data is not prepared
-    users.rename(columns={'0': 'user'}, inplace=True)
-    X = pd.merge(features, users, left_index=True, right_index=True)
-    X.columns = X.columns.astype(str)
-    labels = labels.iloc[:, 0]
+    try:
+        users.rename(columns={'0': 'user'}, inplace=True)
+    except:
+        pass
+    if len(feature_names) == 7:
+        users_rep = users.loc[users.index.repeat(int(settings["window_size"] * 50))].to_numpy()
+        features["user"] = users_rep
+        windows = []
+        for ind, window_df in features.groupby(["user", "tsfresh_id"]):
+            windows.append(window_df.iloc[:,:6].to_numpy())
+        windows = np.stack(windows)
+    else:
+        X = pd.merge(features, users, left_index=True, right_index=True)
+        X.columns = X.columns.astype(str)
+        labels = labels.iloc[:, 0]
 
     subject_groups_folder_name = "all_subjects" if not settings.get("use_ocd_only") else "ocd_diagnosed_only"
     ws_folder_name = f"ws_{settings.get('window_size')}"
@@ -22,6 +36,14 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
     out_dir = f"{config.get('ml_results_folder')}/{subject_groups_folder_name}/{ws_folder_name}"
 
     balancing_option = settings.get("balancing_option")
+
+    out_dir = config.get("ml_results_folder")
+    only_dl = True ## TODO: set to false in settings - could also use "Raw" param.
+    if only_dl:
+        OCDetectDataset.preload(windows, users, labels)
+        dl_main(config, users)
+        return
+
 
     # TODO add models to settings and read out which model(s) should be used if not all
     users = users["user"]
