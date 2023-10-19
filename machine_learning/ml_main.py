@@ -1,6 +1,3 @@
-from imblearn.over_sampling import SMOTE
-from imblearn.under_sampling import RandomUnderSampler
-from misc import logger
 import pandas as pd
 import numpy as np
 from collections import Counter
@@ -64,7 +61,7 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
                                                                       X_train, y_train, X_test, y_test, feature_names,
                                                                       out_dir=out_dir,
                                                                       sample_balancing=balancing_option,
-                                                                      seed=seed)
+                                                                      seed=seed, test_subject=test_subject)
             # all_model_metrics[str(model.__class__.__name__)] = (val_metrics, test_metrics, curves)
             all_model_metrics[str(model.__class__.__name__)] = (test_metrics, curves)
 
@@ -80,3 +77,18 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
         print("Meta settings file not found.")
     except Exception as e:
         print(f"An error occurred: {str(e)}")
+
+
+   # ===== Save aggregate plots across models =====
+    # Generate Boxplots for Metrics
+    json_metric_data = {}
+    for metric_name in all_model_metrics[str(model.__class__.__name__)][0].keys():
+        if metric_name == 'confusion_matrix':
+            json_metric_data[metric_name] = {model_name: (test_metrics[metric_name].tolist())
+                                             for model_name, (test_metrics, _) in all_model_metrics.items()}
+            continue
+        metric_data = {model_name: (test_metrics[metric_name])
+                       for model_name, (test_metrics, _) in all_model_metrics.items()}
+        json_metric_data[metric_name] = metric_data
+        # boxplot(out_dir, metric_data, metric_name, "hand washing", ymin=(-1 if metric_name == 'mcc' else 0))
+    json.dump(json_metric_data, open(f'{out_dir}/all_model_metrics.json', 'w'), indent=4)

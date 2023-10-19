@@ -17,8 +17,8 @@ seed: 42
 ###################################################################
 
 ### General settings
-resample: False # TODO outdated?
-use_oversampling: False # TODO outdated?
+resample: True # TODO outdated?
+use_oversampling: True # TODO outdated?
 use_undersampling: False # do not set over- AND undersampling to True # TODO outdated?
 balancing_option: "random_undersampling"
 

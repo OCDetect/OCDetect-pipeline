@@ -1,6 +1,6 @@
 import os
 import time
-from machine_learning.classify.metrics import all_classification_metrics_list
+from machine_learning.classify.metrics import all_classification_metrics_list, compute_classification_metrics
 from machine_learning.classify.test_model import test_classification_model
 from misc import logger
 import numpy as np
@@ -15,10 +15,10 @@ from sklearn.svm import LinearSVC
 def evaluate_single_model(model, param_grid,
                           X_train, y_train, X_test, y_test, feature_names,
                           cv_splits=8, cv_scoring=None, select_features=False,
-                          out_dir='results/default', sample_balancing=None, seed=42):
+                          out_dir='results/default', sample_balancing=None, seed=42, test_subject=None):
 
-    os.makedirs(f'{out_dir}/val/', exist_ok=True)
-    os.makedirs(f'{out_dir}/test/', exist_ok=True)
+    os.makedirs(f'{out_dir}/test_subject_{test_subject}/val/', exist_ok=True)
+    os.makedirs(f'{out_dir}/test_subject_{test_subject}/test/', exist_ok=True)
     model_name = str(model.__class__.__name__)
 
     cv = LeaveOneGroupOut()
@@ -81,7 +81,7 @@ def evaluate_single_model(model, param_grid,
         pass
     except ValueError as ve:
         logger.error(ve)
-        with open(f'{out_dir}/best_parameters.txt', 'a+') as f:
+        with open(f'{out_dir}/test_subject_{test_subject}/best_parameters.txt', 'a+') as f:
             f.write('\n' + model_name)
             f.write(f'GridSearch Failed due to incompatible options in best selected model.\n')
         logger.error("Warning: 'GridSearch Failed due to incompatible options in best selected model.")
@@ -89,7 +89,7 @@ def evaluate_single_model(model, param_grid,
         return {metric: ([0.0] if metric != 'confusion_matrix' else [empty_cm] * cv_splits) for metric in all_metrics_list}, \
                {metric: (0.0 if metric != 'confusion_matrix' else empty_cm) for metric in all_metrics_list}, \
                (([0] * 101, [0] * 101, [0] * 101), ([0] * 101, [0] * 101, [0] * 101))
-    with open(f'{out_dir}/best_parameters.txt', 'a+') as f:
+    with open(f'{out_dir}/test_subject_{test_subject}/best_parameters.txt', 'a+') as f:
         f.write('\n' + model_name)
         f.write(f'\nBest Params: {grid_model.best_params_}\n')
     logger.info(f'Best Params: {grid_model.best_params_} - {cv_scoring}: {grid_model.best_score_}')
@@ -98,6 +98,6 @@ def evaluate_single_model(model, param_grid,
 
     # =================== Final Model Testing ===============
     X_test = X_test.drop(columns=["user"])
-    test_metrics, test_curves = test_classification_model(best_model, X_train, y_train, X_test, y_test, feature_names,
+    test_metrics, test_curves = test_classification_model(best_model, X_train, y_train, X_test, y_test, feature_names, test_subject,
                                                           model_name, select_features, out_dir)
     return test_metrics, test_curves
