@@ -9,25 +9,28 @@
 import numpy as np
 import pandas as pd
 import torch.cuda
+from sklearn.model_selection import train_test_split
 
 from .train import *
 from torch.utils.data import DataLoader
 
-def dl_main(config: dict):
+def dl_main(config: dict, users):
     # ---------------------------------------------------------------------------------------------------------
     # 1. Prepare the Dataset according to the config
-
-    train_test_split = [[[1,2], [5]], [[5, 2], [1]]]
+    if type(users) == pd.DataFrame:
+        users = users["user"]
+    users = users.unique()
+    split = [train_test_split(users, test_size=0.3)]
 
     # ---------------------------------------------------------------------------------------------------------
     # 2. Cross-Validation loop and results-gathering.
     dl_config["devices"] = ["cuda"] if torch.cuda.is_available() else ["cpu"]
-    for train_subs, test_subs in train_test_split:
+    for train_subs, test_subs in split:
         for model_name in ["ShallowDeepConvLSTM", "attendanddiscriminate", "tinyhar"]:
             dl_config["name"] = model_name
             dl_config["model"] = dl_config[model_name]
             t_losses, v_losses, v_preds, v_gt = run_inertial_network(train_subs, test_subs, dl_config,
-                                 config.get("ml_results_folder") + "dl_checkpoints/", 10, resume=False)
+                                 config.get("ml_results_folder") + "dl_checkpoints/", 10, resume=False, split_name="TODO")
 
 
     # ---------------------------------------------------------------------------------------------------------

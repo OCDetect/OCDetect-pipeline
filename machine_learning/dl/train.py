@@ -43,11 +43,8 @@ def worker_init_reset_seed(worker_id):
     torch.manual_seed(seed)
 
 
-def run_inertial_network(train_sbjs, val_sbjs, cfg, ckpt_folder, ckpt_freq, resume, run=None):
-    split_name = "split_name_goes_here"
+def run_inertial_network(train_sbjs, val_sbjs, cfg, ckpt_folder, ckpt_freq, resume, run=None, split_name="split_name"):
     # load train and val inertial data
-
-
     # define inertial datasets
     train_dataset = OCDetectDataset(train_sbjs, cfg['dataset']['window_size'], model=cfg['name'])
     test_dataset = OCDetectDataset(val_sbjs, cfg['dataset']['window_size'], model=cfg['name'])

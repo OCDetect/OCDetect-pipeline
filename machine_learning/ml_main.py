@@ -17,7 +17,7 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
     except:
         pass
     if len(feature_names) == 7:
-        users_rep = users.loc[users.index.repeat(150)].to_numpy()
+        users_rep = users.loc[users.index.repeat(int(settings["window_size"] * 50))].to_numpy()
         features["user"] = users_rep
         windows = []
         for ind, window_df in features.groupby(["user", "tsfresh_id"]):
@@ -35,7 +35,7 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
     only_dl = True ## TODO: set to false in settings - could also use "Raw" param.
     if only_dl:
         OCDetectDataset.preload(windows, users, labels)
-        dl_main(config)
+        dl_main(config, users)
         return
 
 
