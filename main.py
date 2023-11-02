@@ -3,16 +3,17 @@ import gc
 import yaml
 import sys
 import socket
-from data_cleansing.modules import load_subject
+from misc.csv_loader import load_subject
 from data_cleansing.helpers.definitions import Sensor
-from data_cleansing.modules import run_data_cleansing
+from data_cleansing.modules.filter import run_data_cleansing
+from data_cleansing.modules.relabel import relabel
 from misc import logger
 from misc.export import export_data
-from ml_main import do_ml
+#from ml_main import do_ml
 from data_cleansing.modules import relabel
 
-preprocessing = False
-machine_learning = True
+preprocessing = True
+machine_learning = False
 
 
 def main(config: dict, settings: dict) -> int:
