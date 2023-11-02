@@ -1,3 +1,5 @@
+import json
+
 import pandas as pd
 import numpy as np
 from collections import Counter
@@ -35,7 +37,7 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
     balancing_option = settings.get("balancing_option")
 
     out_dir = config.get("ml_results_folder")
-    only_dl = True ## TODO: set to false in settings - could also use "Raw" param.
+    only_dl = False ## TODO: set to false in settings - could also use "Raw" param.
     if only_dl:
         OCDetectDataset.preload(windows, users, labels)
         dl_main(config, users)

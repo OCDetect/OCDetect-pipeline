@@ -16,14 +16,13 @@ import pandas as pd
 import getpass
 from machine_learning.ml_main import ml_pipeline
 from copy import deepcopy
+import threading
+import concurrent.futures
+from multiprocessing import Manager, Lock
 
 data_cleansing = False
 data_preparation = True
 machine_learning = True
-
-import threading
-import concurrent.futures
-from multiprocessing import Manager, Lock
 
 
 def main(config: dict, settings: dict) -> int:
@@ -36,7 +35,10 @@ def main(config: dict, settings: dict) -> int:
     """
     threads = []
     futures = []
-    already_done = pd.read_csv(config["output_folder"] + "prep_params.csv", index_col=False)
+    try:
+        already_done = pd.read_csv(config["output_folder"] + "prep_params.csv", index_col=False)
+    except FileNotFoundError:
+        already_done = [] #TODO to be tested for data_cleansing = True
     if data_cleansing:
         with Manager() as manager:
             #subj_loaded = manager.dict()

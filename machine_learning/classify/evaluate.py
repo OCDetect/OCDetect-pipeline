@@ -31,9 +31,10 @@ def evaluate_single_model(model, param_grid,
         logger.info(f'n samples before: {len(y_train[y_train == 0])} vs. {len(y_train[y_train == 1])}')
         if sample_balancing == 'random_undersampling':
             resampler = RandomUnderSampler()
+            logger.info("Using random undersampling")
         else:  # 'SMOTE'
             resampler = SMOTE(n_jobs=-1, sampling_strategy=0.2689, random_state=seed)
-
+            logger.info("Using oversampling")
         pipeline_steps.append(('resampling', resampler))
 
     # ================= SELECT OPTIMAL MODEL AND FEATURE SET THROUGH CV =================

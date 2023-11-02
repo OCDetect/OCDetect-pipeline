@@ -144,7 +144,6 @@ def get_data_path_variables(use_scaling, use_filter, config:dict, settings: dict
     scaling = "scaled" if use_scaling and not raw else "not_scaled"
     filtering = "filtered" if use_filter and not raw else "not_filtered"
 
-
     return window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering, raw
 
 
