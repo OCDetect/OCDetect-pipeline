@@ -25,8 +25,10 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
             windows.append(window_df.iloc[:,:6].to_numpy())
         windows = np.stack(windows)
     else:
+        features.columns = feature_names.iloc[:, 0].tolist()
+        users.columns = ["user"]
         X = pd.merge(features, users, left_index=True, right_index=True)
-        X.columns = X.columns.astype(str)
+        #  X.columns = X.columns.astype(str)
         labels = labels.iloc[:, 0]
 
     subject_groups_folder_name = "all_subjects" if not settings.get("use_ocd_only") else "ocd_diagnosed_only"
@@ -36,13 +38,12 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
 
     balancing_option = settings.get("balancing_option")
 
-    out_dir = config.get("ml_results_folder")
-    only_dl = False ## TODO: set to false in settings - could also use "Raw" param.
+    # out_dir = config.get("ml_results_folder")
+    only_dl = False  # TODO: set to false in settings - could also use "Raw" param.
     if only_dl:
         OCDetectDataset.preload(windows, users, labels)
         dl_main(config, users)
         return
-
 
     # TODO add models to settings and read out which model(s) should be used if not all
     users = users["user"]
@@ -56,11 +57,11 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
         all_model_metrics = {}
 
         # model grid
-        model_grid = get_classification_model_grid('balanced' if balancing_option == 'class_weight' else None, seed=seed)
+        model_grid = get_classification_model_grid(seed=seed)
         for j, (model, param_grid) in enumerate(model_grid):
             # val_metrics, test_metrics, curves = evaluate_single_model(model, param_grid,
             test_metrics, curves = evaluate_single_model(model, param_grid,
-                                                                      X_train, y_train, X_test, y_test, feature_names,
+                                                                       X_train, y_train, X_test, y_test, feature_names,
                                                                       out_dir=out_dir,
                                                                       sample_balancing=balancing_option,
                                                                       seed=seed, test_subject=test_subject)

@@ -21,7 +21,7 @@ import concurrent.futures
 from multiprocessing import Manager, Lock
 
 data_cleansing = False
-data_preparation = True
+data_preparation = False
 machine_learning = True
 
 
@@ -38,7 +38,7 @@ def main(config: dict, settings: dict) -> int:
     try:
         already_done = pd.read_csv(config["output_folder"] + "prep_params.csv", index_col=False)
     except FileNotFoundError:
-        already_done = [] #TODO to be tested for data_cleansing = True
+        already_done = []  # TODO to be tested for data_cleansing = True
     if data_cleansing:
         with Manager() as manager:
             #subj_loaded = manager.dict()

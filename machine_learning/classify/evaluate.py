@@ -36,6 +36,8 @@ def evaluate_single_model(model, param_grid,
             resampler = SMOTE(n_jobs=-1, sampling_strategy=0.2689, random_state=seed)
             logger.info("Using oversampling")
         pipeline_steps.append(('resampling', resampler))
+    else:
+        logger.info("no additional balancing")
 
     # ================= SELECT OPTIMAL MODEL AND FEATURE SET THROUGH CV =================
 
