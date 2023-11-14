@@ -4,16 +4,12 @@ from sklearn.metrics import ConfusionMatrixDisplay, PrecisionRecallDisplay, prec
 import numpy as np
 
 model_name_replacements = {
-    'DecisionTreeClassifier': 'Decision tree',
     'LogisticRegression': 'Logistic regression',
-    'LinearSVC': 'Linear SVM',
     'GradientBoostingClassifier': 'Gradient boosting machine',
-    'RandomForestClassifier': 'Random forest',
-    'SVC': 'SVM',
-    'MLPClassifier': 'Neural network',
+    'RandomForestClassifier': 'Random forest'
 }
 
-def plot_roc_pr_curve(X_test, y_test, test_subject, model, model_name, out_dir):
+def plot_roc_pr_curve(X_test, y_test, model, model_name, out_dir):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
     ax1.set_aspect('equal')
     ax2.set_aspect('equal')
@@ -47,7 +43,7 @@ def plot_roc_pr_curve(X_test, y_test, test_subject, model, model_name, out_dir):
     ax2.set_title('Precision-Recall Curve')
     ax2.legend(loc='lower left')
 
-    plt.savefig(f'{out_dir}/test_subject_{test_subject}/test/{model_name}_roc_prc_curves'.replace(' ', '_'), bbox_inches='tight', dpi=300)
+    plt.savefig(f'{out_dir}/{model_name}_roc_prc_curves'.replace(' ', '_'), bbox_inches='tight', dpi=300)
 
     return roc_curve, roc_auc, precision_recall_curve, prc_auc, average_precision
 
@@ -59,11 +55,11 @@ def plot_confusion_matrix(test_subject, confusion_matrix, model_name, out_dir, p
                                   display_labels=[0, 1])
     disp.plot(include_values=True, cmap='Blues', ax=ax,
               xticks_rotation='horizontal', values_format='d')
-    plt.savefig(f'{out_dir}/test_subject_{test_subject}/{model_name}_cm'.replace(' ', '_'))
+    plt.savefig(f'{out_dir}/{model_name}_cm'.replace(' ', '_'))
     plt.close()
 
 
-def plot_coefficients(test_subject, out_dir, coefs, feature_names, model_name, label_name, top_features=None):
+def plot_coefficients(out_dir, coefs, feature_names, model_name, label_name, top_features=None):
     # filter out 0 values
     filter_mask = (abs(coefs) > 1e-3)
     coefs = coefs[filter_mask]
@@ -83,7 +79,7 @@ def plot_coefficients(test_subject, out_dir, coefs, feature_names, model_name, l
     plt.bar(np.arange(len(coefs)), coefs, color=colors)
     plt.xticks(np.arange(len(coefs)), feature_names, rotation=60, ha='right')
     plt.tight_layout()
-    plt.savefig(f'{out_dir}/test_subject_{test_subject}/test/{model_name}_feature_importance', dpi=300)
+    plt.savefig(f'{out_dir}/{model_name}_feature_importance', dpi=300)
     plt.close()
 
 

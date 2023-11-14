@@ -49,7 +49,7 @@ relabel_offset : 5   # how many seconds before the label did the hand washing en
 ###################################################################
 
 ### Settings for data windowing
-window_size : 5 # value in seconds
+window_size : 1 # value in seconds
 overlap : 0.5
 labelling_algorithm : "Majority"
 

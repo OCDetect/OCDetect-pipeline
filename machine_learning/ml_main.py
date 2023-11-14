@@ -22,7 +22,7 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
         features["user"] = users_rep
         windows = []
         for ind, window_df in features.groupby(["user", "tsfresh_id"]):
-            windows.append(window_df.iloc[:,:6].to_numpy())
+            windows.append(window_df.iloc[:, :6].to_numpy())
         windows = np.stack(windows)
     else:
         features.columns = feature_names.iloc[:, 0].tolist()
@@ -59,13 +59,11 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
         # model grid
         model_grid = get_classification_model_grid(seed=seed)
         for j, (model, param_grid) in enumerate(model_grid):
-            # val_metrics, test_metrics, curves = evaluate_single_model(model, param_grid,
             test_metrics, curves = evaluate_single_model(model, param_grid,
-                                                                       X_train, y_train, X_test, y_test, feature_names,
-                                                                      out_dir=out_dir,
-                                                                      sample_balancing=balancing_option,
-                                                                      seed=seed, test_subject=test_subject)
-            # all_model_metrics[str(model.__class__.__name__)] = (val_metrics, test_metrics, curves)
+                                                         X_train, y_train, X_test, y_test, feature_names,
+                                                         out_dir=out_dir,
+                                                         sample_balancing=balancing_option,
+                                                         seed=seed, test_subject=test_subject)
             all_model_metrics[str(model.__class__.__name__)] = (test_metrics, curves)
 
     export_path = config.get("export_subfolder_ml_prepared")
@@ -81,8 +79,7 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
-
-   # ===== Save aggregate plots across models =====
+    # ===== Save aggregate plots across models =====
     # Generate Boxplots for Metrics
     json_metric_data = {}
     for metric_name in all_model_metrics[str(model.__class__.__name__)][0].keys():
