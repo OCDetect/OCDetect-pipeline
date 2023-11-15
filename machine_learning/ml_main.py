@@ -25,7 +25,7 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
             windows.append(window_df.iloc[:, :6].to_numpy())
         windows = np.stack(windows)
     else:
-        features.columns = feature_names.iloc[:, 0].tolist()
+        features.columns = feature_names
         users.columns = ["user"]
         X = pd.merge(features, users, left_index=True, right_index=True)
         #  X.columns = X.columns.astype(str)

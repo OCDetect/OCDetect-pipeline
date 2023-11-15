@@ -21,7 +21,7 @@ import concurrent.futures
 from multiprocessing import Manager, Lock
 
 data_cleansing = False
-data_preparation = False
+data_preparation = True
 machine_learning = True
 
 
@@ -100,7 +100,7 @@ def main(config: dict, settings: dict) -> int:
             users = pd.read_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}{raw_str}.csv",
                                 usecols=lambda col: col != "Unnamed: 0")
             feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}{raw_str}.csv",
-                                        usecols=lambda col: col != "Unnamed: 0")
+                                        usecols=lambda col: col != "Unnamed: 0").iloc[:, 0].tolist()
 
         seed = settings.get("seed")
         ml_pipeline(features, users, labels, feature_names, seed, settings, config)

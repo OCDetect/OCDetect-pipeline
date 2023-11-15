@@ -217,8 +217,8 @@ def prepare_data(settings: dict, config: dict, raw: bool=False):
 
         logger.info(f"Subject: {i}, features: {len(features_user)}, labels: {len(user_labels)}")
 
-    labels = pd.concat(labels).reset_index(drop=True)
-    users = pd.concat(users).reset_index(drop=True)
+    labels = pd.concat(labels).reset_index(drop=True).to_frame()
+    users = pd.concat(users).reset_index(drop=True).to_frame()
 
     features = pd.concat(features)
     feature_names = features.columns.values.tolist()
