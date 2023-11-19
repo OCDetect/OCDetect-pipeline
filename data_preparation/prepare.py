@@ -78,7 +78,9 @@ def check_ignore(current_window):
 
 def perform_majority_voting(current_window, hw_general=True):
     counts = current_window['relabeled'].value_counts()
-
+    null_class = counts.get(0, 0)
+    routine_hw = counts.get(1, 0)
+    compulsive_hw = counts.get(2, 0)
     if hw_general:
         null_class = counts.get(0, 0)
         routine_hw = counts.get(1, 0)
@@ -99,7 +101,7 @@ def perform_majority_voting(current_window, hw_general=True):
             majority_label = 2  # compulsive hand washing present
         else:
             majority_label = 0  # null class
-
+            
     return majority_label
 
 
@@ -125,7 +127,6 @@ def load_data_preparation_settings(settings: dict): # Todo: make sure that not o
     resample = settings.get("resample")
     use_undersampling = settings.get("use_undersampling")
     use_oversampling = settings.get("use_oversampling")
-
     return use_filter, use_scaling, resample, use_undersampling, use_oversampling
 
 
@@ -240,10 +241,10 @@ def prepare_data(settings: dict, config: dict, raw: bool=False):
 
         os.makedirs(f"{export_path}/{sub_folder_path}", exist_ok=True)
 
-        labels.to_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}{raw_str}.csv")
-        users.to_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}{raw_str}.csv")
-        features.to_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}{raw_str}.csv")
-        pd.DataFrame(feature_names).to_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}{raw_str}.csv")
+        labels.to_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}{raw_str}.csv", index=False)
+        users.to_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}{raw_str}.csv", index=False)
+        features.to_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}{raw_str}.csv", index=False)
+        pd.DataFrame(feature_names).to_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}{raw_str}.csv", index=False)
 
         # create file with meta information for the current window setup
         meta_info = f"Meta information for \"{file_date}\":\n"

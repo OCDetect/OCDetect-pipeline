@@ -21,7 +21,7 @@ import concurrent.futures
 from multiprocessing import Manager, Lock
 
 data_cleansing = False
-data_preparation = True
+data_preparation = False
 machine_learning = True
 
 
@@ -93,15 +93,10 @@ def main(config: dict, settings: dict) -> int:
             logger.info(f"Scaled data: {scaling}; Filtered data: {filtering}")
 
             # todo: remove column "unnamed: 0" while writing to file instead of when reading in
-            features = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}{raw_str}.csv",
-                                   usecols=lambda col: col != "Unnamed: 0")
-            labels = pd.read_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}{raw_str}.csv",
-                                 usecols=lambda col: col != "Unnamed: 0")
-            users = pd.read_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}{raw_str}.csv",
-                                usecols=lambda col: col != "Unnamed: 0")
-            feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}{raw_str}.csv",
-                                        usecols=lambda col: col != "Unnamed: 0").iloc[:, 0].tolist()
-
+            features = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}{raw_str}.csv")
+            labels = pd.read_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}{raw_str}.csv")
+            users = pd.read_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}{raw_str}.csv")
+            feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}{raw_str}.csv").iloc[:, 0].tolist()
         seed = settings.get("seed")
         ml_pipeline(features, users, labels, feature_names, seed, settings, config)
 
