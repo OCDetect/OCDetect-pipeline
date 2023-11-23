@@ -28,7 +28,6 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
         features.columns = feature_names
         users.columns = ["user"]
         X = pd.merge(features, users, left_index=True, right_index=True)
-        #  X.columns = X.columns.astype(str)
         labels = labels.iloc[:, 0]
 
     subject_groups_folder_name = "all_subjects" if not settings.get("use_ocd_only") else "ocd_diagnosed_only"
