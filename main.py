@@ -92,7 +92,6 @@ def main(config: dict, settings: dict) -> int:
             logger.info(f"Using path: {export_path}{sub_folder_path}")
             logger.info(f"Scaled data: {scaling}; Filtered data: {filtering}")
 
-            # todo: remove column "unnamed: 0" while writing to file instead of when reading in
             features = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}{raw_str}.csv")
             labels = pd.read_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}{raw_str}.csv")
             users = pd.read_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}{raw_str}.csv")
