@@ -23,6 +23,7 @@ from multiprocessing import Manager, Lock
 
 def main(config: dict, settings: dict) -> int:
     #change
+    # und wenn ich es so mache
     data_cleansing = settings["data_cleansing"]
     data_preparation = settings["data_preparation"]
     machine_learning = settings["machine_learning"]
