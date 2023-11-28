@@ -11,9 +11,6 @@ from datetime import date
 from data_preparation.utils.filter import butter_filter
 from data_preparation.utils.scaler import std_scaling_data
 
-save_data = True
-overwrite_data = True
-
 
 def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: dict):
     """
@@ -150,6 +147,8 @@ def get_data_path_variables(use_scaling, use_filter, config:dict, settings: dict
 
 # main function for data preparation
 def prepare_data(settings: dict, config: dict, raw: bool=False):
+    save_data = settings["save_data"]
+    overwrite_data = settings["overwrite_data"]
     use_filter, use_scaling, resample, use_undersampling, use_oversampling = load_data_preparation_settings(settings)
     all_subjects = True if not settings.get("use_ocd_only") else False
 
