@@ -127,13 +127,13 @@ def boxplot(out_dir, data, metric_name, y_label, ymin=0, ymax=1):
     plt.close()
 
 def barchart(out_dir, data, metric_name):
-    """Prints bar chart of metric_name (set in settings) for all subjects and models
+    """Prints bar chart of metric_name (set in settings) for all test subjects and models
 
     Parameters
     out_dir : str
         Base output directory
     data : dict
-        Metric data in the form {subject: (model: (metrics: value)}
+        Metric data in the form {test_subject: (model: (metrics: value)}
     metric_name : str
         The name of the metric
     """
@@ -169,9 +169,9 @@ def barchart(out_dir, data, metric_name):
     # set axes and legend
     ax.set_xticks(bar_positions + (len(unique_models) - 1) * bar_width / 2)
     ax.set_xticklabels(unique_subjects)
-    ax.set_xlabel('subjects')
+    ax.set_xlabel('test subjects')
     ax.set_ylabel(metric_name)
-    ax.set_title(metric_name + ' per subject and model')
+    ax.set_title(metric_name + ' per test subject and model')
     ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()
     # save
