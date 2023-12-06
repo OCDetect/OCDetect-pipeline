@@ -87,4 +87,10 @@ features :
 
 jobs : 32
 
+### plot settings
+
+barchart_metric: "f1_score"
+
+
+
 

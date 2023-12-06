@@ -110,17 +110,70 @@ def boxplot(out_dir, data, metric_name, y_label, ymin=0, ymax=1):
 
     model_names = list(data.keys())
     # Plot val boxplot
-    val_data = list(map(lambda x: x[0], data.values()))
+    #val_data = list(map(lambda x: x[0], data.values()))
+    val_data = list(data.values())
     plt.boxplot(val_data)
 
     # Plot test single data point
-    test_data = list(map(lambda x: x[1], data.values()))
-    plt.scatter(range(1, len(model_names) + 1), test_data, marker='o', color='blue')
+    #test_data = list(map(lambda x: x[1], data.values()))
+    #plt.scatter(range(1, len(model_names) + 1), test_data, marker='o', color='blue')
 
     # Format axes etc
     ax.set_xticklabels([model_name_replacements.get(model_name, model_name) for model_name in model_names], rotation=45, ha='right')
     ax.set_ylim(ymin, ymax)
     ax.set_ylabel(metric_name)
     plt.tight_layout()
+    plt.savefig(f'{out_dir}/all_models_{metric_name}', dpi=96)
+    plt.close()
+
+def barchart(out_dir, data, metric_name):
+    """Prints bar chart of metric_name (set in settings) for all subjects and models
+
+    Parameters
+    out_dir : str
+        Base output directory
+    data : dict
+        Metric data in the form {subject: (model: (metrics: value)}
+    metric_name : str
+        The name of the metric
+    """
+
+    subjects = []
+    models = []
+    metrics_value = []
+    for subject_id, metrics in data.items():
+        for model, value in metrics.items():
+            subjects.append(subject_id)
+            models.append(model)
+            metrics_value.append(value[0][metric_name])
+
+    # unique arrays for chart positioning
+    unique_models = set(models)
+    unique_subjects = set(subjects)
+
+    # position and colors of the charts
+    bar_positions = np.arange(len(unique_subjects)) * (len(unique_models) * 0.5)
+    bar_width = 0.2
+    colors = plt.cm.viridis_r(np.linspace(0, 1, len(unique_models)))
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+
+    # matching metric_values and setting on the corresponding bars
+    for i, model in enumerate(unique_models):
+        model_data = []
+        for j, m in enumerate(models):
+            if m == model:
+                model_data.append(metrics_value[j])
+        ax.bar(bar_positions + i * bar_width, model_data, bar_width, label=model, color=colors[i], alpha=0.7)
+
+    # set axes and legend
+    ax.set_xticks(bar_positions + (len(unique_models) - 1) * bar_width / 2)
+    ax.set_xticklabels(unique_subjects)
+    ax.set_xlabel('subjects')
+    ax.set_ylabel(metric_name)
+    ax.set_title(metric_name + ' per subject and model')
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()
+    # save
     plt.savefig(f'{out_dir}/all_models_{metric_name}', dpi=96)
     plt.close()
