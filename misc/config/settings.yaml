@@ -2,10 +2,10 @@
 sampling_frequency : 50
 
 data_cleansing : False
-data_preparation : True
+data_preparation : False
 machine_learning : True
 
-testing: True
+testing: False
 use_ocd_only: True
 #test_n_recs: 10
 #test_n_subs: 10
@@ -22,15 +22,31 @@ seed: 42
 ###################################################################
 
 ### General settings
-resample: True # TODO outdated?
-use_oversampling: False # TODO outdated?
-use_undersampling: True # do not set over- AND undersampling to True # TODO outdated?
-balancing_option: "random_undersampling"
+
+#resample: True # outdated?
+#use_oversampling: False
+#use_undersampling: True
+#use_over_under_sampling: False
+#balancing_option: "random_undersampling"
+
+resampling: True
+use_resampling: use_undersampling #user: set to possible values from resampling_methods
+#check in python that use_resampling is value from resampling_methods
+resampling_methods:
+  - use_undersampling
+  - use_oversampling
+
+# check in python if get("use_resampling")==undersampling, resampling_method = .get(undersampling).get(resampling_method)
+#or if(resampling): resampling_method= get(use_resampling).get(resampling_method)
+undersampling:
+  resampling_method: "random_undersampling"
+  #add different undersampling methods
+
+oversampling:
+  resampling_method: "smote"
 
 use_filter: True
 use_scaling: True
-
-
 
 
 
@@ -58,7 +74,7 @@ save_data: True
 overwrite_data: True
 
 ### Settings for data windowing
-window_size : 1 # value in seconds
+window_size : 10 # value in seconds
 test_window_size: 30
 overlap : 0.5
 labelling_algorithm : "Majority"
