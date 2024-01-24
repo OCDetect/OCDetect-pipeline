@@ -7,15 +7,17 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import partial
 from itertools import repeat
 
-pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', None)
+
+labels = {"Certain": 1, "Begin uncertain": 2, "End uncertain": 3, "Begin AND End uncertain": 4}
 
 relabel_method = "two_columns" # method whether annotator columns are merged or both adding both annotations "merged_column" or "two_columns"
-run_subject = "03" #specify always as in files eg. OCDetect_03 run_subject = "03", OCDetect_30 run_subject = "30"
+run_subject = "03" #specify always as in files e.g. OCDetect_03 run_subject = "03", OCDetect_30 run_subject = "30"
 
-relabeled_path = "/dhc/groups/ocdetect/relabeled_subjects" # path to exported files from label studio, always name then "a_{number of annotator}_subject_{subject_number}.csv subject_number as fpr run_subject
+relabeled_path = "/dhc/groups/ocdetect/relabeled_subjects" # path to exported files from label studio, always name then "a{number of annotator}_subject_{subject_number}.csv subject_number as fpr run_subject
+# lea: 1, lorenz: 2, robin: 3, kristina: 4
 origin_path = "/dhc/home/"+getpass.getuser()+"/datasets/OCDetect/preprocessed" # path to files getting relabeled
 target_path = "/dhc/groups/ocdetect/preprocessed_relabeled_"+relabel_method # path to relabeled files, one for both methods
-
 
 def process_file(file, subject, df_first, df_second=None):
     if file.endswith('.csv') and file.split('_')[1] == subject: # and file == "OCDetect_03_recording_05_382535ec-9a0d-4359-b120-47f7605a22de.csv":
@@ -38,7 +40,6 @@ def relabel(subject):
         return
     df_first = convert_df(pd.read_csv(os.path.join(relabeled_path,relabeled[0])))
     df_second = convert_df(pd.read_csv(os.path.join(relabeled_path,relabeled[1])))
-
     if relabel_method == "merged_column":
         merged_df = merge(df_first, df_second)
         args = (subject, merged_df)
@@ -46,7 +47,7 @@ def relabel(subject):
     if relabel_method == "two_columns":
         args = (subject, df_first, df_second)
 
-    with ProcessPoolExecutor(max_workers=55) as executor: #let run files in parallel
+    with ProcessPoolExecutor(max_workers=63) as executor: #let run files in parallel
         futures = [executor.submit(process_file, file, *args) for file in os.listdir(origin_path)]
 
         for future in as_completed(futures):
@@ -60,7 +61,9 @@ def two_columns(file_name, origin, annotator_frst, annotator_scnd): #writing new
     for i, annotator in enumerate(annotators):
         for index, row in annotator.iterrows():
             if row['file']==file_name:
-                origin.loc[(origin['datetime'] >= row['start']) & (origin['datetime'] <= row['end']), 'annotator_'+str(i+1)] = 1.0
+                label = labels[row['label']]
+                print(label, row["label"], row['start'])
+                origin.loc[(origin['datetime'] >= row['start']) & (origin['datetime'] <= row['end']), 'annotator_'+str(i+1)] = label
     return origin
 
 def merge(df_first, df_second): # logic how cases certain-certain, certain-uncertain, uncertain-uncertain should be merged
