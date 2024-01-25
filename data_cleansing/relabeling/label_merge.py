@@ -11,12 +11,12 @@ pd.set_option('display.max_rows', None)
 
 labels = {"Certain": 1, "Begin uncertain": 2, "End uncertain": 3, "Begin AND End uncertain": 4}
 
-relabel_method = "two_columns" # method whether annotator columns are merged or both adding both annotations "merged_column" or "two_columns"
+relabel_method = "merged_column" # method whether annotator columns are merged or both adding both annotations "merged_column" or "two_columns"
 run_subject = "03" #specify always as in files e.g. OCDetect_03 run_subject = "03", OCDetect_30 run_subject = "30"
 
 relabeled_path = "/dhc/groups/ocdetect/relabeled_subjects" # path to exported files from label studio, always name then "a{number of annotator}_subject_{subject_number}.csv subject_number as fpr run_subject
 # lea: 1, lorenz: 2, robin: 3, kristina: 4
-origin_path = "/dhc/home/"+getpass.getuser()+"/datasets/OCDetect/preprocessed" # path to files getting relabeled
+origin_path = "/dhc/groups/ocdetect/preprocessed" # path to files getting relabeled
 target_path = "/dhc/groups/ocdetect/preprocessed_relabeled_"+relabel_method # path to relabeled files, one for both methods
 
 def process_file(file, subject, df_first, df_second=None):
@@ -123,7 +123,7 @@ def merge(df_first, df_second): # logic how cases should be merged
                 # append new label to df
                 if start and end:
                     new_row = {'file': row1['file'], 'file_number': row1['file_number'], 'start': start, 'end': end}
-                    all_labels = all_labels.append(new_row, ignore_index=True)
+                    all_labels = pd.concat([all_labels, pd.DataFrame([new_row])], ignore_index=True)
     return all_labels
 
 
