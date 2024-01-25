@@ -24,7 +24,8 @@ def process_file(file, subject, df_first, df_second=None):
         origin_df = pd.read_csv(os.path.join(origin_path, file))
         origin_df['datetime'] = pd.to_datetime(origin_df['datetime'])
         if relabel_method == "merged_column":
-            relabel_df = merged_column(file, origin_df, df_first)
+            annotation_df = merge(df_first, df_second)
+            relabeled_df = merged_column(file, origin_df, annotation_df)
         if relabel_method == "two_columns":
             relabeled_df = two_columns(file, origin_df, df_first, df_second)
 
@@ -76,53 +77,48 @@ def merge(df_first, df_second): # logic how cases certain-certain, certain-uncer
             if row2['file'] > row1['file']:
                 break # our files are in order
             if row1['file'] == row2['file']:
-                # case certain, certain
-                if row1['label'] == "certain" == row2['label']:
-                    start = find_start(type_certain, row1['start'], row2['start'])
-                    end = find_end(type_certain, row1['end'], row2['end'])
-                # case uncertain, uncertain
-                if row1['label'] == "uncertain" == row2['label']:
-                    start = find_start(type_uncertain, row1['start'], row2['start'])
-                    end = find_end(type_uncertain, row1['end'], row2['end'])
-                # case certain uncertain
-                if row1['label'] == "uncertain" and row2['label'] == "certain":
-                    if type_un_cert == "intersection":
-                        start = find_start(type_un_cert, row1['start'], row2['start'])
-                        end = find_end(type_un_cert, row1['end'], row2['end'])
-                    if type_un_cert == "ignore_uncertain":
-                        start = row2['start']
-                        end = row2['end']
-                if row1['label'] == "certain" and row2['label'] == "uncertain":
-                    if type_un_cert == "intersection":
-                        start = find_start(type_un_cert, row1['start'], row2['start'])
-                        end = find_end(type_un_cert, row1['end'], row2['end'])
-                    if type_un_cert == "ignore_uncertain":
-                        start = row1['start']
-                        end = row1['end']
-                # case certain begin_uncertain- begin is type_un_cert; end both certain
-                if (row1['label'] == "begin_uncertain" and row2['label'] == "certain") or (row2['label'] == "begin_uncertain" and row1['label'] == "certain") :
-                    start = find_start(type_un_cert, row1['end'], row2['end'])
-                    end = find_end(type_certain, row1['end'], row2['end'])
-                # certain, end_uncertain - end is type_un_cert; begin both certain
-                if (row1['label'] == "end_uncertain" and row2['label'] == "certain") or (row2['label'] == "end_uncertain" and row1['label'] == "certain"):
-                    start = find_start(type_certain, row1['start'], row2['start'])
-                    end = find_end(type_un_cert, row1['end'], row2['end'])
-                # uncertain, begin_uncertain- end is type_un_cert; start both uncertain
-                if (row1['label'] == "begin_uncertain" and row2['label'] == "uncertain") or (row2['label'] == "begin_uncertain" and row1['label'] == "uncertain"):
-                    start = find_start(type_uncertain, row1['start'], row2['start'])
-                    end = find_end(type_un_cert, row1['end'], row2['end'])
-                # uncertain, end_uncertain - start is type_un_cert; end both uncertain
-                if (row1['label'] == "end_uncertain" and row2['label'] == "uncertain") or (row2['label'] == "end_uncertain" and row1['label'] == "uncertain"):
-                    start = find_start(type_un_cert, row1['start'], row2['start'])
-                    end = find_end(type_uncertain, row1['end'], row2['end'])
-                # begin_uncert, begin_uncert; begin both uncertain; end both certain
-                if row1['label'] == row2['label'] == "begin_uncertain":
-                    start = find_start(type_uncertain, row1['start'], row2['start'])
-                    end = find_end(type_certain, row1['end'], row2['end'])
-                # end_uncert, end_uncert; begin both certain, end both uncert
-                if row1['label'] == row2['label'] == "end_uncertain":
-                    start = find_start(type_certain, row1['start'], row2['start'])
-                    end = find_end(type_uncertain, row1['end'], row2['end'])
+                label1, label2 = row1['label'], row2['label']
+                if label1 == label2:
+                    # equal labels
+                    if label1 == 'certain':
+                        start = find_start(type_certain, row1['start'],row2['start'])
+                        end = find_end(type_certain, row1['end'], row2['end'])
+                    elif label1 == 'uncertain':
+                        start = find_start(type_uncertain, row1['start'], row2['start'])
+                        end = find_end(type_uncertain, row1['end'], row2['end'])
+                    elif label1 == 'begin_uncertain':
+                        start = find_start(type_uncertain, row1['start'], row2['start'])
+                        end = find_end(type_certain, row1['end'], row2['end'])
+                    elif label1 == 'end_uncertain':
+                        start = find_start(type_certain, row1['start'], row2['start'])
+                        end = find_end(type_uncertain, row1['end'], row2['end'])
+                else:
+                    if (label1 == 'certain' and label2 == 'uncertain') or (
+                            label2 == 'certain' and label1 == 'uncertain'):
+                        # handle certain, uncertain and uncertain, certain
+                            start = find_un_cert_start(type_un_cert, row1['start'], row2['start'], label1, label2)
+                            end = find_un_cert_start(type_un_cert, row1['end'], row2['end'], label1, label2)
+                    #begin_uncertain
+                    elif label1 == 'begin_uncertain' or label2 == 'begin_uncertain':
+                        # handle cases with 'begin_uncertain'
+                        if label2 == 'certain' or label1 == 'certain':
+                            start = find_un_cert_start(type_un_cert, row1['start'], row2['start'], label1, label2)
+                            end = find_end(type_certain, row1['end'], row2['end'])
+                        elif label2 == 'uncertain' or label1 == 'uncertain':
+                            start = find_start(type_uncertain, row1['start'], row2['start'])
+                            end = find_un_cert_end(type_un_cert, row1['end'], row2['end'], label1, label2)
+                        elif label2 == 'end_uncertain' or label1 == 'end_uncertain':
+                            start = find_un_cert_start(type_un_cert, row1['start'], row2['start'], label1, label2)
+                            end = find_un_cert_end(type_un_cert, row1['end'], row2['end'], label1, label2)
+                    elif label1 == 'end_uncertain' or label2 == 'end_uncertain':
+                        # handle cases with 'end_uncertain'
+                        #begin_uncertain end_uncertain already handled
+                        if label2 == 'certain' or label1 == 'certain':
+                            start = find_start(type_certain, row1['start'], row2['start'])
+                            end = find_un_cert_end(type_un_cert, row1['end'], row2['end'], label1, label2)
+                        elif label2 == 'uncertain' or label1 == 'uncertain':
+                            start = find_un_cert_start(type_un_cert, row1['start'], row2['start'], label1, label2)
+                            end = find_end(type_uncertain, row1['end'], row2['end'])
                 # append new label to df
                 new_row = {'file': row1['file'], 'start': start, 'end': end}
                 all_labels = all_labels.append(new_row, ignore_index=True)
@@ -142,6 +138,25 @@ def find_end(merge_type, end1, end2):
     if merge_type == "union":
         return max(end1, end2)
 
+
+def find_un_cert_start(merge_type, start1, start2, label1, label2):
+    if merge_type == "intersection":
+        max(start1, start2)
+    if merge_type == "ignore_uncertain":
+        if label1 == "certain":
+            return start1
+        else:
+            return start2
+
+
+def find_un_cert_end(merge_type, end1, end2, label1, label2):
+    if merge_type == "intersection":
+        return min(end1, end2)
+    if merge_type == "ignore_uncertain":
+        if label1 == "certain":
+            return end1
+        else:
+            return end2
 
 def merged_column(file_name, origin, annotation): #writing new labels to origin dateframe as one column
     origin['annotation'] = 0
