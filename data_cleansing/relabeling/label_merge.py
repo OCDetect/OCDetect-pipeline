@@ -4,67 +4,81 @@ import pandas as pd
 import json
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from functools import partial
-from itertools import repeat
 
+pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 
 labels = {"Certain": 1, "Begin uncertain": 2, "End uncertain": 3, "Begin AND End uncertain": 4}
 
-relabel_method = "merged_column" # method whether annotator columns are merged or both adding both annotations "merged_column" or "two_columns"
+#relabel_method = "merged_column" # method whether annotator columns are merged or both adding both annotations "merged_column" or "two_columns"
 run_subject = "03" #specify always as in files e.g. OCDetect_03 run_subject = "03", OCDetect_30 run_subject = "30"
 
 relabeled_path = "/dhc/groups/ocdetect/relabeled_subjects" # path to exported files from label studio, always name then "a{number of annotator}_subject_{subject_number}.csv subject_number as fpr run_subject
 # lea: 1, lorenz: 2, robin: 3, kristina: 4
 origin_path = "/dhc/groups/ocdetect/preprocessed" # path to files getting relabeled
-target_path = "/dhc/groups/ocdetect/preprocessed_relabeled_"+relabel_method # path to relabeled files, one for both methods
+target_path = "/dhc/groups/ocdetect/preprocessed_relabeled_2" # path to relabeled files, one for both methods
 
-def process_file(file, subject, df_first, df_second=None):
-    if file.endswith('.csv') and file.split('_')[1] == subject: # and file == "OCDetect_03_recording_05_382535ec-9a0d-4359-b120-47f7605a22de.csv":
-        origin_df = pd.read_csv(os.path.join(origin_path, file))
-        origin_df['datetime'] = pd.to_datetime(origin_df['datetime'])
-        if relabel_method == "merged_column":
-            #annotation_df = merge(df_first, df_second)
-            relabeled_df = merged_column(file, origin_df, df_first)
-        if relabel_method == "two_columns":
-            relabeled_df = two_columns(file, origin_df, df_first, df_second)
+def process_file(file, subject, df_first, df_second, annotation_df):
+        if file.endswith('.csv') and file.split('_')[1] == subject:# and file == "OCDetect_03_recording_05_382535ec-9a0d-4359-b120-47f7605a22de.csv":
+            origin_df = pd.read_csv(os.path.join(origin_path, file))
+            origin_df['datetime'] = pd.to_datetime(origin_df['datetime'])
+            annotations_filtered =  annotation_df.loc[annotation_df['file'] == file]
+            annotations_filtered = annotations_filtered.copy()
+            annotations_filtered['compulsive'] = 0
 
-        relabeled_df.to_csv(os.path.join(target_path, file), index=False) #write relabeled files to target_path
+            compulsive_dates = origin_df.loc[origin_df['compulsive'] == 1.0, 'datetime']
+            for event in compulsive_dates:
+                for index, row in reversed(list(annotations_filtered.iterrows())):
+                    if pd.Timedelta(0) <= (event - row['end']) < pd.Timedelta('5 minutes'):
+                        annotations_filtered.at[index, 'compulsive'] = 1.0
+                        break
+
+            origin_df['compulsive'] = 0
+            relabeled_df = add_annotations(file, origin_df, df_first, df_second, annotations_filtered)
+
+            relabeled_df.to_csv(os.path.join(target_path, file), index=False) #write relabeled files to target_path
 
 def relabel(subject):
     relabeled = []
-    for file in os.listdir(relabeled_path):
-        if "_"+str(subject)+".csv" in file:
-            relabeled.append(file)
+    for label_file in os.listdir(relabeled_path):
+        if "_"+str(subject)+".csv" in label_file:
+            relabeled.append(label_file)
     if len(relabeled) < 2 or len(relabeled) > 2:
         print ("Exactly 2 annotator files required")
         return
+
     df_first = convert_df(pd.read_csv(os.path.join(relabeled_path,relabeled[0])))
     df_second = convert_df(pd.read_csv(os.path.join(relabeled_path,relabeled[1])))
-    if relabel_method == "merged_column":
-        merged_df = merge(df_first, df_second)
-        args = (subject, merged_df)
 
-    if relabel_method == "two_columns":
-        args = (subject, df_first, df_second)
+    annotation_df = merge(df_first, df_second)
 
-    with ProcessPoolExecutor(max_workers=63) as executor: #let run files in parallel
-        futures = [executor.submit(process_file, file, *args) for file in os.listdir(origin_path)]
+    args = (subject, df_first, df_second, annotation_df) #TODO change second df_first back to annotation_df after working on merge function
 
-        for future in as_completed(futures):
-            future.result()
+    for ls_file in os.listdir(origin_path):
+        process_file(ls_file, *args)
 
+    # with ProcessPoolExecutor(max_workers=63) as executor: #let run files in parallel
+    #     futures = [executor.submit(process_file, file, *args) for file in os.listdir(origin_path)]
+    #
+    #     for future in as_completed(futures):
+    #         future.result()
 
-def two_columns(file_name, origin, annotator_frst, annotator_scnd): #writing new labels to origin dateframe as two columns for both annotators
+def add_annotations(file_name, origin, annotator_frst, annotator_scnd, merged_annotation):
     origin['annotator_1'] = 0
     origin['annotator_2'] = 0
+    origin['merged_annotation'] = 0
     annotators = [annotator_frst, annotator_scnd]
     for i, annotator in enumerate(annotators):
         for index, row in annotator.iterrows():
             if row['file'] == file_name:
                 label = labels[row['label']]
-                print(label, row["label"], row['start'])
                 origin.loc[(origin['datetime'] >= row['start']) & (origin['datetime'] <= row['end']), 'annotator_'+str(i+1)] = label
+    print(merged_annotation)
+    for index, row in merged_annotation.iterrows():
+        if row['file']==file_name:
+            compulsive = row['compulsive']
+            origin.loc[(origin['datetime'] >= row['start']) & (origin['datetime'] <= row['end']), 'merged_annotation'] = 1.0
+            origin.loc[(origin['datetime'] >= row['start']) & (origin['datetime'] <= row['end']), 'compulsive'] = compulsive
     return origin
 
 def merge(df_first, df_second): # logic how cases should be merged
@@ -124,6 +138,8 @@ def merge(df_first, df_second): # logic how cases should be merged
                 if start and end:
                     new_row = {'file': row1['file'], 'file_number': row1['file_number'], 'start': start, 'end': end}
                     all_labels = pd.concat([all_labels, pd.DataFrame([new_row])], ignore_index=True)
+    all_labels = all_labels[all_labels['start'] < all_labels['end']]
+    print(all_labels)
     return all_labels
 
 
@@ -160,12 +176,6 @@ def find_un_cert_end(merge_type, end1, end2, label1, label2):
         else:
             return end2
 
-def merged_column(file_name, origin, annotation): #writing new labels to origin dateframe as one column
-    origin['annotation'] = 0
-    for index, row in annotation.iterrows():
-        if row['file']==file_name:
-            origin.loc[(origin['datetime'] >= row['start']) & (origin['datetime'] <= row['end']), 'annotation'] = 1.0
-    return origin
 
 
 def convert_df(df):
@@ -188,7 +198,6 @@ def convert_df(df):
 
     df_new['start'] = pd.to_datetime(df_new['start']) #convert to datetime for fast comparison
     df_new['end'] = pd.to_datetime(df_new['end'])
-
     return df_new
 
 
