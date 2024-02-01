@@ -86,14 +86,14 @@ def add_annotations(file_name, origin, annotator_frst, annotator_scnd, merged_an
 
 def merge(df_first, df_second): # logic how cases should be merged
     all_labels = pd.DataFrame(columns=['file', 'file_number', 'start', 'end'])
-    type_certain = "union" # intersection or union
-    type_uncertain = "union" # intersection or union
+    type_certain = "intersection" # intersection or union
+    type_uncertain = "intersection" # intersection or union
     type_un_cert = "ignore_uncertain" # intersection or ignore_uncertain
     for index1, row1 in df_first.iterrows():
         for index2, row2 in df_second.iterrows():
             if row2['file'] == row1['file']:
-                if row2['file_number'] > row1['file_number']:
-                    continue # our files are in order
+                #if row2['file_number'] > row1['file_number']:
+                 #   continue # our files are in order
                 if row1['file_number'] == row2['file_number']:
                     label1, label2 = row1['label'], row2['label']
                     start1, start2 = row1['start'], row2['start']
@@ -114,31 +114,29 @@ def merge(df_first, df_second): # logic how cases should be merged
                             start = find_start(type_certain, start1, start2)
                             end = find_end(type_uncertain, end1, end2)
                     else:
-                        if (label1 == 'Certain' and label2 == 'Begin AND End uncertain') or (
-                                label2 == 'Certain' and label1 == 'Begin AND End uncertain'):
-                            # handle certain, uncertain and uncertain, certain
-                                start = find_un_cert_start(type_un_cert, start1, start2, label1, label2)
-                                end = find_un_cert_start(type_un_cert, end1, end2, label1, label2)
+                        if (label1 == 'Certain' and label2 == 'Begin AND End uncertain') or (label2 == 'Certain' and label1 == 'Begin AND End uncertain'):
+                                start = find_un_cert_start(type_un_cert, start1, start2, label1)
+                                end = find_un_cert_end(type_un_cert, end1, end2, label1)
                     #begin_uncertain
                         elif label1 == 'Begin uncertain' or label2 == 'Begin uncertain':
                             # handle cases with 'begin_uncertain'
                             if label2 == 'Certain' or label1 == 'Certain':
-                                start = find_un_cert_start(type_un_cert, start1, start2, label1, label2)
+                                start = find_un_cert_start(type_un_cert, start1, start2, label1)
                                 end = find_end(type_certain, end1, end2)
                             elif label2 == 'Begin AND End uncertain' or label1 == 'Begin AND End uncertain':
                                 start = find_start(type_uncertain, start1, start2)
-                                end = find_un_cert_end(type_un_cert, end1, end2, label1, label2)
+                                end = find_un_cert_end(type_un_cert, end1, end2, label1)
                             elif label2 == 'End uncertain' or label1 == 'End uncertain':
-                                start = find_un_cert_start(type_un_cert, start1, start2, label1, label2)
-                                end = find_un_cert_end(type_un_cert, end1, end2, label1, label2)
+                                start = find_un_cert_start(type_un_cert, start1, start2, label1)
+                                end = find_un_cert_end(type_un_cert, end1, end2, label1)
                         elif label1 == 'End uncertain' or label2 == 'End uncertain':
                             # handle cases with 'End uncertain'
                             #begin_uncertain End uncertain already handled
                             if label2 == 'Certain' or label1 == 'Certain':
                                 start = find_start(type_certain, start1, start2)
-                                end = find_un_cert_end(type_un_cert, end1, end2, label1, label2)
+                                end = find_un_cert_end(type_un_cert, end1, end2, label1)
                             elif label2 == 'Begin AND End uncertain' or label1 == 'Begin AND End uncertain':
-                                start = find_un_cert_start(type_un_cert, start1, start2, label1, label2)
+                                start = find_un_cert_start(type_un_cert, start1, start2, label1)
                                 end = find_end(type_uncertain, end1, end2)
                 # append new label to df
                     if start and end:
@@ -146,9 +144,9 @@ def merge(df_first, df_second): # logic how cases should be merged
                         all_labels = pd.concat([all_labels, pd.DataFrame([new_row])], ignore_index=True)
     return all_labels
 
+
 def find_start(merge_type, start1, start2):
     if merge_type == "intersection":
-        print(max(start1, start2))
         return max(start1, start2)
     if merge_type == "union":
         return min(start1, start2)
@@ -161,9 +159,9 @@ def find_end(merge_type, end1, end2):
         return max(end1, end2)
 
 
-def find_un_cert_start(merge_type, start1, start2, label1, label2):
+def find_un_cert_start(merge_type, start1, start2, label1):
     if merge_type == "intersection":
-        max(start1, start2)
+        return max(start1, start2)
     if merge_type == "ignore_uncertain":
         if label1 == "Certain":
             return start1
@@ -171,7 +169,7 @@ def find_un_cert_start(merge_type, start1, start2, label1, label2):
             return start2
 
 
-def find_un_cert_end(merge_type, end1, end2, label1, label2):
+def find_un_cert_end(merge_type, end1, end2, label1):
     if merge_type == "intersection":
         return min(end1, end2)
     if merge_type == "ignore_uncertain":
@@ -180,22 +178,25 @@ def find_un_cert_end(merge_type, end1, end2, label1, label2):
         else:
             return end2
 
+print(find_un_cert_end("intersection", 1,2,"y"))
 label ='Certain'
 label_2 ='Certain'
-test_first = [['OCDetect_03_recording_06', 20, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label],
-['OCDetect_03_recording_06', 19, '2022-04-06 20:01:00.800000', '2022-04-06 20:05:00.740000', label],
-['OCDetect_03_recording_06', 18, '2022-04-06 20:40:58.800000', '2022-04-06 20:45:00.740000', label],
-['OCDetect_03_recording_07', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label],
-['OCDetect_03_recording_08', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label],
-['OCDetect_03_recording_06', 17, '2022-04-06 21:30:00.800000', '2022-04-06 21:40:00.740000', label]]
+test_first = [['OCDetect_03_recording_06', 20, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', 'Begin AND End uncertain'],
+              ['OCDetect_03_recording_06', 19, '2022-04-06 20:01:00.800000', '2022-04-06 20:05:00.740000', label],
+              ['OCDetect_03_recording_06', 18, '2022-04-06 20:40:58.800000', '2022-04-06 20:45:00.740000', label],
+              ['OCDetect_03_recording_07', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label],
+              ['OCDetect_03_recording_08', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label],
+              ['OCDetect_03_recording_06', 17, '2022-04-06 21:30:00.800000', '2022-04-06 21:40:00.740000', label],
+              ['OCDetect_03_recording_06', 15, '2022-04-07 20:35:00.800000', '2022-04-07 20:39:00.740000', 'Certain']]
 
-test_second = [['OCDetect_03_recording_06', 20, '2022-04-06 20:36:00.800000', '2022-04-06 20:37:00.740000', label_2],
-['OCDetect_03_recording_06', 19, '2022-04-06 20:00:00.800000', '2022-04-06 20:04:00.740000', label_2],
-['OCDetect_03_recording_06', 18, '2022-04-06 20:46:00.800000', '2022-04-06 20:48:00.740000', label_2],
-['OCDetect_03_recording_07', 2, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label_2],
-['OCDetect_03_recording_09', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label_2],
-['OCDetect_03_recording_06', 17, '2022-04-06 21:29:00.800000', '2022-04-06 20:32:00.740000', label_2],
-['OCDetect_03_recording_06', 17, '2022-04-06 21:35:00.800000', '2022-04-06 20:41:00.740000', label_2]]
+test_second = [['OCDetect_03_recording_06', 20, '2022-04-06 20:36:00.800000', '2022-04-06 20:37:00.740000', 'Certain'],
+               ['OCDetect_03_recording_06', 19, '2022-04-06 20:00:00.800000', '2022-04-06 20:04:00.740000', label_2],
+               ['OCDetect_03_recording_06', 18, '2022-04-06 20:46:00.800000', '2022-04-06 20:48:00.740000', label_2],
+               ['OCDetect_03_recording_07', 2, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label_2],
+               ['OCDetect_03_recording_09', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label_2],
+               ['OCDetect_03_recording_06', 17, '2022-04-06 21:29:00.800000', '2022-04-06 20:32:00.740000', label_2],
+               ['OCDetect_03_recording_06', 17, '2022-04-06 21:35:00.800000', '2022-04-06 20:41:00.740000', label_2],
+               ['OCDetect_03_recording_06', 15, '2022-04-07 20:36:00.800000', '2022-04-07 20:37:00.740000', 'Begin AND End uncertain'],]
 
 # erste Einträge: test_first beinhaltet test_second
 # zweite Einträge: test_second beginnt, test_first beginnt, test_second endet, test_first endet
@@ -209,10 +210,10 @@ test_second = [['OCDetect_03_recording_06', 20, '2022-04-06 20:36:00.800000', '2
 
 df_1 = pd.DataFrame(test_first, columns= ['file', 'file_number', 'start', 'end', 'label'])
 df_2 = pd.DataFrame(test_second, columns= ['file', 'file_number', 'start', 'end', 'label'])
-print("DF 1")
-print(df_1)
-print("DF 2")
-print(df_2)
+#print("DF 1")
+#print(df_1)
+#print("DF 2")
+#print(df_2)
 
 print("Merged DF")
 print(merge(df_1, df_2))
