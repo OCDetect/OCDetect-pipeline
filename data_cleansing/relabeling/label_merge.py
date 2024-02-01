@@ -86,9 +86,9 @@ def add_annotations(file_name, origin, annotator_frst, annotator_scnd, merged_an
 
 def merge(df_first, df_second): # logic how cases should be merged
     all_labels = pd.DataFrame(columns=['file', 'file_number', 'start', 'end'])
-    type_certain = "intersection" # intersection or union
-    type_uncertain = "intersection" # intersection or union
-    type_un_cert = "intersection" # intersection or ignore_uncertain
+    type_certain = "union" # intersection or union
+    type_uncertain = "union" # intersection or union
+    type_un_cert = "ignore_uncertain" # intersection or ignore_uncertain
     for index1, row1 in df_first.iterrows():
         for index2, row2 in df_second.iterrows():
             if row2['file'] == row1['file']:
@@ -98,9 +98,6 @@ def merge(df_first, df_second): # logic how cases should be merged
                     label1, label2 = row1['label'], row2['label']
                     start1, start2 = row1['start'], row2['start']
                     end1, end2 = row1['end'], row2['end']
-                    # break if there is no intersection between labels
-                    if end1 < start2 or end2 < start1:
-                        continue
                     start, end = None, None
                     if label1 == label2:
                     # equal labels
@@ -151,6 +148,7 @@ def merge(df_first, df_second): # logic how cases should be merged
 
 def find_start(merge_type, start1, start2):
     if merge_type == "intersection":
+        print(max(start1, start2))
         return max(start1, start2)
     if merge_type == "union":
         return min(start1, start2)
@@ -167,7 +165,7 @@ def find_un_cert_start(merge_type, start1, start2, label1, label2):
     if merge_type == "intersection":
         max(start1, start2)
     if merge_type == "ignore_uncertain":
-        if label1 == "certain":
+        if label1 == "Certain":
             return start1
         else:
             return start2
@@ -177,7 +175,7 @@ def find_un_cert_end(merge_type, end1, end2, label1, label2):
     if merge_type == "intersection":
         return min(end1, end2)
     if merge_type == "ignore_uncertain":
-        if label1 == "certain":
+        if label1 == "Certain":
             return end1
         else:
             return end2
