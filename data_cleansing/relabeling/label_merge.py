@@ -93,14 +93,14 @@ def merge(df_first, df_second): # logic how cases should be merged
         for index2, row2 in df_second.iterrows():
             if row2['file'] == row1['file']:
                 if row2['file_number'] > row1['file_number']:
-                    break # our files are in order
+                    continue # our files are in order
                 if row1['file_number'] == row2['file_number']:
                     label1, label2 = row1['label'], row2['label']
                     start1, start2 = row1['start'], row2['start']
                     end1, end2 = row1['end'], row2['end']
                     # break if there is no intersection between labels
                     if end1 < start2 or end2 < start1:
-                        break
+                        continue
                     start, end = None, None
                     if label1 == label2:
                     # equal labels
