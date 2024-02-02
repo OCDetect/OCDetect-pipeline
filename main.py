@@ -19,7 +19,7 @@ from copy import deepcopy
 
 data_cleansing = False
 data_preparation = True
-machine_learning = True
+machine_learning = False
 
 import threading
 import concurrent.futures
@@ -91,6 +91,7 @@ def main(config: dict, settings: dict) -> int:
             logger.info(f"Scaled data: {scaling}; Filtered data: {filtering}")
 
             # todo: remove column "unnamed: 0" while writing to file instead of when reading in
+            logger.info("Reading precalculated windows")
             features = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}{raw_str}.csv",
                                    usecols=lambda col: col != "Unnamed: 0")
             labels = pd.read_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}{raw_str}.csv",
@@ -99,6 +100,7 @@ def main(config: dict, settings: dict) -> int:
                                 usecols=lambda col: col != "Unnamed: 0")
             feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}{raw_str}.csv",
                                         usecols=lambda col: col != "Unnamed: 0")
+            logger.info("Finished loading precalculated windows")
 
         seed = settings.get("seed")
         ml_pipeline(features, users, labels, feature_names, seed, settings, config)

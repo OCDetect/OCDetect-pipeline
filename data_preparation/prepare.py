@@ -135,8 +135,10 @@ def get_data_path_variables(use_scaling, use_filter, config:dict, settings: dict
 
     window_size = settings.get("window_size")
     subjects = settings.get("use_ocd_only")
-
+    trustworthy_only = settings.get("use_trustworthy_only")
     subjects_folder_name = "all_subjects" if not subjects else "ocd_diagnosed_only"
+    if trustworthy_only:
+        subjects_folder_name = "trustworthy_only"
     sub_folder_path = f"ws_{window_size}_s/{subjects_folder_name}"
 
     raw = "_raw" if settings.get("raw_features") else ""
@@ -161,6 +163,8 @@ def prepare_data(settings: dict, config: dict, raw: bool=False):
     dataframes = {}
 
     subject_numbers = settings.get("all_subjects") if all_subjects else settings.get("ocd_diagnosed_subjects")
+    if settings.get("use_trustworthy_only"):
+        subject_numbers = settings.get("trustworthy_subjects")
 
     for file_name in tqdm(os.listdir(folder_path)):
         if file_name.endswith('.csv'):

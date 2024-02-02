@@ -3,6 +3,7 @@ import pandas as pd
 from torch.utils.data import Dataset
 import torch
 
+
 class OCDetectDataset(Dataset):
     preloaded_data = None
 
@@ -24,13 +25,13 @@ class OCDetectDataset(Dataset):
             cls.preloaded_data[user][0] = np.stack(cls.preloaded_data[user][0])
             cls.preloaded_data[user][1] = np.array(cls.preloaded_data[user][1])
 
-    def __init__(self, subjects, window_size=150, model=""):
+    def __init__(self, subjects, window_size=250, model=""):
         if OCDetectDataset.preloaded_data is None:
             raise Exception("DatasetClass must be initialized using preload first!")
         self.channels = 6
         self.window_size = window_size
         self.model_name = model
-        self.classes = 3
+        self.classes = 2
         ### get preloaded data ###
         windows = []
         labels = []
@@ -40,7 +41,6 @@ class OCDetectDataset(Dataset):
         self.features = np.concatenate(windows)
         self.labels = np.concatenate(labels)
         self.length = len(self.features)
-
 
     def __len__(self):
         return self.length

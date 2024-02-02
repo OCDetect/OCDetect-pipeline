@@ -8,6 +8,7 @@ from machine_learning.classify.models import get_classification_model_grid
 from machine_learning.classify.evaluate import evaluate_single_model
 from .dl.dl_main import dl_main
 from .dl.OCDetectDataset import OCDetectDataset
+from sklearn.model_selection import StratifiedKFold as SKF
 
 
 def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, config: dict):
@@ -29,13 +30,18 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
         labels = labels.iloc[:, 0]
 
     all_subjects = True if not settings.get("use_ocd_only") else False
+    split_type = "all"
+    if settings.get("use_ocd_only", False):
+        split_type = "ocd_only"
+    if settings.get("use_trustworthy_only", True):
+        split_type = "trustworthy_only"
     balancing_option = settings.get("balancing_option")
 
     out_dir = config.get("ml_results_folder")
     only_dl = True ## TODO: set to false in settings - could also use "Raw" param.
     if only_dl:
         OCDetectDataset.preload(windows, users, labels)
-        dl_main(config, users)
+        dl_main(config, settings, users, split_type)
         return
 
 
