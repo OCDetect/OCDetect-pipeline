@@ -33,17 +33,18 @@ def process_file(file, subject, df_first, df_second, annotation_df):
             label_dates = origin_df.loc[origin_df['user yes/no'] == 1.0, ['datetime', 'compulsive']]
 
             # for annotation_index, annotation in annotations_df.iterrows():
-            #     next_labels = label_dates.loc[(pd.Timedelta('5 minutes') >= (label_dates['datetime'] - annotation['end'])) & ((label_dates['datetime'] - annotation['end']) >= pd.Timedelta(0)), 'compulsive']
+            #     next_labels = label_dates.loc[(pd.Timedelta('5 minutes') >= (label_dates['datetime'] - annotation['end'])) & ((label_dates['datetime'] - annotation['end']) >= pd.Timedelta(0)), ['datetime','compulsive']]
             #     if len(next_labels) == 0:
             #         raise ValueError("No User Label found for label", annotation['file'], annotation['file_number'], annotation['start'], annotation['end'])
-            #     annotations_df.loc[annotation_index, 'compulsive'] = next_labels.iloc[0]
+            #     annotation_df.loc[annotation_index, 'compulsive'] = next_labels.iloc[0, 'compulsive']
+            #     annotation_df.loc[annotation_index, 'usr_label'] = next_labels.iloc[0, 'datetime']
 
             for annotation_index, annotation in annotation_df.iterrows():
                 min_distance_index = (label_dates['datetime'] - annotation['end']).abs().idxmin()
                 annotation_df.loc[annotation_index, 'compulsive'] = label_dates.loc[min_distance_index, 'compulsive']
+                annotation_df.loc[annotation_index, 'usr_label'] = label_dates.loc[min_distance_index, 'datetime']
             origin_df['compulsive'] = 0
             print(annotation_df)
-
             relabeled_df = add_annotations(file, origin_df, df_first, df_second, annotation_df)
 
             relabeled_df.to_csv(os.path.join(target_path, file), index=False) #write relabeled files to target_path
@@ -86,8 +87,8 @@ def add_annotations(file_name, origin, annotator_frst, annotator_scnd, merged_an
     for index, row in merged_annotation.iterrows():
         if row['file']==file_name:
             compulsive = row['compulsive']
-            origin.loc[(origin['datetime'] >= row['start']) & (origin['datetime'] <= row['end']), 'merged_annotation'] = 1.0
-            origin.loc[(origin['datetime'] >= row['start']) & (origin['datetime'] <= row['end']), 'compulsive'] = compulsive
+            origin.loc[(origin['datetime'] >= row['start']) & (origin['datetime'] <= row['end']) & (origin['datetime'] <= row['usr_label']), 'merged_annotation'] = 1.0
+            origin.loc[(origin['datetime'] >= row['start']) & (origin['datetime'] <= row['end']) & (origin['datetime'] <= row['usr_label']), 'compulsive'] = compulsive
     return origin
 
 
@@ -169,7 +170,7 @@ def find_un_cert_start(merge_type, start1, start2, label1):
     if merge_type == "intersection":
         return max(start1, start2)
     if merge_type == "ignore_uncertain":
-        if label1 == "Certain":
+        if label1 == "Certain" or label1 == "End uncertain": #CHANGED
             return start1
         else:
             return start2
@@ -179,7 +180,7 @@ def find_un_cert_end(merge_type, end1, end2, label1):
     if merge_type == "intersection":
         return min(end1, end2)
     if merge_type == "ignore_uncertain":
-        if label1 == "Certain":
+        if label1 == "Certain" or label1 == "Begin uncertain": #CHANGED
             return end1
         else:
             return end2
