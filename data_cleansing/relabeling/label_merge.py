@@ -100,6 +100,8 @@ def merge(df_first, df_second): # logic how cases should be merged
                     label1, label2 = row1['label'], row2['label']
                     start1, start2 = row1['start'], row2['start']
                     end1, end2 = row1['end'], row2['end']
+                    if end1 < start2 or end2 < start1:
+                        continue
                     start, end = None, None
                     if label1 == label2:
                     # equal labels
