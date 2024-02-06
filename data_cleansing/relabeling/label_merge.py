@@ -19,12 +19,12 @@ origin_path = "/dhc/groups/ocdetect/preprocessed" # path to files getting relabe
 target_path = "/dhc/groups/ocdetect/preprocessed_relabeled" # path to relabeled files, one for both methods
 
 # Merging settings
-type_certain = "union" # intersection or union
-type_uncertain = "union" # intersection or union
+type_certain = "intersection" # intersection or union
+type_uncertain = "intersection" # intersection or union
 type_un_cert = "ignore_uncertain" # intersection or ignore_uncertain
 
 def process_file(file, subject, df_first, df_second, annotation_df):
-        if file.endswith('.csv') and file.split('_')[1] == subject:# and file == "OCDetect_03_recording_05_382535ec-9a0d-4359-b120-47f7605a22de.csv":
+        if file.endswith('.csv') and file.split('_')[1] == subject: # and file == "OCDetect_03_recording_05_382535ec-9a0d-4359-b120-47f7605a22de.csv":
             origin_df = pd.read_csv(os.path.join(origin_path, file))
             origin_df['datetime'] = pd.to_datetime(origin_df['datetime'])
 
@@ -32,22 +32,24 @@ def process_file(file, subject, df_first, df_second, annotation_df):
 
             label_dates = origin_df.loc[origin_df['user yes/no'] == 1.0, ['datetime', 'compulsive']]
 
-            # for annotation_index, annotation in annotations_df.iterrows():
-            #     next_labels = label_dates.loc[(pd.Timedelta('5 minutes') >= (label_dates['datetime'] - annotation['end'])) & ((label_dates['datetime'] - annotation['end']) >= pd.Timedelta(0)), ['datetime','compulsive']]
-            #     if len(next_labels) == 0:
-            #         raise ValueError("No User Label found for label", annotation['file'], annotation['file_number'], annotation['start'], annotation['end'])
-            #     annotation_df.loc[annotation_index, 'compulsive'] = next_labels.iloc[0, 'compulsive']
-            #     annotation_df.loc[annotation_index, 'usr_label'] = next_labels.iloc[0, 'datetime']
-
             for annotation_index, annotation in annotation_df.iterrows():
-                min_distance_index = (label_dates['datetime'] - annotation['end']).abs().idxmin()
-                annotation_df.loc[annotation_index, 'compulsive'] = label_dates.loc[min_distance_index, 'compulsive']
-                annotation_df.loc[annotation_index, 'usr_label'] = label_dates.loc[min_distance_index, 'datetime']
-            origin_df['compulsive'] = 0
-            print(annotation_df)
+                label_crossings = label_dates[label_dates['datetime'].between(annotation['start'], annotation['end'], inclusive = 'neither')]
+                if label_crossings.empty:
+                    next_labels = label_dates.loc[(pd.Timedelta('5 minutes') >= (label_dates['datetime'] - annotation['end'])) & ((label_dates['datetime'] - annotation['end']) >= pd.Timedelta(0)), ['datetime','compulsive']]
+                    annotation_df.loc[annotation_index, 'compulsive'] = next_labels.iloc[0]['compulsive']
+                    annotation_df.loc[annotation_index, 'usr_label'] = next_labels.iloc[0]['datetime']
+                else:
+                    annotation_df.loc[annotation_index, 'compulsive'] = label_crossings.iloc[-1]['compulsive']
+                    annotation_df.loc[annotation_index, 'usr_label'] = label_crossings.iloc[-1]['datetime']
+
+            # for annotation_index, annotation in annotation_df.iterrows():
+            #     min_distance_index = (label_dates['datetime'] - annotation['end']).abs().idxmin()
+            #     annotation_df.loc[annotation_index, 'compulsive'] = label_dates.loc[min_distance_index, 'compulsive']
+            #     annotation_df.loc[annotation_index, 'usr_label'] = label_dates.loc[min_distance_index, 'datetime']
+            # origin_df['compulsive'] = 0
             relabeled_df = add_annotations(file, origin_df, df_first, df_second, annotation_df)
 
-            relabeled_df.to_csv(os.path.join(target_path, file), index=False) #write relabeled files to target_path
+            relabeled_df.to_csv(os.path.join(target_path, file), index = False) #write relabeled files to target_path
 
 def relabel(subject):
     relabeled = []
