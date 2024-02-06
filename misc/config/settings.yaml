@@ -1,8 +1,12 @@
 ### fixed values due to data collection settings
 sampling_frequency : 50
 
+data_cleansing : False
+data_preparation : True
+machine_learning : True
 
-testing: !!bool true
+testing: True
+use_ocd_only: True
 #test_n_recs: 10
 #test_n_subs: 10
 
@@ -13,6 +17,10 @@ untrustworthy_subjects : []  # TODO: rename this item and use it in order to e.g
 use_ocd_only: False
 use_trustworthy_only : True
 
+# ocd_diagnosed_subjects: [5, 9, 1, 3, 12, 13, 20, 24, 29, 30]
+ocd_diagnosed_subjects: [1, 3, 4, 18, 20, 30]
+test_subjects : [1, 3, 4] # at least 3 for ml
+
 seed: 42
 
 ###################################################################
@@ -20,14 +28,13 @@ seed: 42
 ###################################################################
 
 ### General settings
-resample: False # TODO outdated?
+resample: True # TODO outdated?
 use_oversampling: False # TODO outdated?
-use_undersampling: False # do not set over- AND undersampling to True # TODO outdated?
+use_undersampling: True # do not set over- AND undersampling to True # TODO outdated?
 balancing_option: "random_undersampling"
 
 use_filter: True
 use_scaling: True
-
 
 
 ### Filtering Settings
@@ -50,8 +57,12 @@ relabel_offset : 5   # how many seconds before the label did the hand washing en
 # DATA PREPARATION SETTINGS
 ###################################################################
 
+save_data: True
+overwrite_data: True
+
 ### Settings for data windowing
-window_size : 5 # value in seconds
+window_size : 1 # value in seconds
+test_window_size: 30
 overlap : 0.5
 labelling_algorithm : "Majority"
 
@@ -66,7 +77,7 @@ scaler : "standard"
 
 ### Settings for feature extraction
 id : "tsfresh_id"
-raw_features : True  # don't extract features, just create windows. Overwrites filter and scaler setting.
+raw_features : False  # don't extract features, just create windows. Overwrites filter and scaler setting.
 
 features :
   mean: None

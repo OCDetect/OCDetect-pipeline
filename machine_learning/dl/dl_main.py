@@ -22,7 +22,7 @@ def dl_main(config: dict, settings: dict, users, subset="all"):
         users = users["user"]
     users = users.unique()
     if subset != "all":
-        if subset == "ocd_only":
+        if subset == "ocd_diagnosed_only":
             users = np.intersect1d(users, settings.get("ocd_diagnosed_subjects"))
         elif subset == "trustworthy_only":
             users = np.intersect1d(users, settings.get("trustworthy_subjects"))

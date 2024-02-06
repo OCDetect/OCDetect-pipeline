@@ -21,18 +21,34 @@
     first_hw_subfolder: labels_first_handwashes/
     export_subfolder: ../../../../Datasets/OCDetect_Export/
 
-- kristina-mac:
-    username: kristina.kirsten
+
+- lorenz-mac:
+    username: lorenz.kautzsch
     hostname: atlas
     data_folder: ../../datasets/OCDetect/
     meta_subfolder: metadata/
     first_hw_subfolder: labels_first_handwashes/
     prefix: OCDetect_
     output_folder: ../../OCDetect/Analysis/plots/idle_regions/
-    export_subfolder: ../../datasets/OCDetect/preprocessed/OCDetect_Export/
+    # export_subfolder: ../../datasets/OCDetect/preprocessed/OCDetect_Export/
+    export_subfolder: ../../datasets/OCDetect/preprocessed/
     export_subfolder_ml_prepared: ../../datasets/OCDetect/windowed/
     plots_folder: ../../datasets/OCDetect/plots/
-    ml_results_folder: ../../datasets/OCDetect/ml_results/
+    ml_results_folder: ../../datasets/OCDetect/ml_results
+
+- kristina-mac:
+    username: kristina.kirsten
+    hostname: [atlas, kottos]
+    data_folder: ../../datasets/OCDetect/
+    meta_subfolder: metadata/
+    first_hw_subfolder: labels_first_handwashes/
+    prefix: OCDetect_
+    output_folder: ../../OCDetect/Analysis/plots/idle_regions/
+    # export_subfolder: ../../datasets/OCDetect/preprocessed/OCDetect_Export/
+    export_subfolder: ../../datasets/OCDetect/preprocessed/
+    export_subfolder_ml_prepared: ../../datasets/OCDetect/windowed/
+    plots_folder: ../../datasets/OCDetect/plots/
+    ml_results_folder: ../../datasets/OCDetect/ml_results
 
 - robin-atlas:
       username: robin.burchard
@@ -46,3 +62,16 @@
       plots_folder: ../OCDetect/Analysis/plots/
       ml_results_folder: ../OCDetect/Analysis/ml_results/
       prefix: OCDetect_
+
+- lea-laptop:
+    username: lea.liekenbrock
+    hostname: atlas
+    data_folder: ../../datasets/OCDetect/
+    meta_subfolder: metadata/
+    first_hw_subfolder: labels_first_handwashes/
+    prefix: OCDetect_
+    output_folder: ../../OCDetect/Analysis/plots/idle_regions/
+    export_subfolder: /dhc/groups/ocdetect/preprocessed/
+    export_subfolder_ml_prepared: /dhc/groups/ocdetect/windowed/
+    plots_folder: ../../datasets/OCDetect/plots/
+    ml_results_folder: ../../datasets/OCDetect/ml_results

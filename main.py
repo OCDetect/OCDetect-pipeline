@@ -17,16 +17,19 @@ import getpass
 from machine_learning.ml_main import ml_pipeline
 from copy import deepcopy
 
-data_cleansing = False
-data_preparation = True
-machine_learning = False
-
 import threading
 import concurrent.futures
 from multiprocessing import Manager, Lock
 
 
 def main(config: dict, settings: dict) -> int:
+
+    data_cleansing = settings["data_cleansing"]
+    data_preparation = settings["data_preparation"]
+    machine_learning = settings["machine_learning"]
+
+    set_test_settings(settings) if settings["testing"] else None # set subjects and window_size to test settings if testing: True
+
     """
     Function to run the entire preprocessing pipeline, from data loading to cleaning to relabeling etc.
     AND/OR run the data cleansing and machine learning pipeline, respectively.
@@ -36,7 +39,10 @@ def main(config: dict, settings: dict) -> int:
     """
     threads = []
     futures = []
-    already_done = pd.read_csv(config["output_folder"] + "prep_params.csv", index_col=False)
+    try:
+        already_done = pd.read_csv(config["output_folder"] + "prep_params.csv", index_col=False)
+    except FileNotFoundError:
+        already_done = []  # TODO to be tested for data_cleansing = True
     if data_cleansing:
         with Manager() as manager:
             #subj_loaded = manager.dict()
@@ -83,6 +89,8 @@ def main(config: dict, settings: dict) -> int:
 
             use_filter, use_scaling, resample, use_undersampling, use_oversampling = load_data_preparation_settings(
                 settings)
+            if resample and not (use_undersampling or use_oversampling):
+                logger.debug(f"You need to set your resampling methode in: {settings}")
 
             window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering, raw_str = get_data_path_variables(
                 use_scaling, use_filter, config, settings)
@@ -92,14 +100,11 @@ def main(config: dict, settings: dict) -> int:
 
             # todo: remove column "unnamed: 0" while writing to file instead of when reading in
             logger.info("Reading precalculated windows")
-            features = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}{raw_str}.csv",
-                                   usecols=lambda col: col != "Unnamed: 0")
-            labels = pd.read_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}{raw_str}.csv",
-                                 usecols=lambda col: col != "Unnamed: 0")
-            users = pd.read_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}{raw_str}.csv",
-                                usecols=lambda col: col != "Unnamed: 0")
-            feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}{raw_str}.csv",
-                                        usecols=lambda col: col != "Unnamed: 0")
+
+            features = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}{raw_str}.csv")
+            labels = pd.read_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}{raw_str}.csv")
+            users = pd.read_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}{raw_str}.csv")
+            feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}{raw_str}.csv").iloc[:, 0].tolist()
             logger.info("Finished loading precalculated windows")
 
         seed = settings.get("seed")
@@ -109,6 +114,12 @@ def main(config: dict, settings: dict) -> int:
 
 
 copy_lock = threading.Lock()
+
+
+def set_test_settings(settings: dict):
+    settings["all_subjects"] = settings["test_subjects"]
+    settings["ocd_diagnosed_subjects"] = settings["test_subjects"]
+    settings["window_size"] = settings["test_window_size"]
 
 
 def data_cleansing_worker(subject: str, config: dict, settings: dict): # , subjects_loaded: dict):

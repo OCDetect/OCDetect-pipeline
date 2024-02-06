@@ -1,34 +1,61 @@
 import matplotlib.pyplot as plt
-from sklearn.metrics import ConfusionMatrixDisplay, PrecisionRecallDisplay
+from sklearn.metrics import ConfusionMatrixDisplay, PrecisionRecallDisplay, precision_recall_curve, roc_curve, auc, \
+    average_precision_score
 import numpy as np
 
-# def plot_roc_pr_curve(X_test, y_test, endpoint, model, model_name, out_dir):
-#     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-#     ax1.set_aspect('equal')
-#     ax2.set_aspect('equal')
-#     ax1.set(xlim=[-0.05, 1.05], ylim=[0.0, 1.05])
-#     ax2.set(xlim=[-0.05, 1.05], ylim=[0.0, 1.05])
-#     fig.suptitle(f'{model_name} predicting {endpoint}')
-#     # ROC
-#     # TODO plot_roc_curve is outdated (use e.g. RocCurveDisplay.from_predictions)
-#     roc_plot = plot_roc_curve(model, X_test, y_test,
-#                               name='ROC curve', lw=1, ax=ax1)
-#     ax2.set(xlim=[-0.05, 1.05], ylim=[0.0, 1.05])
-#     prc_plot = PrecisionRecallDisplay.from_estimator(model, X_test, y_test,
-#                                                      name='PR curve', lw=1, ax=ax2)
-#     plt.savefig(f'{out_dir}/{endpoint}/test/{model_name}_roc_prc_curves'.replace(' ', '_'), bbox_inches='tight', dpi=96)
-#
-#     return roc_plot, prc_plot
+model_name_replacements = {
+    'LogisticRegression': 'Logistic regression',
+    'GradientBoostingClassifier': 'Gradient boosting machine',
+    'RandomForestClassifier': 'Random forest'
+}
+
+def plot_roc_pr_curve(X_test, y_test, model, model_name, out_dir):
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+    ax1.set_aspect('equal')
+    ax2.set_aspect('equal')
+    ax1.set(xlim=[-0.05, 1.05], ylim=[0.0, 1.05])
+    ax2.set(xlim=[-0.05, 1.05], ylim=[0.0, 1.05])
+    fig.suptitle(f'{model_name}')
+
+    # Calculate ROC curve and ROC AUC
+    fpr, tpr, _ = roc_curve(y_test, model.predict_proba(X_test)[:, 1])
+    roc_auc = auc(fpr, tpr)
+
+    # Calculate Average Precision
+    average_precision = average_precision_score(y_test, model.predict_proba(X_test)[:, 1])
+
+    # Plot ROC curve
+    ax1.plot(fpr, tpr, color='darkorange', lw=1, label=f'ROC curve (AUC = {roc_auc:.2f})')
+    ax1.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')
+    ax1.set_xlabel('False Positive Rate')
+    ax1.set_ylabel('True Positive Rate')
+    ax1.set_title('Receiver Operating Characteristic')
+    ax1.legend(loc='lower right')
+
+    # Calculate Precision-Recall curve and PR AUC
+    precision, recall, _ = precision_recall_curve(y_test, model.predict_proba(X_test)[:, 1])
+    prc_auc = auc(recall, precision)
+
+    # Plot Precision-Recall curve
+    ax2.plot(recall, precision, color='darkorange', lw=1, label=f'PR curve (AUC = {prc_auc:.2f})')
+    ax2.set_xlabel('Recall')
+    ax2.set_ylabel('Precision')
+    ax2.set_title('Precision-Recall Curve')
+    ax2.legend(loc='lower left')
+
+    plt.savefig(f'{out_dir}/{model_name}_roc_prc_curves'.replace(' ', '_'), bbox_inches='tight', dpi=300)
+
+    return roc_curve, roc_auc, precision_recall_curve, prc_auc, average_precision
 
 
-def plot_confusion_matrix(label, confusion_matrix, model_name, out_dir, phase):
+def plot_confusion_matrix(test_subject, confusion_matrix, model_name, out_dir, phase):
     cm_fig, ax = plt.subplots()
-    cm_fig.suptitle(f'{model_name} predicting {label}')
+    cm_fig.suptitle(f'{model_name}')
     disp = ConfusionMatrixDisplay(confusion_matrix=confusion_matrix,
                                   display_labels=[0, 1])
     disp.plot(include_values=True, cmap='Blues', ax=ax,
               xticks_rotation='horizontal', values_format='d')
-    plt.savefig(f'{out_dir}/{label}/{phase}/{model_name}_cm'.replace(' ', '_'))
+    plt.savefig(f'{out_dir}/{model_name}_cm'.replace(' ', '_'))
     plt.close()
 
 
@@ -52,5 +79,48 @@ def plot_coefficients(out_dir, coefs, feature_names, model_name, label_name, top
     plt.bar(np.arange(len(coefs)), coefs, color=colors)
     plt.xticks(np.arange(len(coefs)), feature_names, rotation=60, ha='right')
     plt.tight_layout()
-    plt.savefig(f'{out_dir}/{label_name.replace(" ", "_")}/test/{model_name}_feature_importance', dpi=300)
+    plt.savefig(f'{out_dir}/{model_name}_feature_importance', dpi=300)
+    plt.close()
+
+
+def boxplot(out_dir, data, metric_name, y_label, ymin=0, ymax=1):
+    """Prints boxplot for CV Splits and additionally plots test set value
+
+    Parameters
+    ----------
+    out_dir : str
+        Base output directory
+    data : dict
+        Metric data in the form {model_name: (list of val split results, test split result)}
+    metric_name : str
+        The name of the metric
+    y_label : str
+        The name of the predicted endpoint
+    ymin : int, default=0
+        min of y axis (usually 0)
+    ymax : int, default=0
+        max of y axis (usually 1)
+    """
+
+    fig = plt.figure()
+    fig.suptitle(f'{metric_name} for all models predicting {y_label}')
+    ax = fig.add_subplot(111)
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+
+    model_names = list(data.keys())
+    # Plot val boxplot
+    val_data = list(map(lambda x: x[0], data.values()))
+    plt.boxplot(val_data)
+
+    # Plot test single data point
+    test_data = list(map(lambda x: x[1], data.values()))
+    plt.scatter(range(1, len(model_names) + 1), test_data, marker='o', color='blue')
+
+    # Format axes etc
+    ax.set_xticklabels([model_name_replacements.get(model_name, model_name) for model_name in model_names], rotation=45, ha='right')
+    ax.set_ylim(ymin, ymax)
+    ax.set_ylabel(metric_name)
+    plt.tight_layout()
+    plt.savefig(f'{out_dir}/all_models_{metric_name}', dpi=96)
     plt.close()

@@ -11,9 +11,6 @@ from datetime import date
 from data_preparation.utils.filter import butter_filter
 from data_preparation.utils.scaler import std_scaling_data
 
-save_data = True
-overwrite_data = True
-
 
 def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: dict):
     """
@@ -78,7 +75,9 @@ def check_ignore(current_window):
 
 def perform_majority_voting(current_window, hw_general=True):
     counts = current_window['relabeled'].value_counts()
-
+    null_class = counts.get(0, 0)
+    routine_hw = counts.get(1, 0)
+    compulsive_hw = counts.get(2, 0)
     if hw_general:
         null_class = counts.get(0, 0)
         routine_hw = counts.get(1, 0)
@@ -99,7 +98,7 @@ def perform_majority_voting(current_window, hw_general=True):
             majority_label = 2  # compulsive hand washing present
         else:
             majority_label = 0  # null class
-
+            
     return majority_label
 
 
@@ -125,7 +124,6 @@ def load_data_preparation_settings(settings: dict): # Todo: make sure that not o
     resample = settings.get("resample")
     use_undersampling = settings.get("use_undersampling")
     use_oversampling = settings.get("use_oversampling")
-
     return use_filter, use_scaling, resample, use_undersampling, use_oversampling
 
 
@@ -146,12 +144,13 @@ def get_data_path_variables(use_scaling, use_filter, config:dict, settings: dict
     scaling = "scaled" if use_scaling and not raw else "not_scaled"
     filtering = "filtered" if use_filter and not raw else "not_filtered"
 
-
     return window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering, raw
 
 
 # main function for data preparation
 def prepare_data(settings: dict, config: dict, raw: bool=False):
+    save_data = settings["save_data"]
+    overwrite_data = settings["overwrite_data"]
     use_filter, use_scaling, resample, use_undersampling, use_oversampling = load_data_preparation_settings(settings)
     all_subjects = True if not settings.get("use_ocd_only") else False
 
@@ -222,8 +221,8 @@ def prepare_data(settings: dict, config: dict, raw: bool=False):
 
         logger.info(f"Subject: {i}, features: {len(features_user)}, labels: {len(user_labels)}")
 
-    labels = pd.concat(labels).reset_index(drop=True)
-    users = pd.concat(users).reset_index(drop=True)
+    labels = pd.concat(labels).reset_index(drop=True).to_frame()
+    users = pd.concat(users).reset_index(drop=True).to_frame()
 
     features = pd.concat(features)
     feature_names = features.columns.values.tolist()
@@ -245,10 +244,10 @@ def prepare_data(settings: dict, config: dict, raw: bool=False):
 
         os.makedirs(f"{export_path}/{sub_folder_path}", exist_ok=True)
 
-        labels.to_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}{raw_str}.csv")
-        users.to_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}{raw_str}.csv")
-        features.to_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}{raw_str}.csv")
-        pd.DataFrame(feature_names).to_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}{raw_str}.csv")
+        labels.to_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}{raw_str}.csv", index=False)
+        users.to_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}{raw_str}.csv", index=False)
+        features.to_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}{raw_str}.csv", index=False)
+        pd.DataFrame(feature_names).to_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}{raw_str}.csv", index=False)
 
         # create file with meta information for the current window setup
         meta_info = f"Meta information for \"{file_date}\":\n"
@@ -258,9 +257,8 @@ def prepare_data(settings: dict, config: dict, raw: bool=False):
 
         settings_data = yaml.dump(settings)
 
-        meta_file = f"meta_info_{file_date}.txt"
+        meta_file = "meta_info.txt"
         with open(f"{export_path}/{sub_folder_path}/{meta_file}", 'w') as file:
-            file.write("Used settings file: \n")
             file.write(meta_info)
             file.write("Used following settings file: \n")
             file.write(settings_data)
