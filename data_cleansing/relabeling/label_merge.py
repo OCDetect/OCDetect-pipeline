@@ -18,25 +18,33 @@ relabeled_path = "/dhc/groups/ocdetect/relabeled_subjects" # path to exported fi
 origin_path = "/dhc/groups/ocdetect/preprocessed" # path to files getting relabeled
 target_path = "/dhc/groups/ocdetect/preprocessed_relabeled_3" # path to relabeled files, one for both methods
 
+# Merging settings
+type_certain = "union" # intersection or union
+type_uncertain = "union" # intersection or union
+type_un_cert = "ignore_uncertain" # intersection or ignore_uncertain
+
 def process_file(file, subject, df_first, df_second, annotation_df):
-        if file.endswith('.csv') and file.split('_')[1] == subject: # and file == "OCDetect_03_recording_05_382535ec-9a0d-4359-b120-47f7605a22de.csv":
+        if file.endswith('.csv') and file.split('_')[1] == subject:# and file == "OCDetect_03_recording_05_382535ec-9a0d-4359-b120-47f7605a22de.csv":
             origin_df = pd.read_csv(os.path.join(origin_path, file))
             origin_df['datetime'] = pd.to_datetime(origin_df['datetime'])
 
-            annotations_df =  annotation_df.loc[annotation_df['file'] == file].copy()
+            annotation_df =  annotation_df.loc[annotation_df['file'] == file].copy()
 
             label_dates = origin_df.loc[origin_df['user yes/no'] == 1.0, ['datetime', 'compulsive']]
 
-            for annotation_index, annotation in annotations_df.iterrows():
-                next_labels = label_dates.loc[(pd.Timedelta('5 minutes') >= (label_dates['datetime'] - annotation['end'])) & ((label_dates['datetime'] - annotation['end']) >= pd.Timedelta(0)), 'compulsive']
-                if len(next_labels) == 0:
-                    raise ValueError("No User Label found for label", annotation['file'], annotation['file_number'], annotation['start'], annotation['end'])
-                annotations_df.loc[annotation_index, 'compulsive'] = next_labels.iloc[0]
-            print(annotations_df)
+            # for annotation_index, annotation in annotations_df.iterrows():
+            #     next_labels = label_dates.loc[(pd.Timedelta('5 minutes') >= (label_dates['datetime'] - annotation['end'])) & ((label_dates['datetime'] - annotation['end']) >= pd.Timedelta(0)), 'compulsive']
+            #     if len(next_labels) == 0:
+            #         raise ValueError("No User Label found for label", annotation['file'], annotation['file_number'], annotation['start'], annotation['end'])
+            #     annotations_df.loc[annotation_index, 'compulsive'] = next_labels.iloc[0]
 
+            for annotation_index, annotation in annotation_df.iterrows():
+                min_distance_index = (label_dates['datetime'] - annotation['end']).abs().idxmin()
+                annotation_df.loc[annotation_index, 'compulsive'] = label_dates.loc[min_distance_index, 'compulsive']
             origin_df['compulsive'] = 0
+            print(annotation_df)
 
-            relabeled_df = add_annotations(file, origin_df, df_first, df_second, annotations_df)
+            relabeled_df = add_annotations(file, origin_df, df_first, df_second, annotation_df)
 
             relabeled_df.to_csv(os.path.join(target_path, file), index=False) #write relabeled files to target_path
 
@@ -52,13 +60,11 @@ def relabel(subject):
     df_first = convert_df(pd.read_csv(os.path.join(relabeled_path,relabeled[0])))
     df_second = convert_df(pd.read_csv(os.path.join(relabeled_path,relabeled[1])))
 
-    annotation_df = merge(df_first, df_second)
+    annotations = merge(df_first, df_second)
 
-    args = (subject, df_first, df_second, df_first) #TODO change second df_first back to annotation_df after working on merge function
-
-    # for ls_file in os.listdir(origin_path):
+    args = (subject, df_first, df_second, annotations)
+    # for ls_file in os.listdir(origin_path): # for case that parallel processing not possible on atlas currently
     #     process_file(ls_file, *args)
-
     with ProcessPoolExecutor(max_workers=5) as executor: #let run files in parallel
         futures = [executor.submit(process_file, file, *args) for file in os.listdir(origin_path)]
 
@@ -83,12 +89,8 @@ def add_annotations(file_name, origin, annotator_frst, annotator_scnd, merged_an
     return origin
 
 
-
 def merge(df_first, df_second): # logic how cases should be merged
     all_labels = pd.DataFrame(columns=['file', 'file_number', 'start', 'end'])
-    type_certain = "intersection" # intersection or union
-    type_uncertain = "intersection" # intersection or union
-    type_un_cert = "ignore_uncertain" # intersection or ignore_uncertain
     for index1, row1 in df_first.iterrows():
         for index2, row2 in df_second.iterrows():
             if row2['file'] == row1['file']:
@@ -98,8 +100,6 @@ def merge(df_first, df_second): # logic how cases should be merged
                     label1, label2 = row1['label'], row2['label']
                     start1, start2 = row1['start'], row2['start']
                     end1, end2 = row1['end'], row2['end']
-                    if end1 < start2 or end2 < start1:
-                        continue
                     start, end = None, None
                     if label1 == label2:
                     # equal labels
@@ -144,6 +144,7 @@ def merge(df_first, df_second): # logic how cases should be merged
                     if start and end:
                         new_row = {'file': row1['file'], 'file_number': row1['file_number'], 'start': start, 'end': end}
                         all_labels = pd.concat([all_labels, pd.DataFrame([new_row])], ignore_index=True)
+    #all_labels = all_labels[all_labels['start'] <= all_labels['end']]
     return all_labels
 
 
@@ -180,46 +181,6 @@ def find_un_cert_end(merge_type, end1, end2, label1):
         else:
             return end2
 
-print(find_un_cert_end("intersection", 1,2,"y"))
-label ='Certain'
-label_2 ='Certain'
-test_first = [['OCDetect_03_recording_06', 20, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', 'Begin AND End uncertain'],
-              ['OCDetect_03_recording_06', 19, '2022-04-06 20:01:00.800000', '2022-04-06 20:05:00.740000', label],
-              ['OCDetect_03_recording_06', 18, '2022-04-06 20:40:58.800000', '2022-04-06 20:45:00.740000', label],
-              ['OCDetect_03_recording_07', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label],
-              ['OCDetect_03_recording_08', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label],
-              ['OCDetect_03_recording_06', 17, '2022-04-06 21:30:00.800000', '2022-04-06 21:40:00.740000', label],
-              ['OCDetect_03_recording_06', 15, '2022-04-07 20:35:00.800000', '2022-04-07 20:39:00.740000', 'Certain']]
-
-test_second = [['OCDetect_03_recording_06', 20, '2022-04-06 20:36:00.800000', '2022-04-06 20:37:00.740000', 'Certain'],
-               ['OCDetect_03_recording_06', 19, '2022-04-06 20:00:00.800000', '2022-04-06 20:04:00.740000', label_2],
-               ['OCDetect_03_recording_06', 18, '2022-04-06 20:46:00.800000', '2022-04-06 20:48:00.740000', label_2],
-               ['OCDetect_03_recording_07', 2, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label_2],
-               ['OCDetect_03_recording_09', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label_2],
-               ['OCDetect_03_recording_06', 17, '2022-04-06 21:29:00.800000', '2022-04-06 20:32:00.740000', label_2],
-               ['OCDetect_03_recording_06', 17, '2022-04-06 21:35:00.800000', '2022-04-06 20:41:00.740000', label_2],
-               ['OCDetect_03_recording_06', 15, '2022-04-07 20:36:00.800000', '2022-04-07 20:37:00.740000', 'Begin AND End uncertain'],]
-
-# erste Einträge: test_first beinhaltet test_second
-# zweite Einträge: test_second beginnt, test_first beginnt, test_second endet, test_first endet
-# dritte einträge: überlappen sich nicht, test_second vor test_first
-# vierte Einträge: überlappen sich sind aber nicht auf dem gleichen File
-# fünfte Einträge: Überlappen sich sind aber nicht auf dem gleichen Subject
-# sechste und siebte Einträge: test_first ist langer Bereich wird von test_second in zwei verschiedenen Intervallen überlappt
-# Erwartetes Verhalten ohne Rücksicht auf verschiedene Labels: Anzahl zurückgegebener Einträge:
-# für Intersection: 3 Einträge
-# für Union: 5 Einträge
-
-df_1 = pd.DataFrame(test_first, columns= ['file', 'file_number', 'start', 'end', 'label'])
-df_2 = pd.DataFrame(test_second, columns= ['file', 'file_number', 'start', 'end', 'label'])
-print("DF 1")
-print(df_1)
-print("DF 2")
-print(df_2)
-
-print("Merged DF")
-print(merge(df_1, df_2))
-
 def convert_df(df):
     # create from label studio exported csv df as e.g.
     # 'file': OCDetect_03_recording_04_0a48395d-614f-497c-ab71-0d579d74ce27.csv, 'file_number': 1, 'start': 2022-04-05 10:17:45.080, 'end': 2022-04-05 10:18:23.100, 'label': Certain
@@ -244,10 +205,11 @@ def convert_df(df):
 
 
 # run
-#for file in os.listdir(target_path): #TODO delete only files of the subject
- #   os.remove(os.path.join(target_path,file)) #delete all
+for file in os.listdir(target_path):
+    if "OCDetect_"+str(run_subject) in file:
+        os.remove(os.path.join(target_path,file)) #delete all
 
-#relabel(run_subject)
+relabel(run_subject)
 
 
 ### Compulsive Testing
@@ -268,3 +230,42 @@ def convert_df(df):
 #         annotations_filtered.at[annotation_index, 'compulsive']=user['compulsive']
 #         #print(annotation['end'], user['datetime'], user['compulsive'])
 #         break
+
+
+# Testing for merge logic
+label ='Certain'
+label_2 ='Certain'
+test_first = [['OCDetect_03_recording_06', 20, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', 'Begin AND End uncertain'],
+              ['OCDetect_03_recording_06', 19, '2022-04-06 20:01:00.800000', '2022-04-06 20:05:00.740000', label],
+              ['OCDetect_03_recording_06', 18, '2022-04-06 20:40:58.800000', '2022-04-06 20:45:00.740000', label],
+              ['OCDetect_03_recording_07', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label],
+              ['OCDetect_03_recording_08', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label],
+              ['OCDetect_03_recording_06', 17, '2022-04-06 21:30:00.800000', '2022-04-06 21:40:00.740000', label],
+              ['OCDetect_03_recording_06', 15, '2022-04-07 20:35:00.800000', '2022-04-07 20:39:00.740000', 'Certain']]
+
+test_second = [['OCDetect_03_recording_06', 20, '2022-04-06 20:36:00.800000', '2022-04-06 20:37:00.740000', 'Certain'],
+               ['OCDetect_03_recording_06', 19, '2022-04-06 20:00:00.800000', '2022-04-06 20:04:00.740000', label_2],
+               ['OCDetect_03_recording_06', 18, '2022-04-06 20:46:00.800000', '2022-04-06 20:48:00.740000', label_2],
+               ['OCDetect_03_recording_07', 2, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label_2],
+               ['OCDetect_03_recording_09', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label_2],
+               ['OCDetect_03_recording_06', 17, '2022-04-06 21:29:00.800000', '2022-04-06 21:32:00.740000', label_2],
+               ['OCDetect_03_recording_06', 17, '2022-04-06 21:35:00.800000', '2022-04-06 21:41:00.740000', label_2],
+               ['OCDetect_03_recording_06', 15, '2022-04-07 20:36:00.800000', '2022-04-07 20:37:00.740000', 'Begin AND End uncertain']]
+
+# erste Einträge: test_first beinhaltet test_second
+# zweite Einträge: test_second beginnt, test_first beginnt, test_second endet, test_first endet
+# dritte einträge: überlappen sich nicht, test_second vor test_first
+# vierte Einträge: überlappen sich sind aber nicht auf dem gleichen File
+# fünfte Einträge: Überlappen sich sind aber nicht auf dem gleichen Subject
+# sechste und siebte Einträge: test_first ist langer Bereich wird von test_second in zwei verschiedenen Intervallen überlappt
+# letzte Spalte überlappen sich
+
+df_1 = pd.DataFrame(test_first, columns= ['file', 'file_number', 'start', 'end', 'label'])
+df_2 = pd.DataFrame(test_second, columns= ['file', 'file_number', 'start', 'end', 'label'])
+print("DF 1")
+print(df_1)
+print("DF 2")
+print(df_2)
+
+print("Merged DF")
+print(merge(df_1, df_2))
