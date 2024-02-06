@@ -16,7 +16,7 @@ run_subject = "03" # specify always as in files e.g. OCDetect_03 run_subject = "
 relabeled_path = "/dhc/groups/ocdetect/relabeled_subjects" # path to exported files from label studio, always name then "a{number of annotator}_subject_{subject_number}.csv subject_number as fpr run_subject
 # lea: 1, lorenz: 2, robin: 3, kristina: 4
 origin_path = "/dhc/groups/ocdetect/preprocessed" # path to files getting relabeled
-target_path = "/dhc/groups/ocdetect/preprocessed_relabeled_3" # path to relabeled files, one for both methods
+target_path = "/dhc/groups/ocdetect/preprocessed_relabeled" # path to relabeled files, one for both methods
 
 # Merging settings
 type_certain = "union" # intersection or union
@@ -63,8 +63,10 @@ def relabel(subject):
     annotations = merge(df_first, df_second)
 
     args = (subject, df_first, df_second, annotations)
+
     # for ls_file in os.listdir(origin_path): # for case that parallel processing not possible on atlas currently
     #     process_file(ls_file, *args)
+
     with ProcessPoolExecutor(max_workers=5) as executor: #let run files in parallel
         futures = [executor.submit(process_file, file, *args) for file in os.listdir(origin_path)]
 
@@ -94,8 +96,8 @@ def merge(df_first, df_second): # logic how cases should be merged
     for index1, row1 in df_first.iterrows():
         for index2, row2 in df_second.iterrows():
             if row2['file'] == row1['file']:
-                #if row2['file_number'] > row1['file_number']:
-                 #   continue # our files are in order
+                if row2['file_number'] > row1['file_number']:
+                   continue # our files are in order
                 if row1['file_number'] == row2['file_number']:
                     label1, label2 = row1['label'], row2['label']
                     start1, start2 = row1['start'], row2['start']
@@ -146,7 +148,6 @@ def merge(df_first, df_second): # logic how cases should be merged
                     if start and end:
                         new_row = {'file': row1['file'], 'file_number': row1['file_number'], 'start': start, 'end': end}
                         all_labels = pd.concat([all_labels, pd.DataFrame([new_row])], ignore_index=True)
-    #all_labels = all_labels[all_labels['start'] <= all_labels['end']]
     return all_labels
 
 
@@ -235,39 +236,39 @@ relabel(run_subject)
 
 
 # Testing for merge logic
-label ='Certain'
-label_2 ='Certain'
-test_first = [['OCDetect_03_recording_06', 20, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', 'Begin AND End uncertain'],
-              ['OCDetect_03_recording_06', 19, '2022-04-06 20:01:00.800000', '2022-04-06 20:05:00.740000', label],
-              ['OCDetect_03_recording_06', 18, '2022-04-06 20:40:58.800000', '2022-04-06 20:45:00.740000', label],
-              ['OCDetect_03_recording_07', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label],
-              ['OCDetect_03_recording_08', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label],
-              ['OCDetect_03_recording_06', 17, '2022-04-06 21:30:00.800000', '2022-04-06 21:40:00.740000', label],
-              ['OCDetect_03_recording_06', 15, '2022-04-07 20:35:00.800000', '2022-04-07 20:39:00.740000', 'Certain']]
-
-test_second = [['OCDetect_03_recording_06', 20, '2022-04-06 20:36:00.800000', '2022-04-06 20:37:00.740000', 'Certain'],
-               ['OCDetect_03_recording_06', 19, '2022-04-06 20:00:00.800000', '2022-04-06 20:04:00.740000', label_2],
-               ['OCDetect_03_recording_06', 18, '2022-04-06 20:46:00.800000', '2022-04-06 20:48:00.740000', label_2],
-               ['OCDetect_03_recording_07', 2, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label_2],
-               ['OCDetect_03_recording_09', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label_2],
-               ['OCDetect_03_recording_06', 17, '2022-04-06 21:29:00.800000', '2022-04-06 21:32:00.740000', label_2],
-               ['OCDetect_03_recording_06', 17, '2022-04-06 21:35:00.800000', '2022-04-06 21:41:00.740000', label_2],
-               ['OCDetect_03_recording_06', 15, '2022-04-07 20:36:00.800000', '2022-04-07 20:37:00.740000', 'Begin AND End uncertain']]
-
-# erste Einträge: test_first beinhaltet test_second
-# zweite Einträge: test_second beginnt, test_first beginnt, test_second endet, test_first endet
-# dritte einträge: überlappen sich nicht, test_second vor test_first
-# vierte Einträge: überlappen sich sind aber nicht auf dem gleichen File
-# fünfte Einträge: Überlappen sich sind aber nicht auf dem gleichen Subject
-# sechste und siebte Einträge: test_first ist langer Bereich wird von test_second in zwei verschiedenen Intervallen überlappt
-# letzte Spalte überlappen sich
-
-df_1 = pd.DataFrame(test_first, columns= ['file', 'file_number', 'start', 'end', 'label'])
-df_2 = pd.DataFrame(test_second, columns= ['file', 'file_number', 'start', 'end', 'label'])
-print("DF 1")
-print(df_1)
-print("DF 2")
-print(df_2)
-
-print("Merged DF")
-print(merge(df_1, df_2))
+# label ='Certain'
+# label_2 ='Certain'
+# test_first = [['OCDetect_03_recording_06', 20, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', 'Begin AND End uncertain'],
+#               ['OCDetect_03_recording_06', 19, '2022-04-06 20:01:00.800000', '2022-04-06 20:05:00.740000', label],
+#               ['OCDetect_03_recording_06', 18, '2022-04-06 20:40:58.800000', '2022-04-06 20:45:00.740000', label],
+#               ['OCDetect_03_recording_07', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label],
+#               ['OCDetect_03_recording_08', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label],
+#               ['OCDetect_03_recording_06', 17, '2022-04-06 21:30:00.800000', '2022-04-06 21:40:00.740000', label],
+#               ['OCDetect_03_recording_06', 15, '2022-04-07 20:35:00.800000', '2022-04-07 20:39:00.740000', 'Certain']]
+#
+# test_second = [['OCDetect_03_recording_06', 20, '2022-04-06 20:36:00.800000', '2022-04-06 20:37:00.740000', 'Certain'],
+#                ['OCDetect_03_recording_06', 19, '2022-04-06 20:00:00.800000', '2022-04-06 20:04:00.740000', label_2],
+#                ['OCDetect_03_recording_06', 18, '2022-04-06 20:46:00.800000', '2022-04-06 20:48:00.740000', label_2],
+#                ['OCDetect_03_recording_07', 2, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label_2],
+#                ['OCDetect_03_recording_09', 1, '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000', label_2],
+#                ['OCDetect_03_recording_06', 17, '2022-04-06 21:29:00.800000', '2022-04-06 21:32:00.740000', label_2],
+#                ['OCDetect_03_recording_06', 17, '2022-04-06 21:35:00.800000', '2022-04-06 21:41:00.740000', label_2],
+#                ['OCDetect_03_recording_06', 15, '2022-04-07 20:36:00.800000', '2022-04-07 20:37:00.740000', 'Begin AND End uncertain']]
+#
+# # erste Einträge: test_first beinhaltet test_second
+# # zweite Einträge: test_second beginnt, test_first beginnt, test_second endet, test_first endet
+# # dritte einträge: überlappen sich nicht, test_second vor test_first
+# # vierte Einträge: überlappen sich sind aber nicht auf dem gleichen File
+# # fünfte Einträge: Überlappen sich sind aber nicht auf dem gleichen Subject
+# # sechste und siebte Einträge: test_first ist langer Bereich wird von test_second in zwei verschiedenen Intervallen überlappt
+# # letzte Spalte überlappen sich
+#
+# df_1 = pd.DataFrame(test_first, columns= ['file', 'file_number', 'start', 'end', 'label'])
+# df_2 = pd.DataFrame(test_second, columns= ['file', 'file_number', 'start', 'end', 'label'])
+# print("DF 1")
+# print(df_1)
+# print("DF 2")
+# print(df_2)
+#
+# print("Merged DF")
+# print(merge(df_1, df_2))
