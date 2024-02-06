@@ -98,6 +98,8 @@ def merge(df_first, df_second): # logic how cases should be merged
                     label1, label2 = row1['label'], row2['label']
                     start1, start2 = row1['start'], row2['start']
                     end1, end2 = row1['end'], row2['end']
+                    if end1 < start2 or end2 < start1:
+                        continue
                     start, end = None, None
                     if label1 == label2:
                     # equal labels
@@ -210,10 +212,10 @@ test_second = [['OCDetect_03_recording_06', 20, '2022-04-06 20:36:00.800000', '2
 
 df_1 = pd.DataFrame(test_first, columns= ['file', 'file_number', 'start', 'end', 'label'])
 df_2 = pd.DataFrame(test_second, columns= ['file', 'file_number', 'start', 'end', 'label'])
-#print("DF 1")
-#print(df_1)
-#print("DF 2")
-#print(df_2)
+print("DF 1")
+print(df_1)
+print("DF 2")
+print(df_2)
 
 print("Merged DF")
 print(merge(df_1, df_2))
@@ -243,7 +245,7 @@ def convert_df(df):
 
 # run
 #for file in os.listdir(target_path): #TODO delete only files of the subject
-#    os.remove(os.path.join(target_path,file)) #delete all
+ #   os.remove(os.path.join(target_path,file)) #delete all
 
 #relabel(run_subject)
 
