@@ -4,6 +4,7 @@
     <configs>
       <sshConfig authType="PASSWORD" host="kottos.hpc.dhclab.i.hpi.de" id="b65c42d8-4d9d-4af6-b2d6-db9da491a21b" port="22" nameFormat="DESCRIPTIVE" username="lorenz.kautzsch" useOpenSSHConfig="true" />
       <sshConfig authType="PASSWORD" host="geras.hpc.dhclab.i.hpi.de" id="317f156e-9e15-4e8b-aaa1-eeeea9bcf9d4" port="22" nameFormat="DESCRIPTIVE" username="lorenz.kautzsch" useOpenSSHConfig="true" />
+      <sshConfig authType="PASSWORD" host="aigaion.hpc.dhclab.i.hpi.de" id="8fbef07d-929e-4a64-8c10-626630714a87" port="22" nameFormat="DESCRIPTIVE" username="lorenz.kautzsch" useOpenSSHConfig="true" />
     </configs>
   </component>
 </project>

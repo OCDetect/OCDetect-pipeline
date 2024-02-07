@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import numpy as np
 from data_cleansing.helpers.definitions import Sensor
+from data_cleansing.helpers.definitions import Label, LabelMergeParameter
 
 
 def get_file_name_initial_hw(subject: str, config: dict) -> str:
