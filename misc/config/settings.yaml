@@ -5,8 +5,8 @@ data_cleansing : False
 data_preparation : True
 machine_learning : True
 
-testing: True
-use_ocd_only: True
+testing: False
+
 #test_n_recs: 10
 #test_n_subs: 10
 
@@ -17,8 +17,6 @@ untrustworthy_subjects : []  # TODO: rename this item and use it in order to e.g
 use_ocd_only: False
 use_trustworthy_only : True
 
-# ocd_diagnosed_subjects: [5, 9, 1, 3, 12, 13, 20, 24, 29, 30]
-ocd_diagnosed_subjects: [1, 3, 4, 18, 20, 30]
 test_subjects : [1, 3, 4] # at least 3 for ml
 
 seed: 42
@@ -58,10 +56,10 @@ relabel_offset : 5   # how many seconds before the label did the hand washing en
 ###################################################################
 
 save_data: True
-overwrite_data: True
+overwrite_data: True  # Currently not Implemented!
 
 ### Settings for data windowing
-window_size : 1 # value in seconds
+window_size : 5 # value in seconds
 test_window_size: 30
 overlap : 0.5
 labelling_algorithm : "Majority"
@@ -90,4 +88,8 @@ features :
 
 jobs : 32
 
-
+###################################################################
+# Machine Learning Pipeline SETTINGS
+###################################################################
+run_deep_learning : True
+run_classic_methods : True

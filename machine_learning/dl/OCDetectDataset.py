@@ -13,7 +13,10 @@ class OCDetectDataset(Dataset):
         if type(users) == pd.DataFrame:
             users = users["user"]
         if type(labels) == pd.DataFrame:
-            labels = labels["0"]
+            try:
+                labels = labels["0"]
+            except:
+                labels = labels[0]
 
         for user in users.unique():
             cls.preloaded_data[user] = [[],[]]
