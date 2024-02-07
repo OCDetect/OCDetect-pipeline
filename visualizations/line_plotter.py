@@ -2,7 +2,7 @@ import pandas as pd
 from data_cleansing.helpers.definitions import Sensor
 import matplotlib.pyplot as plt
 from misc import logger
-from data_cleansing.helpers import calc_magnitude
+from data_cleansing.helpers.misc import calc_magnitude
 import numpy as np
 
 
@@ -126,7 +126,7 @@ def plot_idle_regions(config: None, df: pd.DataFrame, sensor: Sensor, save_fig=F
     # Extract data for ignore = True
     df_red = df[df['ignore'] == True]
 
-    plt.figure(figsize=(18, 8))
+    fig = plt.figure(figsize=(18, 8))
 
     # Plot the line with different colors based on 'idle' column
     plt.plot(df.index, df[f'mag {sensor.value}'], color='grey', label='unfiltered')
@@ -142,3 +142,6 @@ def plot_idle_regions(config: None, df: pd.DataFrame, sensor: Sensor, save_fig=F
         plt.savefig(f"{config.get('output_folder')}{fig_name}.png", bbox_inches='tight')
     else:
         plt.show()
+    plt.clf()
+    plt.close(fig)
+

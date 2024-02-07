@@ -1,10 +1,12 @@
 import os
+import time
+
 import pandas as pd
 import datetime
 from glob import glob
 from typing import List, Dict, Tuple, Union
 from pathlib import Path
-from data_cleansing.helpers import get_metadata, add_timezone_and_summertime, get_file_name_initial_hw
+from data_cleansing.helpers.misc import get_metadata, add_timezone_and_summertime, get_file_name_initial_hw
 from misc import logger
 from data_cleansing.helpers.definitions import IgnoreReason
 from tqdm import tqdm
@@ -20,9 +22,10 @@ def get_subject_filelist(subject_id: str, config: dict, settings: dict) -> List[
         subject_filelist = np.random.choice(subject_filelist, n_test, replace=False)
     return subject_filelist
 
-
+subjects_loaded = {}
 def load_subject(subject_id: str, config: dict, settings: dict)\
         -> Union[List[pd.DataFrame], Tuple[List[pd.DataFrame], dict]]:
+    global subjects_loaded
     """
     Load a single subject. All recordings are loaded and augmented with relevant information:
         - datetime instead of timestamp, taken from metadata
@@ -30,8 +33,14 @@ def load_subject(subject_id: str, config: dict, settings: dict)\
     :param subject_id: The subject to be loaded
     :param config: dict containing configuration information, e.g. folders, filenames or other settings
     :param settings: the global settings
+    :param subjects_loaded: dict, containing all subjects that have been loaded so far.
     :return: List with pd.DataFrames, one per recording of the subjects and the position in the list, dates (optional)
     """
+    if subject_id in subjects_loaded:
+        while subjects_loaded[subject_id] is False:
+            time.sleep(1)
+        return subjects_loaded[subject_id]
+    subjects_loaded[subject_id] = False
 
     first_hw_csv_name = get_file_name_initial_hw(subject_id, config)
 
@@ -60,6 +69,7 @@ def load_subject(subject_id: str, config: dict, settings: dict)\
             recording_df.loc[initial_hw_indices, 'ignore'] = IgnoreReason.InitialHandWash
             recording_df.loc[1 - initial_hw_indices, 'ignore'] = IgnoreReason.DontIgnore
         recordings.append(recording_df)
+    subjects_loaded[subject_id] = recordings
     return recordings
 
 
