@@ -5,7 +5,6 @@ import json
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from data_cleansing.helpers.definitions import Label, LabelMergeParameter, IgnoreReason, enum_labels, string_to_parameter
-import numpy as np
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
