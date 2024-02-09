@@ -35,14 +35,8 @@ class LabelMergeParameter(Enum):
     Union = 1
     IgnoreUncertain = 2
 
-enum_labels = {
-    "Certain": Label.Certain.value,
-    "Begin uncertain": Label.BeginUncertain.value,
-    "End uncertain": Label.EndUncertain.value,
-    "Begin AND End uncertain": Label.BeginEndUncertain.value}
-
-def string_to_parameter(parameter_string):
-    for parameter in LabelMergeParameter:
-        if parameter.name == parameter_string:
-            return parameter
-    return None
+label_mapping = {
+    "Certain": Label.Certain,
+    "Begin uncertain": Label.BeginUncertain,
+    "End uncertain": Label.EndUncertain,
+    "Begin AND End uncertain": Label.BeginEndUncertain}

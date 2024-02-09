@@ -4,7 +4,7 @@ import pandas as pd
 import json
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from data_cleansing.helpers.definitions import Label, LabelMergeParameter, IgnoreReason, enum_labels, string_to_parameter
+from data_cleansing.helpers.definitions import Label, LabelMergeParameter, IgnoreReason, label_mapping
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
@@ -18,9 +18,9 @@ origin_path = "/dhc/groups/ocdetect/preprocessed" # path to files getting relabe
 target_path = "/dhc/groups/ocdetect/preprocessed_relabeled" # path to relabeled files
 
 # Merging settings
-type_certain = string_to_parameter("Intersection") # intersection or union
-type_uncertain = string_to_parameter("Intersection") # intersection or union
-type_un_cert = string_to_parameter("IgnoreUncertain") # intersection or ignore_uncertain
+type_certain = LabelMergeParameter.Intersection # LabelMergeParameter.Intersection or LabelMergeParameter.Union
+type_uncertain = LabelMergeParameter.Intersection # LabelMergeParameter.Intersection or LabelMergeParameter.Union
+type_un_cert = LabelMergeParameter.IgnoreUncertain # LabelMergeParameter.Intersection or LabelMergeParameter.IgnoreUncertain
 
 
 def relabel(subject):
@@ -49,7 +49,7 @@ def relabel(subject):
             future.result()
 
 def process_file(origin_file, subject, annotation_first, annotation_second, merged_annotation):
-        if origin_file.endswith('.csv') and origin_file.split('_')[1] == subject:# and origin_file == "OCDetect_03_recording_05_382535ec-9a0d-4359-b120-47f7605a22de.csv": #for  testing
+        if origin_file.endswith('.csv') and origin_file.split('_')[1] == subject and origin_file == "OCDetect_03_recording_05_382535ec-9a0d-4359-b120-47f7605a22de.csv": #for  testing
             origin_df = pd.read_csv(os.path.join(origin_path, origin_file))
             origin_df['datetime'] = pd.to_datetime(origin_df['datetime'])
 
@@ -71,6 +71,8 @@ def process_file(origin_file, subject, annotation_first, annotation_second, merg
                 else:
                     merged_annotation.loc[annotation_index, 'compulsive'] = label_crossings.iloc[-1]['compulsive']
                     merged_annotation.loc[annotation_index, 'usr_label'] = label_crossings.iloc[-1]['datetime']
+
+            print(merged_annotation)
 
             ## ALTERNATIVE: Determine for labeled interval which User label it belongs to, closest User label to end of interval (before or after end)
             # for annotation_index, annotation in merged_annotation.iterrows():
@@ -103,42 +105,42 @@ def merge(df_first, df_second): # logic how cases should be merged
                     start, end = None, None
                     if label1 == label2:
                     # equal labels
-                        if label1 == Label.Certain.value:
+                        if label1 == Label.Certain:
                             start = find_start(type_certain, start1, start2)
                             end = find_end(type_certain, end1, end2)
-                        elif label1 == Label.BeginEndUncertain.value:
+                        elif label1 == Label.BeginEndUncertain:
                             start = find_start(type_uncertain, start1, start2)
                             end = find_end(type_uncertain, end1, end2)
-                        elif label1 == Label.BeginUncertain.value:
+                        elif label1 == Label.BeginUncertain:
                             start = find_start(type_uncertain, start1, start2)
                             end = find_end(type_certain, end1, end2)
-                        elif label1 == Label.EndUncertain.value:
+                        elif label1 == Label.EndUncertain:
                             start = find_start(type_certain, start1, start2)
                             end = find_end(type_uncertain, end1, end2)
                     else:
-                        if ((label1 == Label.Certain.value and label2 == Label.BeginEndUncertain.value) or
-                            (label2 == Label.Certain.value and label1 == Label.BeginEndUncertain.value)):
+                        if ((label1 == Label.Certain and label2 == Label.BeginEndUncertain) or
+                            (label2 == Label.Certain and label1 == Label.BeginEndUncertain)):
                                 start = find_un_cert_start(type_un_cert, start1, start2, label1)
                                 end = find_un_cert_end(type_un_cert, end1, end2, label1)
                     #begin_uncertain
-                        elif label1 == Label.BeginUncertain.value or label2 == Label.BeginUncertain.value:
+                        elif label1 == Label.BeginUncertain or label2 == Label.BeginUncertain:
                             # handle cases with 'begin_uncertain'
-                            if label2 == Label.Certain.value or label1 == Label.Certain.value:
+                            if label2 == Label.Certain or label1 == Label.Certain:
                                 start = find_un_cert_start(type_un_cert, start1, start2, label1)
                                 end = find_end(type_certain, end1, end2)
-                            elif label2 == Label.BeginEndUncertain.value or label1 == Label.BeginEndUncertain.value:
+                            elif label2 == Label.BeginEndUncertain or label1 == Label.BeginEndUncertain:
                                 start = find_start(type_uncertain, start1, start2)
                                 end = find_un_cert_end(type_un_cert, end1, end2, label1)
-                            elif label2 == Label.EndUncertain.value or label1 == Label.EndUncertain.value:
+                            elif label2 == Label.EndUncertain or label1 == Label.EndUncertain:
                                 start = find_un_cert_start(type_un_cert, start1, start2, label1)
                                 end = find_un_cert_end(type_un_cert, end1, end2, label1)
-                        elif label1 == Label.EndUncertain.value or label2 == Label.EndUncertain.value:
+                        elif label1 == Label.EndUncertain or label2 == Label.EndUncertain:
                             # handle cases with Label.EndUncertain
                             #begin_uncertain End uncertain already handled
-                            if label2 == Label.Certain.value or label1 == Label.Certain.value:
+                            if label2 == Label.Certain or label1 == Label.Certain:
                                 start = find_start(type_certain, start1, start2)
                                 end = find_un_cert_end(type_un_cert, end1, end2, label1)
-                            elif label2 == Label.BeginEndUncertain.value or label1 == Label.BeginEndUncertain.value:
+                            elif label2 == Label.BeginEndUncertain or label1 == Label.BeginEndUncertain:
                                 start = find_un_cert_start(type_un_cert, start1, start2, label1)
                                 end = find_end(type_uncertain, end1, end2)
                 # append new label to df
@@ -166,7 +168,7 @@ def find_un_cert_start(merge_type, start1, start2, label1):
     if merge_type == LabelMergeParameter.Intersection:
         return max(start1, start2)
     if merge_type == LabelMergeParameter.IgnoreUncertain:
-        if label1 == Label.Certain.value or label1 == Label.EndUncertain.value:
+        if label1 == Label.Certain or label1 == Label.EndUncertain:
             return start1
         else:
             return start2
@@ -176,7 +178,7 @@ def find_un_cert_end(merge_type, end1, end2, label1):
     if merge_type == LabelMergeParameter.Intersection:
         return min(end1, end2)
     if merge_type == LabelMergeParameter.IgnoreUncertain:
-        if label1 == Label.Certain.value or label1 == Label.BeginUncertain.value:
+        if label1 == Label.Certain or label1 == Label.BeginUncertain:
             return end1
         else:
             return end2
@@ -188,11 +190,11 @@ def add_annotations(file_name, origin, annotation_first, annotation_second, merg
         for index, row in annotator.iterrows(): # write single annotations to preprocessed_file
             if row['file'] == file_name:
                 label = row['label']
-                origin.loc[(origin['datetime'] >= row['start']) & (origin['datetime'] <= row['end']), 'annotator_'+str(i+1)] = label
+                origin.loc[(origin['datetime'] >= row['start']) & (origin['datetime'] <= row['end']), 'annotator_'+str(i+1)] = label.value
 
     for index, row in merged_annotation.iterrows(): # add merged annotation to corresponding row until User label
         if row['file']==file_name:
-            compulsive = row['compulsive']
+            compulsive = int(row['compulsive'])
             origin.loc[(origin['datetime'] >= row['start']) & (origin['datetime'] <= row['end']) & (origin['datetime'] <= row['usr_label']), 'merged_annotation'] = 1
             origin.loc[(origin['datetime'] >= row['start']) & (origin['datetime'] <= row['end']) & (origin['datetime'] <= row['usr_label']), 'compulsive_relabeled'] = compulsive
     return origin
@@ -201,7 +203,7 @@ def set_ignore(relabeled, merged_annotation): # set ignore value (7) for 5 minut
     for annotation_index, annotation in merged_annotation.iterrows():
         relabeled.loc[((annotation['start'] - relabeled['datetime']) > pd.Timedelta(minutes=0)) &
                       ((annotation['start'] - relabeled['datetime']) <= pd.Timedelta(minutes=5)) &
-                      (relabeled['merged_annotation'] != 1), 'ignore'] = IgnoreReason.BeforeHandWash.value
+                      (relabeled['merged_annotation'] != 1), 'ignore'] = IgnoreReason.BeforeHandWash
     return relabeled
 
 def convert_df(df):
@@ -217,7 +219,7 @@ def convert_df(df):
         row_label = json.loads(row['label'])[0]
         start = row_label["start"][:23]
         end = row_label["end"][:23]
-        label = enum_labels[row_label["timeserieslabels"][0]]
+        label = label_mapping[row_label["timeserieslabels"][0]]
 
         new_row = {'file': file_name, 'file_number': file_number, 'start': start, 'end': end, 'label': label}
         df_new = pd.concat([df_new, pd.DataFrame([new_row])], ignore_index=True)
@@ -236,8 +238,7 @@ for file in os.listdir(target_path):
 
 relabel(run_subject) #TODO run for all manually relabeled subjects
 
-### Insert rows for testing; compulsive column
-
+### Insert rows for testing of compulsive column
 # new_row ={'file': 'OCDetect_03_recording_05_382535ec-9a0d-4359-b120-47f7605a22de.csv', 'file_number':12, 'start': '2022-04-05 17:40:40.480000', 'end': '2022-04-05 17:41:59.220000'}
 #             index = len(merged_annotation) - 1
 #             merged_annotation = pd.concat([merged_annotation.iloc[:index], pd.DataFrame([new_row]), merged_annotation.iloc[index:]], ignore_index=True)
