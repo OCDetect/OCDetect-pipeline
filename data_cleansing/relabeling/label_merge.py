@@ -49,7 +49,7 @@ def relabel(subject):
             future.result()
 
 def process_file(origin_file, subject, annotation_first, annotation_second, merged_annotation):
-        if origin_file.endswith('.csv') and origin_file.split('_')[1] == subject and origin_file == "OCDetect_03_recording_05_382535ec-9a0d-4359-b120-47f7605a22de.csv": #for  testing
+        if origin_file.endswith('.csv') and origin_file.split('_')[1] == subject: # and origin_file == "OCDetect_03_recording_05_382535ec-9a0d-4359-b120-47f7605a22de.csv": #for  testing
             origin_df = pd.read_csv(os.path.join(origin_path, origin_file))
             origin_df['datetime'] = pd.to_datetime(origin_df['datetime'])
 
@@ -71,8 +71,6 @@ def process_file(origin_file, subject, annotation_first, annotation_second, merg
                 else:
                     merged_annotation.loc[annotation_index, 'compulsive'] = label_crossings.iloc[-1]['compulsive']
                     merged_annotation.loc[annotation_index, 'usr_label'] = label_crossings.iloc[-1]['datetime']
-
-            print(merged_annotation)
 
             ## ALTERNATIVE: Determine for labeled interval which User label it belongs to, closest User label to end of interval (before or after end)
             # for annotation_index, annotation in merged_annotation.iterrows():
