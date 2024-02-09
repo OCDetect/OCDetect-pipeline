@@ -233,9 +233,9 @@ def convert_df(df):
 
 # delete all files of the subject in target directory (preprocessed_relabeled)
 #for file in os.listdir(target_path):
- #   if "OCDetect_"+str(run_subject) in file:
-  #      os.remove(os.path.join(target_path,file))
-
+    #if "OCDetect_"+str(run_subject) in file:
+        #os.remove(os.path.join(target_path,file))
+#check for intersect first
 #relabel(run_subject) #TODO run for all manually relabeled subjects
 
 ### Insert rows for testing of compulsive column
