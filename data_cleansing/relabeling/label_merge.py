@@ -18,9 +18,9 @@ origin_path = "/dhc/groups/ocdetect/preprocessed" # path to files getting relabe
 target_path = "/dhc/groups/ocdetect/preprocessed_relabeled" # path to relabeled files
 
 # Merging settings
-type_certain = LabelMergeParameter.Intersection # LabelMergeParameter.Intersection or LabelMergeParameter.Union
-type_uncertain = LabelMergeParameter.Intersection # LabelMergeParameter.Intersection or LabelMergeParameter.Union
-type_un_cert = LabelMergeParameter.IgnoreUncertain # LabelMergeParameter.Intersection or LabelMergeParameter.IgnoreUncertain
+d_type_certain = LabelMergeParameter.Intersection # LabelMergeParameter.Intersection or LabelMergeParameter.Union
+d_type_uncertain = LabelMergeParameter.Intersection # LabelMergeParameter.Intersection or LabelMergeParameter.Union
+d_type_un_cert = LabelMergeParameter.IgnoreUncertain # LabelMergeParameter.Intersection or LabelMergeParameter.IgnoreUncertain
 
 
 def relabel(subject):
@@ -35,7 +35,7 @@ def relabel(subject):
     df_first = convert_df(pd.read_csv(os.path.join(relabeled_path,relabeled[0]))) #convert jsons (labelstudio) into dfs
     df_second = convert_df(pd.read_csv(os.path.join(relabeled_path,relabeled[1])))
 
-    annotations = merge(df_first, df_second) # apply merging logic
+    annotations = merge(df_first, df_second, d_type_uncertain, d_type_certain, d_type_un_cert) # apply merging logic
 
     args = (subject, df_first, df_second, annotations)
 
@@ -87,22 +87,24 @@ def process_file(origin_file, subject, annotation_first, annotation_second, merg
             output_df.to_csv(os.path.join(target_path, origin_file), index = False) #write relabeled files to target_path
 
 
-def merge(df_first, df_second): # logic how cases should be merged
+def merge(df_first, df_second, type_uncertain, type_certain, type_un_cert): # logic how cases should be merged
     all_labels = pd.DataFrame(columns=['file', 'file_number', 'start', 'end'])
+    # iterate through all labels of annotator1 and annotator2
     for index1, row1 in df_first.iterrows():
         for index2, row2 in df_second.iterrows():
             if row2['file'] == row1['file']:
-                if row2['file_number'] > row1['file_number']:
-                   continue # our files are in order
+                #if row2['file_number'] > row1['file_number']:
+                   #break # TODO: ask, our files are in order on the cluster? testcases are unordered...
                 if row1['file_number'] == row2['file_number']:
                     label1, label2 = row1['label'], row2['label']
                     start1, start2 = row1['start'], row2['start']
                     end1, end2 = row1['end'], row2['end']
+                    # check for intersection between the annotations, else skip
                     if end1 < start2 or end2 < start1:
                         continue
                     start, end = None, None
                     if label1 == label2:
-                    # equal labels
+                    # handle equal labels with specified merge types
                         if label1 == Label.Certain:
                             start = find_start(type_certain, start1, start2)
                             end = find_end(type_certain, end1, end2)
@@ -116,13 +118,13 @@ def merge(df_first, df_second): # logic how cases should be merged
                             start = find_start(type_certain, start1, start2)
                             end = find_end(type_uncertain, end1, end2)
                     else:
+                        # handle certain-uncertain cases
                         if ((label1 == Label.Certain and label2 == Label.BeginEndUncertain) or
                             (label2 == Label.Certain and label1 == Label.BeginEndUncertain)):
                                 start = find_un_cert_start(type_un_cert, start1, start2, label1)
                                 end = find_un_cert_end(type_un_cert, end1, end2, label1)
-                    #begin_uncertain
+                        # handle label begin_uncertain
                         elif label1 == Label.BeginUncertain or label2 == Label.BeginUncertain:
-                            # handle cases with 'begin_uncertain'
                             if label2 == Label.Certain or label1 == Label.Certain:
                                 start = find_un_cert_start(type_un_cert, start1, start2, label1)
                                 end = find_end(type_certain, end1, end2)
@@ -132,9 +134,9 @@ def merge(df_first, df_second): # logic how cases should be merged
                             elif label2 == Label.EndUncertain or label1 == Label.EndUncertain:
                                 start = find_un_cert_start(type_un_cert, start1, start2, label1)
                                 end = find_un_cert_end(type_un_cert, end1, end2, label1)
+                        # handle cases with end_uncertain
                         elif label1 == Label.EndUncertain or label2 == Label.EndUncertain:
-                            # handle cases with Label.EndUncertain
-                            #begin_uncertain End uncertain already handled
+                            # begin_uncertain End uncertain already handled
                             if label2 == Label.Certain or label1 == Label.Certain:
                                 start = find_start(type_certain, start1, start2)
                                 end = find_un_cert_end(type_un_cert, end1, end2, label1)
@@ -230,11 +232,11 @@ def convert_df(df):
 ### RUN
 
 # delete all files of the subject in target directory (preprocessed_relabeled)
-for file in os.listdir(target_path):
-    if "OCDetect_"+str(run_subject) in file:
-        os.remove(os.path.join(target_path,file))
+#for file in os.listdir(target_path):
+ #   if "OCDetect_"+str(run_subject) in file:
+  #      os.remove(os.path.join(target_path,file))
 
-relabel(run_subject) #TODO run for all manually relabeled subjects
+#relabel(run_subject) #TODO run for all manually relabeled subjects
 
 ### Insert rows for testing of compulsive column
 # new_row ={'file': 'OCDetect_03_recording_05_382535ec-9a0d-4359-b120-47f7605a22de.csv', 'file_number':12, 'start': '2022-04-05 17:40:40.480000', 'end': '2022-04-05 17:41:59.220000'}
