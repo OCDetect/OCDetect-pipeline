@@ -93,8 +93,8 @@ def merge(df_first, df_second, type_uncertain, type_certain, type_un_cert): # lo
     for index1, row1 in df_first.iterrows():
         for index2, row2 in df_second.iterrows():
             if row2['file'] == row1['file']:
-                #if row2['file_number'] > row1['file_number']:
-                   #break # TODO: ask, our files are in order on the cluster? testcases are unordered...
+                if row2['file_number'] > row1['file_number']:
+                   break # our files are in order on the cluster
                 if row1['file_number'] == row2['file_number']:
                     label1, label2 = row1['label'], row2['label']
                     start1, start2 = row1['start'], row2['start']
