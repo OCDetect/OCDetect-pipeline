@@ -3,6 +3,7 @@
 # ------------------------------------------------------------------------
 # Author: Marius Bock
 # E-mail: marius.bock(at)uni-siegen.de
+# Adapted by .... TODO
 # ------------------------------------------------------------------------
 import os
 import time
@@ -25,14 +26,16 @@ def init_weights(net, method):
     def init_layer(m):
         if type(m) in [nn.Linear, nn.Conv2d, nn.Conv1d]:
             if method == "xavier_normal":
-                torch.nn.init.xavier_normal(m.weight)
+                torch.nn.init.xavier_normal_(m.weight)
             elif method == "xavier_uniform":
-                torch.nn.init.xavier_uniform(m.weight)
+                torch.nn.init.xavier_uniform_(m.weight)
     net.apply(init_layer)
     return net  # TODO: ask marius for original code
 
+
 def save_checkpoint(save_states, _, file_folder, file_name):
     torch.save(save_states, os.path.join(file_folder, file_name))
+
 
 def worker_init_reset_seed(worker_id):
     seed = 769584165
@@ -43,12 +46,7 @@ def worker_init_reset_seed(worker_id):
     torch.manual_seed(seed)
 
 
-def run_inertial_network(train_sbjs, val_sbjs, cfg, ckpt_folder, ckpt_freq, resume, run=None, split_name="split_name"):
-    # load train and val inertial data
-    # define inertial datasets
-    train_dataset = OCDetectDataset(train_sbjs, cfg['dataset']['window_size'], model=cfg['name'])
-    test_dataset = OCDetectDataset(val_sbjs, cfg['dataset']['window_size'], model=cfg['name'])
-
+def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_freq, resume, run=None, split_name="split_name"):
     # define dataloaders
     train_loader = DataLoader(train_dataset, cfg['loader']['batch_size'], shuffle=True, num_workers=4, worker_init_fn=worker_init_reset_seed, persistent_workers=True)
     test_loader = DataLoader(test_dataset, cfg['loader']['batch_size'], shuffle=False, num_workers=4, worker_init_fn=worker_init_reset_seed, persistent_workers=True)
@@ -62,22 +60,8 @@ def run_inertial_network(train_sbjs, val_sbjs, cfg, ckpt_folder, ckpt_freq, resu
             )
         print("Number of learnable parameters for DeepConvLSTM: {}".format(sum(p.numel() for p in net.parameters() if p.requires_grad)))
         criterion = nn.CrossEntropyLoss()
-    elif cfg['name'] == 'dim_deepconvlstm':
-        net = DimDeepConvLSTM(
-            train_dataset.channels, train_dataset.classes, train_dataset.window_size,
-            cfg['model']['conv_kernels'], cfg['model']['conv_kernel_size'], 
-            cfg['model']['lstm_units'], cfg['model']['lstm_layers'], cfg['model']['dropout']
-            )
-        print("Number of learnable parameters for DeepConvLSTM: {}".format(sum(p.numel() for p in net.parameters() if p.requires_grad)))
-        criterion = nn.CrossEntropyLoss()
     elif cfg['name'] == 'attendanddiscriminate':
         net = AttendAndDiscriminate(
-            train_dataset.channels, train_dataset.classes, cfg['model']['hidden_dim'], cfg['model']['conv_kernels'], cfg['model']['conv_kernel_size'], cfg['model']['enc_layers'], cfg['model']['enc_is_bidirectional'], cfg['model']['dropout'], cfg['model']['dropout_rnn'], cfg['model']['dropout_cls'], cfg['model']['activation'], cfg['model']['sa_div']
-            )
-        print("Number of learnable parameters for A-and-D: {}".format(sum(p.numel() for p in net.parameters() if p.requires_grad)))
-        criterion = nn.CrossEntropyLoss(reduction="mean")
-    elif cfg['name'] == 'dim_attendanddiscriminate':
-        net = DimAttendAndDiscriminate(
             train_dataset.channels, train_dataset.classes, cfg['model']['hidden_dim'], cfg['model']['conv_kernels'], cfg['model']['conv_kernel_size'], cfg['model']['enc_layers'], cfg['model']['enc_is_bidirectional'], cfg['model']['dropout'], cfg['model']['dropout_rnn'], cfg['model']['dropout_cls'], cfg['model']['activation'], cfg['model']['sa_div']
             )
         print("Number of learnable parameters for A-and-D: {}".format(sum(p.numel() for p in net.parameters() if p.requires_grad)))
@@ -86,11 +70,6 @@ def run_inertial_network(train_sbjs, val_sbjs, cfg, ckpt_folder, ckpt_freq, resu
         net = TinyHAR((100, 1, train_dataset.features.shape[1], train_dataset.channels), train_dataset.classes, cfg['model']['conv_kernels'], cfg['model']['conv_layers'], cfg['model']['conv_kernel_size'], dropout=cfg['model']['dropout'])
         print("Number of learnable parameters for TinyHAR: {}".format(sum(p.numel() for p in net.parameters() if p.requires_grad)))
         criterion = nn.CrossEntropyLoss()
-    elif cfg['name'] == 'dim_tinyhar':
-        net = DimTinyHAR((100, 1, train_dataset.features.shape[1], train_dataset.channels), train_dataset.classes, cfg['model']['conv_kernels'], cfg['model']['conv_layers'], cfg['model']['conv_kernel_size'], dropout=cfg['model']['dropout'])
-        print("Number of learnable parameters for TinyHAR: {}".format(sum(p.numel() for p in net.parameters() if p.requires_grad)))
-        criterion = nn.CrossEntropyLoss()
-
     # define criterion and optimizer
     opt = torch.optim.Adam(net.parameters(), lr=cfg['train_cfg']['lr'], weight_decay=cfg['train_cfg']['weight_decay'])
 
@@ -101,7 +80,7 @@ def run_inertial_network(train_sbjs, val_sbjs, cfg, ckpt_folder, ckpt_freq, resu
     # use weighted loss if selected
     if cfg['train_cfg']['weighted_loss']:
         class_weights = compute_class_weight('balanced', classes=np.unique(train_dataset.labels), y=train_dataset.labels)
-        if len(class_weights) < 3:
+        if len(class_weights) < 2:
             class_weights = list(class_weights) + [1.0]
         criterion.weight = torch.tensor(class_weights).float().to(cfg['devices'][0])
 
@@ -131,11 +110,11 @@ def run_inertial_network(train_sbjs, val_sbjs, cfg, ckpt_folder, ckpt_freq, resu
         if cfg['name'] == 'attendanddiscriminate':
             net, t_losses, _, _ = train_one_epoch(train_loader, net, opt, criterion, cfg['devices'][0], cfg['train_cfg']['beta'], cfg['train_cfg']['lr_cent'], cfg['name'])
         else:
-            net, t_losses, _, _ = train_one_epoch(train_loader, net, opt, criterion, cfg['devices'][0])
+            net, t_losses, _, _, = train_one_epoch(train_loader, net, opt, criterion, cfg['devices'][0])
         print("--- %s seconds ---" % (time.time() - start_time))
         # save ckpt once in a while
         if (((ckpt_freq > 0) and ((epoch + 1) % ckpt_freq == 0))):
-            save_states = { 
+            save_states = {
                 'epoch': epoch + 1,
                 'state_dict': net.state_dict(),
                 'optimizer': opt.state_dict(),
@@ -146,15 +125,12 @@ def run_inertial_network(train_sbjs, val_sbjs, cfg, ckpt_folder, ckpt_freq, resu
 
         # validation
         if cfg['name'] == 'attendanddiscriminate':
-            v_losses, v_preds, v_gt = validate_one_epoch(test_loader, net, criterion, cfg['devices'][0], cfg['name'])
+            v_losses, v_preds, v_preds_raw, v_gt = validate_one_epoch(test_loader, net, criterion, cfg['devices'][0], cfg['name'])
         else:
-            v_losses, v_preds, v_gt = validate_one_epoch(test_loader, net, criterion, cfg['devices'][0])
+            v_losses, v_preds, v_preds_raw, v_gt = validate_one_epoch(test_loader, net, criterion, cfg['devices'][0])
 
         if cfg['train_cfg']['lr_step'] > 0:
             scheduler.step()
-        
-
-
 
 
         # calculate validation metrics
@@ -164,13 +140,26 @@ def run_inertial_network(train_sbjs, val_sbjs, cfg, ckpt_folder, ckpt_freq, resu
         v_rec = recall_score(v_gt, v_preds, average=None, zero_division=1)
         v_f1 = f1_score(v_gt, v_preds, average=None, zero_division=1)
 
+        if epoch == 0:
+            v_train_gt = []
+            for i, (inputs, targets) in enumerate(train_loader):
+                batch_gt = targets.cpu().numpy().flatten()
+                v_train_gt = np.concatenate((v_train_gt, batch_gt))
+            np.save(os.path.join(ckpt_folder, 'unprocessed_results', 'v_train_' + cfg['name'] + "_" + split_name), v_train_gt)
+
         if epoch == (start_epoch + cfg['train_cfg']['epochs']) - 1:
             # save raw results (for later postprocessing)
             os.makedirs(os.path.join(ckpt_folder, 'unprocessed_results'), exist_ok=True)
-            np.save(os.path.join(ckpt_folder, 'unprocessed_results', 'v_preds_' + split_name), v_preds)
-            np.save(os.path.join(ckpt_folder, 'unprocessed_results', 'v_gt_' + split_name), v_gt)
+            np.save(os.path.join(ckpt_folder, 'unprocessed_results', 'v_preds_' + cfg['name'] + "_" + split_name), v_preds)
+            np.save(os.path.join(ckpt_folder, 'unprocessed_results', 'v_gt_' + cfg['name'] + "_" + split_name), v_gt)
+            np.save(os.path.join(ckpt_folder, 'unprocessed_results', 'v_raw_' + cfg['name'] + "_" + split_name), v_preds_raw)
             os.makedirs(os.path.join(ckpt_folder, 'processed_results'), exist_ok=True)
-            with open(os.path.join(ckpt_folder, 'processed_results', "results.csv"), "a") as f:
+
+            results_filename = os.path.join(ckpt_folder, 'processed_results', "results.csv")
+            write_headline = not os.path.isfile(results_filename)
+            with open(results_filename, "a") as f:
+                if write_headline:
+                    f.write("model_name,epoch,acc,prec,recall,f1,splitname\n")
                 f.write(f"{cfg['name']}, {epoch + 1}, {np.nanmean(v_acc)}, {np.nanmean(v_prec)}, {np.nanmean(v_rec)}, {np.nanmean(v_f1)}, {split_name} \n")
 
         # print results to terminal
@@ -187,7 +176,6 @@ def run_inertial_network(train_sbjs, val_sbjs, cfg, ckpt_folder, ckpt_freq, resu
 
         if run is not None:
             run[split_name].append({"train_loss": np.nanmean(t_losses), "val_loss": np.nanmean(v_losses), "accuracy": v_acc, "precision": np.nanmean(v_prec), "recall": np.nanmean(v_rec), 'f1': np.nanmean(v_f1)})
-
 
     return t_losses, v_losses, v_preds, v_gt
 
@@ -228,7 +216,7 @@ def train_one_epoch(loader, network, opt, criterion, gpu=None, beta=0.0003, lr_c
 
 
 def validate_one_epoch(loader, network, criterion, gpu=None, network_name='deepconvlstm'):
-    losses, preds, gt = [], [], []
+    losses, preds, preds_raw, gt = [], [], [], []
 
     network.eval()
     with torch.no_grad():
@@ -249,9 +237,14 @@ def validate_one_epoch(loader, network, criterion, gpu=None, network_name='deepc
             losses.append(batch_loss.item())
 
             # create predictions and append them to final list
-            batch_preds = np.argmax(output.cpu().detach().numpy(), axis=-1)
+            batch_preds_raw = output.cpu().detach().numpy()
+            batch_preds = np.argmax(batch_preds_raw, axis=-1)
             batch_gt = targets.cpu().numpy().flatten()
             preds = np.concatenate((preds, batch_preds))
+            if len(preds_raw) == 0:
+                preds_raw = batch_preds_raw
+            else:
+                preds_raw = np.concatenate((preds_raw, batch_preds_raw))
             gt = np.concatenate((gt, batch_gt))
-    return losses, preds, gt
+    return losses, preds, preds_raw, gt
 
