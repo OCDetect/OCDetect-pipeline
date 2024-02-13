@@ -23,6 +23,7 @@ d_type_un_cert = LabelMergeParameter.IgnoreUncertain # LabelMergeParameter.Inter
 
 
 def relabel(subject):
+    clean_target_directory(subject, target_path)
     relabeled = []
     for label_file in os.listdir(relabeled_path):
         if "_"+str(subject)+".csv" in label_file:
@@ -230,15 +231,14 @@ def convert_df(df):
 
 
 # delete all files of the subject in target directory (preprocessed_relabeled)
-def clean_target_directory(target_directory):
+def clean_target_directory(subject_id, target_directory):
     for file in os.listdir(target_directory):
-        if "OCDetect_"+str(run_subject) in file:
+        if "OCDetect_"+str(subject_id) in file:
             os.remove(os.path.join(target_directory, file))
 
 
 ### RUN
-# clean_target_directory(target_path)
-# relabel(run_subject) #TODO run for all manually relabeled subjects
+relabel(run_subject) #TODO run for all manually relabeled subjects
 
 
 ### Insert rows for testing of compulsive column
