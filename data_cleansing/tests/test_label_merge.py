@@ -3,6 +3,7 @@ from data_cleansing.relabeling.label_merge import merge
 import pandas as pd
 import pytest
 
+
 def test_merge():
     label = Label.Certain
     label_2 = Label.Certain
@@ -60,7 +61,6 @@ def test_merge_certain_intersection():
     pd.testing.assert_frame_equal(output, expected_output)
 
 
-
 def test_merge_ignore_uncertain_union():
     # merge strategy: union, union, uncertain-certain: intersection
     test_annotator1 = [
@@ -91,6 +91,7 @@ def test_merge_ignore_uncertain_union():
     expected_output = pd.DataFrame(expected, columns=['file', 'file_number', 'start', 'end'])
     output = merge(df_annotator1, df_annotator2, type_uncertain, type_certain, type_un_cert)
     pd.testing.assert_frame_equal(output, expected_output)
+
 
 def test_union_ignore_uncertain():
     # merge strategy union and uncertain-certain: ignore_uncertain
@@ -218,7 +219,6 @@ def test_end_uncertain_union():
         ['OCDetect_03_recording_06', '19', '2022-04-06 20:00:00.800000', '2022-04-06 20:04:00.740000'],
         ['OCDetect_03_recording_06', '20', '2022-04-06 20:35:00.800000', '2022-04-06 20:39:00.740000']
        ]
-
     expected_output = pd.DataFrame(expected, columns=['file', 'file_number', 'start', 'end'])
     output = merge(df_annotator1, df_annotator2, type_uncertain, type_certain, type_un_cert)
     pd.testing.assert_frame_equal(output, expected_output)

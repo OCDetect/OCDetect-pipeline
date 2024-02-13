@@ -11,7 +11,6 @@ pd.set_option('display.max_rows', None)
 
 run_subject = "03" # specify in files e.g. OCDetect_03 run_subject = "03", OCDetect_30 run_subject = "30"
 
-
 relabeled_path = "/dhc/groups/ocdetect/relabeled_subjects" # path to exported files from label studio, always name then "a{number of annotator}_subject_{subject_number}.csv subject_number as fpr run_subject
 # lea: 1, lorenz: 2, robin: 3, kristina: 4
 origin_path = "/dhc/groups/ocdetect/preprocessed" # path to files getting relabeled
@@ -54,7 +53,7 @@ def process_file(origin_file, subject, annotation_first, annotation_second, merg
             origin_df['datetime'] = pd.to_datetime(origin_df['datetime'])
 
             # only files that belong to the annotation
-            merged_annotation =  merged_annotation.loc[merged_annotation['file'] == origin_file].copy()
+            merged_annotation = merged_annotation.loc[merged_annotation['file'] == origin_file].copy()
 
             # get User labels from preprocessed origin_file
             label_dates = origin_df.loc[origin_df['user yes/no'] == 1.0, ['datetime', 'compulsive']]
@@ -206,6 +205,7 @@ def set_ignore(relabeled, merged_annotation): # set ignore value (7) for 5 minut
                       (relabeled['merged_annotation'] != 1), 'ignore'] = IgnoreReason.BeforeHandWash
     return relabeled
 
+
 def convert_df(df):
     # create from label studio exported csv df as e.g.
     # 'file': OCDetect_03_recording_04_0a48395d-614f-497c-ab71-0d579d74ce27.csv, 'file_number': 1, 'start': 2022-04-05 10:17:45.080, 'end': 2022-04-05 10:18:23.100, 'label': Certain
@@ -229,14 +229,17 @@ def convert_df(df):
     return df_new
 
 
-### RUN
-
 # delete all files of the subject in target directory (preprocessed_relabeled)
-#for file in os.listdir(target_path):
-    #if "OCDetect_"+str(run_subject) in file:
-        #os.remove(os.path.join(target_path,file))
-#check for intersect first
-#relabel(run_subject) #TODO run for all manually relabeled subjects
+def clean_target_directory(target_directory):
+    for file in os.listdir(target_directory):
+        if "OCDetect_"+str(run_subject) in file:
+            os.remove(os.path.join(target_directory, file))
+
+
+### RUN
+# clean_target_directory(target_path)
+# relabel(run_subject) #TODO run for all manually relabeled subjects
+
 
 ### Insert rows for testing of compulsive column
 # new_row ={'file': 'OCDetect_03_recording_05_382535ec-9a0d-4359-b120-47f7605a22de.csv', 'file_number':12, 'start': '2022-04-05 17:40:40.480000', 'end': '2022-04-05 17:41:59.220000'}
