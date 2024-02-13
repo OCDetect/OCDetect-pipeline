@@ -16,6 +16,7 @@ import pandas as pd
 import getpass
 from machine_learning.ml_main import ml_pipeline
 from copy import deepcopy
+
 import threading
 import concurrent.futures
 from multiprocessing import Manager, Lock
@@ -79,8 +80,14 @@ def main(config: dict, settings: dict) -> int:
                     future.result()
 
         logger.info("Finished running prepocessing")
+
+    # Preparation / Data loading and ML:
+    run_deep_learning = settings.get("run_deep_learning")
+    run_classic_methods = settings.get("run_classic_methods")
+    raw_str = "both" if run_deep_learning and run_classic_methods else ("raw" if run_deep_learning else "features")
     if data_preparation:
-        labels, features, users, feature_names = prepare_data(settings, config, raw=settings.get("raw_features", True))
+
+        labels, (features, features_raw), users, feature_names = prepare_data(settings, config, raw=raw_str)
     if machine_learning:
         if not data_preparation:
             # load prepared data
@@ -91,18 +98,29 @@ def main(config: dict, settings: dict) -> int:
             if resample and not (use_undersampling or use_oversampling):
                 logger.debug(f"You need to set your resampling methode in: {settings}")
 
-            window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering, raw_str = get_data_path_variables(
+            window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering = get_data_path_variables(
                 use_scaling, use_filter, config, settings)
 
             logger.info(f"Using path: {export_path}{sub_folder_path}")
             logger.info(f"Scaled data: {scaling}; Filtered data: {filtering}")
 
-            features = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}{raw_str}.csv")
-            labels = pd.read_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}{raw_str}.csv")
-            users = pd.read_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}{raw_str}.csv")
-            feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}{raw_str}.csv").iloc[:, 0].tolist()
+            # todo: remove column "unnamed: 0" while writing to file instead of when reading in
+            logger.info("Reading precalculated windows")
+
+            if run_classic_methods:
+                features = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}.csv")
+            if run_deep_learning:
+                features_raw = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_raw.csv")
+            labels = pd.read_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}.csv")
+            users = pd.read_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}.csv")
+            feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}.csv").iloc[:, 0].tolist()
+            logger.info("Finished loading precalculated windows")
+
         seed = settings.get("seed")
-        ml_pipeline(features, users, labels, feature_names, seed, settings, config)
+        if run_classic_methods:
+            ml_pipeline(features, users, labels, feature_names, seed, settings, config, classic=True)
+        if run_deep_learning:
+            ml_pipeline(features_raw, users, labels, feature_names, seed, settings, config, classic=False)
 
     return 0
 
@@ -147,7 +165,7 @@ def data_cleansing_worker(subject: str, config: dict, settings: dict): # , subje
         del item
     del cleaned_data
     gc.collect()
-    return
+
     if not settings["run_export"]:
         for item in recordings_list:
             item.clear()
