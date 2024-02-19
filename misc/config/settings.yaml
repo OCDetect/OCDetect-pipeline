@@ -88,6 +88,14 @@ features :
 
 jobs : 32
 
+
+### Settings for manual relabeling merge
+# Not yet in use
+type_certain : "Intersection" # intersection or union
+type_uncertain : "Intersection" # intersection or union
+type_un_cert : "IgnoreUncertain" # intersection or ignore_uncertain
+
+
 ###################################################################
 # Machine Learning Pipeline SETTINGS
 ###################################################################
