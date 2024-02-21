@@ -35,6 +35,7 @@
     export_subfolder_ml_prepared: ../../datasets/OCDetect/windowed/
     plots_folder: ../../datasets/OCDetect/plots/
     ml_results_folder: ../../datasets/OCDetect/ml_results
+    relabeled_subfolder: ../../datasets/OCDetect/preprocessed_relabeled/
 
 - kristina-mac:
     username: kristina.kirsten
