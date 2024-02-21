@@ -41,7 +41,7 @@ def dl_main(config: dict, settings: dict, users, subset="all"):
     for train_idx, test_idx in split:
         train_subs = users[train_idx]
         test_subs = users[test_idx]
-        for model_name in ["ShallowDeepConvLSTM", "tinyhar"]:
+        for model_name in ["ShallowDeepConvLSTM"]: # , "tinyhar"]: TODO
             dl_config["name"] = model_name
             dl_config["model"] = dl_config[model_name]
             split_name = f"train_{str(train_subs)}_test_{str(test_subs)}"
@@ -94,7 +94,7 @@ dl_config = {
         "batch_size": 4096,
     },
     "train_cfg": {
-        "lr": 0.0001,
+        "lr": 0.001,
         "lr_decay": 0.8,
         "lr_step": 5,
         "epochs": 30,

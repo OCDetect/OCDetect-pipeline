@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader
 import torch.nn as nn
 
 from .AttendAndDiscriminate import AttendAndDiscriminate, DimAttendAndDiscriminate, compute_center_loss, get_center_delta
-from .DeepConvLSTM import DeepConvLSTM, DimDeepConvLSTM
+from .DeepConvLSTM import DeepConvLSTM
 from .TinyHAR import TinyHAR, DimTinyHAR
 from .OCDetectDataset import OCDetectDataset
 
@@ -78,11 +78,11 @@ def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_fre
         scheduler = torch.optim.lr_scheduler.StepLR(opt, step_size=cfg['train_cfg']['lr_step'], gamma=cfg['train_cfg']['lr_decay'])
     
     # use weighted loss if selected
-    if cfg['train_cfg']['weighted_loss']:
+    """if cfg['train_cfg']['weighted_loss']:
         class_weights = compute_class_weight('balanced', classes=np.unique(train_dataset.labels), y=train_dataset.labels)
         if len(class_weights) < 2:
             class_weights = list(class_weights) + [1.0]
-        criterion.weight = torch.tensor(class_weights).float().to(cfg['devices'][0])
+        criterion.weight = torch.tensor(class_weights).float().to(cfg['devices'][0])"""
 
     if resume:
         resume = os.path.join(ckpt_folder, 'ckpts', resume)
@@ -164,13 +164,13 @@ def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_fre
 
         # print results to terminal
         block1 = 'Epoch: [{:03d}/{:03d}]'.format(epoch, cfg['train_cfg']['epochs'])
-        block2 = 'TRAINING:\tavg. loss {:.2f}'.format(np.nanmean(t_losses))
-        block3 = 'VALIDATION:\tavg. loss {:.2f}'.format(np.nanmean(v_losses))
+        block2 = 'TRAINING:\tavg. loss {:.4f}'.format(np.nanmean(t_losses))
+        block3 = 'VALIDATION:\tavg. loss {:.4f}'.format(np.nanmean(v_losses))
         block4 = ''
-        block4  += '\n\t\tAcc {:>4.2f} (%)'.format(np.nanmean(v_acc) * 100)
-        block4  += ' Prec {:>4.2f} (%)'.format(np.nanmean(v_prec) * 100)
-        block4  += ' Rec {:>4.2f} (%)'.format(np.nanmean(v_rec) * 100)
-        block4  += ' F1 {:>4.2f} (%)'.format(np.nanmean(v_f1) * 100)
+        block4  += '\n\t\tAcc {:>4.4f} (%)'.format(np.nanmean(v_acc) * 100)
+        block4  += ' Prec {:>4.4f} (%)'.format(np.nanmean(v_prec) * 100)
+        block4  += ' Rec {:>4.4f} (%)'.format(np.nanmean(v_rec) * 100)
+        block4  += ' F1 {:>4.4f} (%)'.format(np.nanmean(v_f1) * 100)
 
         print('\n'.join([block1, block2, block3, block4]))
 
@@ -196,7 +196,6 @@ def train_one_epoch(loader, network, opt, criterion, gpu=None, beta=0.0003, lr_c
                 inputs, targets = inputs.to(gpu), targets.to(gpu)
             output = network(inputs)
             batch_loss = criterion(output, targets)
-
         opt.zero_grad()
         batch_loss.backward()
         opt.step()
