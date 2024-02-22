@@ -52,7 +52,7 @@
 
 - robin-atlas:
       username: robin.burchard
-      hostname: [atlas, artemis]
+      hostname: [atlas, artemis, hermes, hestia]
       data_folder: ../../../groups/ocdetect/orig_data/
       meta_subfolder: ../metadata/
       first_hw_subfolder: ../labels_first_handwashes/
