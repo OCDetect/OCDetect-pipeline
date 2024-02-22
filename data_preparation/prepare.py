@@ -158,18 +158,22 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
     save_data = settings["save_data"]
     overwrite_data = settings["overwrite_data"]
     use_filter, use_scaling, resample, use_undersampling, use_oversampling = load_data_preparation_settings(settings)
-    all_subjects = True if not settings.get("use_ocd_only") else False
+
 
     logger.info("Preparing data for machine learning")
 
-    folder_path = config.get("export_subfolder")
+    folder_path = config.get("export_subfolder") if settings['selected_subject_option'] != 'relabeled_subjects' else config.get("relabeled_subfolder")
     pattern = r'OCDetect_(\d+)'
 
     dataframes = {}
 
-    subject_numbers = settings.get("all_subjects") if all_subjects else settings.get("ocd_diagnosed_subjects")
-    if settings.get("use_trustworthy_only"):
-        subject_numbers = settings.get("trustworthy_subjects")
+    # all_subjects = True if not settings.get("use_ocd_only") else False
+    # subject_numbers = settings.get("all_subjects") if all_subjects else settings.get("ocd_diagnosed_subjects")
+    # if settings.get("use_trustworthy_only"):
+    #     subject_numbers = settings.get("trustworthy_subjects")
+
+    selected_subject_option = str(settings['selected_subject_option'])
+    subject_numbers = settings[selected_subject_option]
 
     for file_name in tqdm(os.listdir(folder_path)):
         if file_name.endswith('.csv'):

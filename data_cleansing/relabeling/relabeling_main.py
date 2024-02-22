@@ -5,7 +5,7 @@ import socket
 import getpass
 
 file_split = False
-label_merge = True
+label_merge = False
 def main(config: dict, settings: dict):
     relabeled_subjects= settings['relabeled_subjects']
     if file_split:
@@ -15,6 +15,7 @@ def main(config: dict, settings: dict):
         for subject in relabeled_subjects:
             relabel(subject, settings['d_type_uncertain'], settings['d_type_certain'], settings['d_type_un_cert'],
                     config['relabeled_path'], config['origin_path'], config['merge_target_path'])
+
 
 def load_settings(file_path):
     with open(file_path, 'r') as file:

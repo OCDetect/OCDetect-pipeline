@@ -4,4 +4,3 @@ relabeled_subjects: ['01','03','30','04','18','20'] # specify in files e.g. OCDe
 d_type_certain : LabelMergeParameter.Intersection # LabelMergeParameter.Intersection or LabelMergeParameter.Union
 d_type_uncertain : LabelMergeParameter.Intersection # LabelMergeParameter.Intersection or LabelMergeParameter.Union
 d_type_un_cert : LabelMergeParameter.IgnoreUncertain # LabelMergeParameter.Intersection or LabelMergeParameter.IgnoreUncertain
-
