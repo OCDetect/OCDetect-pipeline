@@ -1,11 +1,12 @@
 import yaml
-from label_merge import relabel
-from file_split import split
+from data_cleansing.relabeling.label_merge import relabel
+from data_cleansing.relabeling.file_split import split
+from data_cleansing.helpers.definitions import LabelMergeParameter, parameter_mapping
 import socket
 import getpass
 
 file_split = False
-label_merge = False
+label_merge = True
 def main(config: dict, settings: dict):
     relabeled_subjects= settings['relabeled_subjects']
     if file_split:
@@ -13,9 +14,10 @@ def main(config: dict, settings: dict):
 
     if label_merge:
         for subject in relabeled_subjects:
-            relabel(subject, settings['d_type_uncertain'], settings['d_type_certain'], settings['d_type_un_cert'],
-                    config['relabeled_path'], config['origin_path'], config['merge_target_path'])
-
+            relabel(subject, parameter_mapping[settings['d_type_uncertain']],
+                    parameter_mapping[settings['d_type_certain']], parameter_mapping[settings['d_type_un_cert']],
+                    config['relabeled_path'], config['origin_path'], config['merge_target_path'],
+                    settings['ignore_before_hw'], settings['ignore_after_hw'])
 
 def load_settings(file_path):
     with open(file_path, 'r') as file:

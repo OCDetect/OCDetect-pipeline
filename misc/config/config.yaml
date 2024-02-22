@@ -10,6 +10,7 @@
     export_subfolder_ml_prepared: ../OCDetect/  # @robin you may want to change this :)
     test_n_recs: 3
     test_n_subs: 3
+    relabeled_subfolder: /dhc/groups/ocdetect/preprocessed_relabeled
 
 - robin-laptop:
     hostname: thinkbook
@@ -20,11 +21,12 @@
     annotations_subfolder: annotations/
     first_hw_subfolder: labels_first_handwashes/
     export_subfolder: ../../../../Datasets/OCDetect_Export/
+    relabeled_subfolder: /dhc/groups/ocdetect/preprocessed_relabeled
 
 
 - lorenz-mac:
     username: lorenz.kautzsch
-    hostname: atlas
+    hostname: [atlas, aigaion]
     data_folder: ../../datasets/OCDetect/
     meta_subfolder: metadata/
     first_hw_subfolder: labels_first_handwashes/
@@ -35,7 +37,7 @@
     export_subfolder_ml_prepared: ../../datasets/OCDetect/windowed/
     plots_folder: ../../datasets/OCDetect/plots/
     ml_results_folder: ../../datasets/OCDetect/ml_results
-    relabeled_subfolder: ../../datasets/OCDetect/preprocessed_relabeled/
+    relabeled_subfolder: /dhc/groups/ocdetect/preprocessed_relabeled
 
 - kristina-mac:
     username: kristina.kirsten
@@ -50,6 +52,7 @@
     export_subfolder_ml_prepared: ../../datasets/OCDetect/windowed/
     plots_folder: ../../datasets/OCDetect/plots/
     ml_results_folder: ../../datasets/OCDetect/ml_results
+    relabeled_subfolder: /dhc/groups/ocdetect/preprocessed_relabeled
 
 - robin-atlas:
       username: robin.burchard
@@ -63,6 +66,7 @@
       plots_folder: ../OCDetect/Analysis/plots/
       ml_results_folder: ../OCDetect/Analysis/ml_results/
       prefix: OCDetect_
+      relabeled_subfolder: /dhc/groups/ocdetect/preprocessed_relabeled
 
 - lea-laptop:
     username: lea.liekenbrock
@@ -76,3 +80,4 @@
     export_subfolder_ml_prepared: /dhc/groups/ocdetect/windowed/
     plots_folder: ../../datasets/OCDetect/plots/
     ml_results_folder: ../../datasets/OCDetect/ml_results
+    relabeled_subfolder: /dhc/groups/ocdetect/preprocessed_relabeled

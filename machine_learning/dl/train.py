@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader
 import torch.nn as nn
 
 from .AttendAndDiscriminate import AttendAndDiscriminate, DimAttendAndDiscriminate, compute_center_loss, get_center_delta
-from .DeepConvLSTM import DeepConvLSTM, DimDeepConvLSTM
+from .DeepConvLSTM import DeepConvLSTM
 from .TinyHAR import TinyHAR, DimTinyHAR
 from .OCDetectDataset import OCDetectDataset
 

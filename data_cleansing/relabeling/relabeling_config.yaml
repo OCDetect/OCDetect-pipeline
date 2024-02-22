@@ -1,21 +1,9 @@
 - lorenz-mac:
     username: lorenz.kautzsch
-    hostname: aigaion
-    relabeled_path: "/dhc/groups/ocdetect/relabeled_subjects" # path to exported files from label studio, always name then "a{number of annotator}_subject_{subject_number}.csv subject_number as fpr run_subject
+    hostname: [atlas,aigaion]
+    relabeled_path: /dhc/groups/ocdetect/relabeled_subjects # path to exported files from label studio, always name then "a{number of annotator}_subject_{subject_number}.csv subject_number as fpr run_subject
     # lea: 1, lorenz: 2, robin: 3, kristina: 4
-    origin_path: "/dhc/groups/ocdetect/preprocessed" # path to files getting relabeled
-    merge_target_path: "/dhc/groups/ocdetect/preprocessed_relabeled" # path to relabeled files
-    split_target_path: "/dhc/groups/ocdetect/relabel_split" # set path where files should be stored
-    relabeled_subfolder: ../../datasets/OCDetect/preprocessed_relabeled/
-    export_subfolder: ../../datasets/OCDetect/preprocessed/
+    origin_path: /dhc/groups/ocdetect/preprocessed # path to files getting relabeled
+    merge_target_path: /dhc/groups/ocdetect/preprocessed_relabeled # path to relabeled files
+    split_target_path: /dhc/groups/ocdetect/relabel_split # set path where files should be stored
 
-- lorenz-mac:
-    username: lorenz.kautzsch
-    hostname: atlas
-    relabeled_path: "/dhc/groups/ocdetect/relabeled_subjects" # path to exported files from label studio, always name then "a{number of annotator}_subject_{subject_number}.csv subject_number as fpr run_subject
-    # lea: 1, lorenz: 2, robin: 3, kristina: 4
-    origin_path: "/dhc/groups/ocdetect/preprocessed" # path to files getting relabeled
-    merge_target_path: "/dhc/groups/ocdetect/preprocessed_relabeled" # path to relabeled files
-    split_target_path: "/dhc/groups/ocdetect/relabel_split" # set path where files should be stored
-    relabeled_subfolder: ../../datasets/OCDetect/preprocessed_relabeled/
-    export_subfolder: ../../datasets/OCDetect/preprocessed/

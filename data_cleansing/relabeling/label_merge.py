@@ -5,13 +5,14 @@ import json
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from data_cleansing.helpers.definitions import Label, LabelMergeParameter, IgnoreReason, label_mapping
-from merging import merge
-from helpers import clean_merge_target_directory, convert_df
+from data_cleansing.relabeling.merging import merge
+from data_cleansing.relabeling.helpers import clean_merge_target_directory, convert_df
 
-# pd.set_option('display.max_columns', None)
-# pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', None)
 
-def relabel(subject, d_type_uncertain, d_type_certain, d_type_un_cert, relabeled_path, origin_path, target_path):
+def relabel(subject, d_type_uncertain, d_type_certain, d_type_un_cert, relabeled_path, origin_path, target_path,
+            ignore_before_hw, ignore_after_hw):
     clean_merge_target_directory(subject, target_path)
     relabeled = []
     for label_file in os.listdir(relabeled_path):
@@ -21,11 +22,11 @@ def relabel(subject, d_type_uncertain, d_type_certain, d_type_un_cert, relabeled
         print ("Exactly 2 annotator files required")
         return
 
-    df_first = convert_df(pd.read_csv(os.path.join(relabeled_path,relabeled[0]))) #convert jsons (labelstudio) into dfs
+    df_first = convert_df(pd.read_csv(os.path.join(relabeled_path,relabeled[0]))) #convert csv/json (labelstudio) into dfs
     df_second = convert_df(pd.read_csv(os.path.join(relabeled_path,relabeled[1])))
 
-    annotations = merge(df_first, df_second, d_type_uncertain, d_type_certain, d_type_un_cert) # apply merging logic
-    args = (subject, df_first, df_second, annotations, origin_path, target_path)
+    annotations = merge(df_first, df_second, d_type_uncertain, d_type_certain, d_type_un_cert) # apply merging log
+    args = (subject, df_first, df_second, annotations, origin_path, target_path, ignore_before_hw, ignore_after_hw)
 
     # for preprocessed_file in os.listdir(origin_path): # for case that parallel processing not possible on atlas currently
     #     process_file(preprocessed_file, *args)
@@ -36,11 +37,11 @@ def relabel(subject, d_type_uncertain, d_type_certain, d_type_un_cert, relabeled
         for future in as_completed(futures):
             future.result()
 
-def process_file(origin_file, subject, annotation_first, annotation_second, merged_annotation, origin_path, target_path):
+def process_file(origin_file, subject, annotation_first, annotation_second, merged_annotation, origin_path, target_path,
+                 ignore_before_hw, ignore_after_hw):
         if origin_file.endswith('.csv') and origin_file.split('_')[1] == subject:# and origin_file == "OCDetect_03_recording_05_382535ec-9a0d-4359-b120-47f7605a22de.csv": #for  testing
             origin_df = pd.read_csv(os.path.join(origin_path, origin_file))
             origin_df['datetime'] = pd.to_datetime(origin_df['datetime'])
-
             # only files that belong to the annotation
             file_annotations = merged_annotation.loc[merged_annotation['file'] == origin_file].reset_index()
             indices_annotations = file_annotations.index
@@ -63,11 +64,12 @@ def process_file(origin_file, subject, annotation_first, annotation_second, merg
                     file_annotations.loc[annotation_index, 'compulsive'] = label_crossings.iloc[-1,1]
                     file_annotations.loc[annotation_index, 'usr_label'] = label_crossings.iloc[-1,0]
 
+
             # write annotations first, annotations second and merged annotation into preprocessed file
             relabeled_df = add_annotations(origin_file, origin_df, annotation_first, annotation_second, file_annotations)
 
             # set ignore column
-            output_df = set_ignore(relabeled_df, merged_annotation)
+            output_df = set_ignore(relabeled_df, merged_annotation, ignore_before_hw, ignore_after_hw)
 
             output_df.to_csv(os.path.join(target_path, origin_file), index = False) #write relabeled files to target_path
             print("file", origin_file, "done")
@@ -96,11 +98,18 @@ def add_annotations(file_name, origin, annotation_first, annotation_second, merg
 
     return origin
 
-def set_ignore(relabeled, merged_annotation): # set ignore value (7) for 5 minutes before relabeled handwashing timeframe
-    for index_merged in merged_annotation.index:
-        relabeled.loc[((merged_annotation.iloc[index_merged]['start'] - relabeled['datetime']) > pd.Timedelta(minutes=0)) &
-                      ((merged_annotation.iloc[index_merged]['start'] - relabeled['datetime']) <= pd.Timedelta(minutes=5)) &
-                      (relabeled['merged_annotation'] != 1), 'ignore'] = IgnoreReason.BeforeHandWash
+def set_ignore(relabeled, merged_annotation, ignore_before_hw, ignore_after_hw): # set ignore value (7) for 5 minutes before relabeled handwashing timeframe
+    if ignore_before_hw > 0:
+        for index_merged in merged_annotation.index:
+            relabeled.loc[((merged_annotation.iloc[index_merged]['start'] - relabeled['datetime']) > pd.Timedelta(minutes=0)) &
+                          ((merged_annotation.iloc[index_merged]['start'] - relabeled['datetime']) <= pd.Timedelta(minutes=int(ignore_before_hw))) &
+                          (relabeled['merged_annotation'] != 1), 'ignore'] = IgnoreReason.BeforeHandWash
+
+    if ignore_after_hw > 0:
+        for index_merged in merged_annotation.index:
+            relabeled.loc[(relabeled['datetime'] - (merged_annotation.iloc[index_merged]['end']) > pd.Timedelta(minutes=0)) &
+                          (relabeled['datetime'] - (merged_annotation.iloc[index_merged]['end']) <= pd.Timedelta(minutes=int(ignore_after_hw))) &
+                          (relabeled['merged_annotation'] != 1), 'ignore'] = IgnoreReason.AfterHandWash
     return relabeled
 
 
