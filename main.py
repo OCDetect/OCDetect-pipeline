@@ -175,17 +175,19 @@ def data_cleansing_worker(subject: str, config: dict, settings: dict): # , subje
         del recordings_list, cleaned_data
         gc.collect()
         return
-    labeled_data = relabel(cleaned_data, config, settings, subject)
+    # TODO read from a settings file or manual relabeled data or automatic relabeling should be used
+    # labeled_data = relabel(cleaned_data, config, settings, subject)
     logger.info(f"##### Exporting subject {subject} #####")
-    export_data(labeled_data, config, settings, subject)
+    # export_data(labeled_data, config, settings, subject)
+    export_data(cleaned_data, config, settings, subject)
     logger.info(f"########## Finished running on subject {subject} ##########")
     for item in recordings_list:
         item.clear()
     for item in cleaned_data:
         item.clear()
-    for item in labeled_data:
-        item.clear()
-    del recordings_list, cleaned_data, labeled_data  # hopefully fix memory-caused sigkill...
+    # for item in labeled_data:
+       # item.clear()
+    del recordings_list, cleaned_data  #, labeled_data  # hopefully fix memory-caused sigkill...
     gc.collect()
 
 
