@@ -35,6 +35,8 @@ relabel_duration : 38
 relabel_offset : 5   # how many seconds before the label did the hand washing end?
 # strategy, strategy parameters could be added here!
 
+# classification mode, binary or multiclass
+classification_mode : binary
 
 ###################################################################
 # DATA PREPARATION SETTINGS

@@ -44,7 +44,7 @@ def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: di
 
             # Choose label
             if labelling_algorithm == 'Majority':
-                majority_label = perform_majority_voting(curr_window)
+                majority_label = perform_majority_voting(settings.get("classification_mode"), curr_window)
                 window_labels.append(majority_label)
 
                 user_list.append(subject_id)
@@ -66,23 +66,19 @@ def check_ignore(current_window):
         return True
 
 
-def perform_majority_voting(current_window, hw_general=True):
+def perform_majority_voting(classification_mode, current_window):
     counts = current_window['relabeled'].value_counts()
 
-    if hw_general:
-        null_class = counts.get(0, 0)
-        routine_hw = counts.get(1, 0)
-        compulsive_hw = counts.get(2, 0)
+    null_class = counts.get(0, 0)
+    routine_hw = counts.get(1, 0)
+    compulsive_hw = counts.get(2, 0)
 
+    if classification_mode == "binary":
         if routine_hw + compulsive_hw > null_class:
             majority_label = 1
         else:
             majority_label = 0
-    else:
-        null_class = counts.get(0, 0)
-        routine_hw = counts.get(1, 0)
-        compulsive_hw = counts.get(2, 0)
-
+    elif classification_mode == "multiclass":
         if routine_hw > compulsive_hw and routine_hw > null_class:
             majority_label = 1  # routine hand washing present
         elif compulsive_hw > routine_hw and compulsive_hw > null_class:
