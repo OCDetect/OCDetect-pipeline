@@ -86,7 +86,6 @@ def main(config: dict, settings: dict) -> int:
     run_classic_methods = settings.get("run_classic_methods")
     raw_str = "both" if run_deep_learning and run_classic_methods else ("raw" if run_deep_learning else "features")
     if data_preparation:
-
         labels, (features, features_raw), users, feature_names = prepare_data(settings, config, raw=raw_str)
     if machine_learning:
         if not data_preparation:
@@ -138,7 +137,9 @@ def data_cleansing_worker(subject: str, config: dict, settings: dict): # , subje
     subject = str(subject)
     if len(subject) == 1:
         subject = "0" + subject
-    export_subfolder = config.get("export_subfolder")
+    #export_subfolder = config.get("export_subfolder")
+    # TODO which folder
+    export_subfolder = config.get("data_folder_relabeled")
     if not (os.path.isdir(export_subfolder)):
         os.mkdir(export_subfolder)
     if os.path.isfile(export_subfolder + "exported.txt"):

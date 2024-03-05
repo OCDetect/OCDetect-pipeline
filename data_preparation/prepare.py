@@ -74,19 +74,41 @@ def check_ignore(current_window):
 
 
 def perform_majority_voting(current_window, hw_general=True):
-    counts = current_window['relabeled'].value_counts()
+    #counts = current_window['relabeled'].value_counts()
+    # ToDo select column based on relabel mechanism
+    counts = current_window['merged_annotation'].value_counts()
+
+    # Count occurrences of N/A and 0, and 1, 2, 3, 4
+    count_result = current_window['merged_annotation'].value_counts().reset_index(name='count')
+
+    # Sum counts for N/A and 0, and 1, 2, 3, 4
+    grouped_counts = count_result.groupby(lambda x: '0' if x in [float('nan'), 0] else '1').sum()
+
     null_class = counts.get(0, 0)
     routine_hw = counts.get(1, 0)
     compulsive_hw = counts.get(2, 0)
-    if hw_general:
-        null_class = counts.get(0, 0)
-        routine_hw = counts.get(1, 0)
-        compulsive_hw = counts.get(2, 0)
 
-        if routine_hw + compulsive_hw > null_class:
+    if hw_general:
+        null = 0
+        hw = 0
+        if "0" in grouped_counts["count"].keys():
+            null = grouped_counts["count"]["0"]
+        if "1" in grouped_counts["count"].keys():
+            hw = grouped_counts["count"]["1"]
+
+        if hw >= null:
             majority_label = 1
         else:
             majority_label = 0
+
+        # null_class = counts.get(0, 0)
+        # routine_hw = counts.get(1, 0)
+        # compulsive_hw = counts.get(2, 0)
+        #
+        # if routine_hw + compulsive_hw > null_class:
+        #     majority_label = 1
+        # else:
+        #     majority_label = 0
     else:
         null_class = counts.get(0, 0)
         routine_hw = counts.get(1, 0)
@@ -146,7 +168,8 @@ def get_data_path_variables(use_scaling, use_filter, config:dict, settings: dict
 
 
 # main function for data preparation
-def prepare_data(settings: dict, config: dict, raw: str="both"):
+# todo default raw value
+def prepare_data(settings: dict, config: dict, raw: str="features"):
     """
     :param settings: Global settings dict
     :param config:   Global user config dict
@@ -162,7 +185,10 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
 
     logger.info("Preparing data for machine learning")
 
-    folder_path = config.get("export_subfolder")
+    # folder_path = config.get("export_subfolder")
+    # TODO choose folder differently based on setting?
+    folder_path = config.get("data_folder_relabeled")
+
     pattern = r'OCDetect_(\d+)'
 
     dataframes = {}
@@ -170,6 +196,7 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
     subject_numbers = settings.get("all_subjects") if all_subjects else settings.get("ocd_diagnosed_subjects")
     if settings.get("use_trustworthy_only"):
         subject_numbers = settings.get("trustworthy_subjects")
+    print(os.listdir(folder_path))
 
     for file_name in tqdm(os.listdir(folder_path)):
         if file_name.endswith('.csv'):
@@ -229,18 +256,25 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
             features_user = feature_extraction(windows, settings)
             features.append(features_user)
 
-        length = max(len(features_user),len(windows))
+        # ToDo this is wrong I guess
+        length = max(len(features),len(windows))
         logger.info(f"Subject: {i}, features: {length}, labels: {len(user_labels)}")
+
+    print(str(len(labels)))
+    print(str(len(users)))
 
     labels = pd.concat(labels).reset_index(drop=True).to_frame()
     users = pd.concat(users).reset_index(drop=True).to_frame()
 
-    features = pd.concat(features)
-    features_raw = pd.concat(features_raw)
-    try:
-        feature_names = features.columns.values.tolist()
-    except:
-        feature_names = features_raw.columns.values.tolist()
+    print(str(len(features)))
+    features = pd.concat(features, ignore_index=True)
+    feature_names = features.columns.values.tolist()
+
+    # features_raw = pd.concat(features_raw)
+    # try:
+      #  feature_names = features.columns.values.tolist()
+    #except:
+     #   feature_names = features_raw.columns.values.tolist()
 
     # 5. Scale data if desired (only on features)
     if use_scaling:
