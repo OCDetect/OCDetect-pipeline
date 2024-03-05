@@ -91,10 +91,10 @@ def perform_majority_voting(current_window, hw_general=True):
     if hw_general:
         null = 0
         hw = 0
-        if "0" in grouped_counts["count"].keys():
-            null = grouped_counts["count"]["0"]
-        if "1" in grouped_counts["count"].keys():
-            hw = grouped_counts["count"]["1"]
+        if 0.0 in grouped_counts["index"].values:
+            null = grouped_counts["count"][grouped_counts["index"] == 0.0].values[0]
+        if 1.0 in grouped_counts["index"].values:
+            hw = grouped_counts["count"][grouped_counts["index"] == 1.0].values[0]
 
         if hw >= null:
             majority_label = 1
