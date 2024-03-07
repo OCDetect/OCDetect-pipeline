@@ -23,9 +23,10 @@ seed: 42
 
 ### General settings
 resample: True # TODO outdated?
-use_oversampling: False # TODO outdated?
-use_undersampling: True # do not set over- AND undersampling to True # TODO outdated?
 balancing_option: "random_undersampling"
+
+balancing : True
+resample_threshold : 0.05
 
 use_filter: True
 use_scaling: True
@@ -87,4 +88,14 @@ features :
 
 jobs : 32
 
+###################################################################
+# MODEL SELECTION SETTINGS
+###################################################################
 
+all_models : False
+
+models:
+  - RandomForestClassifier: True
+  - GradientBoostingClassifier: True
+  - LogisticRegression: True
+  - DummyClassifier: True

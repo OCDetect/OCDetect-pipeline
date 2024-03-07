@@ -86,10 +86,10 @@ def main(config: dict, settings: dict) -> int:
             # load prepared data
             logger.info("Read in prepared data")
 
-            use_filter, use_scaling, resample, use_undersampling, use_oversampling = load_data_preparation_settings(
+            use_filter, use_scaling, resample, balancing_option = load_data_preparation_settings(
                 settings)
-            if resample and not (use_undersampling or use_oversampling):
-                logger.debug(f"You need to set your resampling methode in: {settings}")
+            if resample and balancing_option not in ["random_undersampling", "SMOTE"]:
+                logger.debug(f"You need to set a correct resampling method in: {settings}")
 
             window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering, raw_str = get_data_path_variables(
                 use_scaling, use_filter, config, settings)

@@ -37,13 +37,15 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
 
     balancing_option = settings.get("balancing_option")
 
-    only_dl = False  # TODO: set to false in settings - could also use "Raw" param.
+    only_dl = settings.get("raw_features")
     if only_dl:
         OCDetectDataset.preload(windows, users, labels)
         dl_main(config, users)
         return
 
-    # TODO add models to settings and read out which model(s) should be used if not all
+    balancing = settings.get("balancing")
+    resample_threshold = settings.get("resample_threshold")
+
     users = users["user"]
     users_outer_cv = list(users.unique())
     for test_subject in users_outer_cv:
@@ -55,12 +57,14 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
         all_model_metrics = {}
 
         # model grid
-        model_grid = get_classification_model_grid(seed=seed)
+        selected_models = [list(classifier.keys())[0] for classifier in settings.get("models") if list(classifier.values())[0]]
+        model_grid = get_classification_model_grid(settings.get("all_models"), selected_models, seed=seed)
         for j, (model, param_grid) in enumerate(model_grid):
             test_metrics, curves = evaluate_single_model(model, param_grid,
                                                          X_train, y_train, X_test, y_test, feature_names,
                                                          out_dir=out_dir,
-                                                         sample_balancing=balancing_option,
+                                                         balancing=balancing,
+                                                         resample_threshold=resample_threshold,
                                                          seed=seed, test_subject=test_subject)
             all_model_metrics[str(model.__class__.__name__)] = (test_metrics, curves)
 
