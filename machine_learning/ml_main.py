@@ -43,8 +43,7 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
         dl_main(config, users)
         return
 
-    balancing = settings.get("balancing")
-    resample_threshold = settings.get("resample_threshold")
+    balancing_option = settings.get("balancing_option")
 
     users = users["user"]
     users_outer_cv = list(users.unique())
@@ -63,8 +62,7 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
             test_metrics, curves = evaluate_single_model(model, param_grid,
                                                          X_train, y_train, X_test, y_test, feature_names,
                                                          out_dir=out_dir,
-                                                         balancing=balancing,
-                                                         resample_threshold=resample_threshold,
+                                                         sample_balancing = balancing_option,
                                                          seed=seed, test_subject=test_subject)
             all_model_metrics[str(model.__class__.__name__)] = (test_metrics, curves)
 

@@ -4,14 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2674a40a-edf3-43e7-ad23-b585d82b9a44" name="Changes" comment="parallel proceeding of files for better performance, writes  miliseconds until decimal places">
-      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
+    <list default="true" id="2674a40a-edf3-43e7-ad23-b585d82b9a44" name="Changes" comment="added proposal for decision parameter resample_threshold if over- or undersampling is used. resample selection by string in settings in load_data_preparation_settings (not in use in prepare_data and for resampling method selection proposal), finished TODO: model selection in settings">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data_preparation/prepare.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_preparation/prepare.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/machine_learning/classify/evaluate.py" beforeDir="false" afterPath="$PROJECT_DIR$/machine_learning/classify/evaluate.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/machine_learning/classify/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/machine_learning/classify/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/machine_learning/ml_main.py" beforeDir="false" afterPath="$PROJECT_DIR$/machine_learning/ml_main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/misc/config/settings.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/misc/config/settings.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -183,7 +179,10 @@
       <workItem from="1705063956480" duration="901000" />
       <workItem from="1705413527010" duration="651000" />
       <workItem from="1705482660116" duration="2515000" />
-      <workItem from="1709735483065" duration="10351000" />
+      <workItem from="1709735483065" duration="11855000" />
+      <workItem from="1709892070086" duration="3198000" />
+      <workItem from="1709895280266" duration="44000" />
+      <workItem from="1709895334401" duration="608000" />
     </task>
     <task id="LOCAL-00001" summary="first try">
       <option name="closed" value="true" />
@@ -449,7 +448,15 @@
       <option name="project" value="LOCAL" />
       <updated>1703170979591</updated>
     </task>
-    <option name="localTasksCounter" value="34" />
+    <task id="LOCAL-00034" summary="added proposal for decision parameter resample_threshold if over- or undersampling is used. resample selection by string in settings in load_data_preparation_settings (not in use in prepare_data and for resampling method selection proposal), finished TODO: model selection in settings">
+      <option name="closed" value="true" />
+      <created>1709827153711</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1709827153711</updated>
+    </task>
+    <option name="localTasksCounter" value="35" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -481,7 +488,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="origin/Lorenz" />
+                        <option value="origin/relabed_ml_integration" />
                       </list>
                     </value>
                   </entry>
@@ -507,7 +514,8 @@
     <MESSAGE value="added Relabeling module to split preprocessed data" />
     <MESSAGE value="expanded logic so no file will have new user label in the next five minutes after the file, added example" />
     <MESSAGE value="parallel proceeding of files for better performance, writes  miliseconds until decimal places" />
-    <option name="LAST_COMMIT_MESSAGE" value="parallel proceeding of files for better performance, writes  miliseconds until decimal places" />
+    <MESSAGE value="added proposal for decision parameter resample_threshold if over- or undersampling is used. resample selection by string in settings in load_data_preparation_settings (not in use in prepare_data and for resampling method selection proposal), finished TODO: model selection in settings" />
+    <option name="LAST_COMMIT_MESSAGE" value="added proposal for decision parameter resample_threshold if over- or undersampling is used. resample selection by string in settings in load_data_preparation_settings (not in use in prepare_data and for resampling method selection proposal), finished TODO: model selection in settings" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -531,7 +539,7 @@
     <SUITE FILE_PATH="coverage/OCDetect_pipeline$pytest_in_test_label_merge_py.coverage" NAME="pytest in test_label_merge.py Coverage Results" MODIFIED="1708618687673" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data_cleansing/tests" />
     <SUITE FILE_PATH="coverage/OCDetect_pipeline$definitions.coverage" NAME="definitions Coverage Results" MODIFIED="1707308959520" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data_cleansing/helpers" />
     <SUITE FILE_PATH="coverage/OCDetect_pipeline$try.coverage" NAME="try Coverage Results" MODIFIED="1708535109919" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data_cleansing/relabeling" />
-    <SUITE FILE_PATH="coverage/OCDetect_pipeline$main.coverage" NAME="main Coverage Results" MODIFIED="1709825229242" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/OCDetect_pipeline$main.coverage" NAME="main Coverage Results" MODIFIED="1709895344153" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/OCDetect_pipeline$merge_test.coverage" NAME="merge_test Coverage Results" MODIFIED="1707220947101" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data_cleansing/relabeling" />
     <SUITE FILE_PATH="coverage/OCDetect_pipeline$plots.coverage" NAME="plots Coverage Results" MODIFIED="1701865792210" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/machine_learning/utils" />
     <SUITE FILE_PATH="coverage/OCDetect_pipeline$pytest_for_test_file_split_test_file_split.coverage" NAME="pytest for test_file_split.test_file_split Coverage Results" MODIFIED="1708619137219" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data_cleansing/tests" />
