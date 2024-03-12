@@ -2,7 +2,7 @@
 sampling_frequency : 50
 
 data_cleansing : False
-data_preparation : True
+data_preparation : False
 machine_learning : True
 
 testing: True
