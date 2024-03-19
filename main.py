@@ -96,7 +96,7 @@ def main(config: dict, settings: dict) -> int:
             if resample and not (use_undersampling or use_oversampling):
                 logger.debug(f"You need to set your resampling methode in: {settings}")
 
-            window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering = get_data_path_variables(
+            window_size, subjects_folder_name, sub_folder_path, export_path, scaling, filtering = get_data_path_variables(
                 use_scaling, use_filter, config, settings)
 
             logger.info(f"Using path: {export_path}{sub_folder_path}")

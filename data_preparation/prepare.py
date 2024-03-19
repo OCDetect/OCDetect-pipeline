@@ -127,22 +127,18 @@ def load_data_preparation_settings(settings: dict): # Todo: make sure that not o
     return use_filter, use_scaling, resample, use_undersampling, use_oversampling
 
 
-def get_data_path_variables(use_scaling, use_filter, config:dict, settings: dict):
+def get_data_path_variables(use_scaling: object, use_filter: object, config: dict, settings: dict) -> object:
 
     export_path = config.get("export_subfolder_ml_prepared")
 
     window_size = settings.get("window_size")
-    subjects = settings.get("use_ocd_only")
-    trustworthy_only = settings.get("use_trustworthy_only")
-    subjects_folder_name = "all_subjects" if not subjects else "ocd_diagnosed_only"
-    if trustworthy_only:
-        subjects_folder_name = "trustworthy_only"
+    subjects_folder_name = settings.get("selected_subject_option")
     sub_folder_path = f"ws_{window_size}_s/{subjects_folder_name}"
 
     scaling = "scaled" if use_scaling else "not_scaled"
     filtering = "filtered" if use_filter else "not_filtered"
 
-    return window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering
+    return window_size, subjects_folder_name, sub_folder_path, export_path, scaling, filtering
 
 
 # main function for data preparation
@@ -166,11 +162,6 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
     pattern = r'OCDetect_(\d+)'
 
     dataframes = {}
-
-    # all_subjects = True if not settings.get("use_ocd_only") else False
-    # subject_numbers = settings.get("all_subjects") if all_subjects else settings.get("ocd_diagnosed_subjects")
-    # if settings.get("use_trustworthy_only"):
-    #     subject_numbers = settings.get("trustworthy_subjects")
 
     selected_subject_option = str(settings['selected_subject_option'])
     subject_numbers = settings[selected_subject_option]
@@ -239,8 +230,12 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
     labels = pd.concat(labels).reset_index(drop=True).to_frame()
     users = pd.concat(users).reset_index(drop=True).to_frame()
 
-    features = pd.concat(features)
-    features_raw = pd.concat(features_raw)
+    if raw in ["both", "features"]:
+        features = pd.concat(features)
+
+    if raw in ["both", "raw"]:
+        features_raw = pd.concat(features_raw)
+
     try:
         feature_names = features.columns.values.tolist()
     except:
@@ -255,7 +250,7 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
     windowing_time_min = windowing_time_s / 60
 
     if save_data:
-        window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering = get_data_path_variables(
+        window_size, subjects_folder_name, sub_folder_path, export_path, scaling, filtering = get_data_path_variables(
             use_scaling, use_filter, config, settings)
 
         today = date.today()
