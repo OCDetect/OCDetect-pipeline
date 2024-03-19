@@ -42,12 +42,15 @@ def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, con
     out_dir = f"{config.get('ml_results_folder')}/{subject_groups_folder_name}/{ws_folder_name}"
 
     balancing_option = settings.get("balancing_option")
-    if not classic:
+
+    only_dl = settings.get("raw_features")
+    if only_dl:
         OCDetectDataset.preload(windows, users, labels)
         dl_main(config, settings, users, subject_groups_folder_name)
         return
 
-    # TODO add models to settings and read out which model(s) should be used if not all
+    balancing_option = settings.get("balancing_option")
+
     users = users["user"]
     users_outer_cv = list(users.unique())
     for test_subject in users_outer_cv:
@@ -59,7 +62,8 @@ def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, con
         all_model_metrics = {}
 
         # model grid
-        model_grid = get_classification_model_grid(seed=seed)
+        selected_models = [list(classifier.keys())[0] for classifier in settings.get("models") if list(classifier.values())[0]]
+        model_grid = get_classification_model_grid(settings.get("all_models"), selected_models, seed=seed)
         for j, (model, param_grid) in enumerate(model_grid):
             test_metrics, curves = evaluate_single_model(model, param_grid,
                                                          X_train, y_train, X_test, y_test, feature_names,

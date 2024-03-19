@@ -26,6 +26,7 @@ def evaluate_single_model(model, param_grid,
     pipeline_steps = []
 
     # ================= ADD BALANCING TO PIPELINE IF SELECTED =================
+    logger.info(f'n samples before: {len(y_train[y_train == 0])} vs. {len(y_train[y_train == 1])}')
     if sample_balancing in ['random_undersampling', 'SMOTE']:
         logger.info(f'n samples before: {len(y_train[y_train == 0])} vs. {len(y_train[y_train == 1])}')
         if sample_balancing == 'random_undersampling':

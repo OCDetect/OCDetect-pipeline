@@ -2,7 +2,7 @@
 sampling_frequency : 50
 
 data_cleansing : False
-data_preparation : True
+data_preparation : False
 machine_learning : True
 
 testing: False
@@ -27,8 +27,6 @@ seed: 42
 
 ### General settings
 resample: True # TODO outdated?
-use_oversampling: False # TODO outdated?
-use_undersampling: True # do not set over- AND undersampling to True # TODO outdated?
 balancing_option: "random_undersampling"
 
 use_filter: True
@@ -88,6 +86,17 @@ features :
 
 jobs : 32
 
+###################################################################
+# MODEL SELECTION SETTINGS
+###################################################################
+
+all_models : False
+
+models:
+  - RandomForestClassifier: True
+  - GradientBoostingClassifier: True
+  - LogisticRegression: True
+  - DummyClassifier: True
 
 ### Settings for manual relabeling merge
 # Not yet in use

@@ -118,13 +118,13 @@ def feature_extraction(subject_windows: pd.DataFrame, settings):
     return features_list
 
 
-def load_data_preparation_settings(settings: dict): # Todo: make sure that not over- AND undersampling are True
+def load_data_preparation_settings(settings: dict):
     use_filter = settings.get("use_filter")
     use_scaling = settings.get("use_scaling")
     resample = settings.get("resample")
-    use_undersampling = settings.get("use_undersampling")
-    use_oversampling = settings.get("use_oversampling")
-    return use_filter, use_scaling, resample, use_undersampling, use_oversampling
+    balancing_option = settings.get("balancing_option")
+
+    return use_filter, use_scaling, resample, balancing_option
 
 
 def get_data_path_variables(use_scaling, use_filter, config:dict, settings: dict):
@@ -157,7 +157,7 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
     """
     save_data = settings["save_data"]
     overwrite_data = settings["overwrite_data"]
-    use_filter, use_scaling, resample, use_undersampling, use_oversampling = load_data_preparation_settings(settings)
+    use_filter, use_scaling, resample, balancing_option = load_data_preparation_settings(settings)
     all_subjects = True if not settings.get("use_ocd_only") else False
 
     logger.info("Preparing data for machine learning")
