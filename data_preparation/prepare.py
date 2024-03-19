@@ -6,7 +6,7 @@ import pandas as pd
 from typing import List
 from tqdm import tqdm
 from misc import logger
-from tsfresh.feature_extraction import extract_features, MinimalFCParameters
+from tsfresh.feature_extraction import extract_features, MinimalFCParameters, ComprehensiveFCParameters
 from datetime import date
 from data_preparation.utils.filter import butter_filter
 from data_preparation.utils.scaler import std_scaling_data
@@ -132,9 +132,31 @@ def feature_extraction(subject_windows: pd.DataFrame, settings):
     :return: the extracted features in a list
     """
 
+    minimal_features = MinimalFCParameters()
+
+    fc_parameters = {
+        "mean": None,
+        "standard_deviation": None,
+        "maximum": None,
+        "minimum": None,
+        "abs_energy": None,
+        "mean_abs_change": None,
+        "skewness": None,
+        "kurtosis": None,
+        "fft_aggregated": [{'aggtype': 'centroid'}, {'aggtype': 'variance'}, {'aggtype': 'skew'}, {'aggtype': 'kurtosis'}],
+       # "fft_coefficient": None,
+        "fourier_entropy": [{'bins': 2}, {'bins': 10}, {'bins': 100}]
+    }
+
+    try:
+        print(fc_parameters)
+    except:
+        print("Could not print minimal features")
+
+
     logger.info("Extracting Features")
     features_list = extract_features(subject_windows, column_id=settings.get("id"),
-                                              default_fc_parameters=MinimalFCParameters(),
+                                              default_fc_parameters=fc_parameters,
                                               n_jobs=settings.get("jobs"))
 
     return features_list
@@ -196,7 +218,6 @@ def prepare_data(settings: dict, config: dict, raw: str="features"):
     subject_numbers = settings.get("all_subjects") if all_subjects else settings.get("ocd_diagnosed_subjects")
     if settings.get("use_trustworthy_only"):
         subject_numbers = settings.get("trustworthy_subjects")
-    print(os.listdir(folder_path))
 
     for file_name in tqdm(os.listdir(folder_path)):
         if file_name.endswith('.csv'):

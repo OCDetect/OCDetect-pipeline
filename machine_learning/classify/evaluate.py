@@ -15,7 +15,7 @@ from sklearn.svm import LinearSVC
 def evaluate_single_model(model, param_grid,
                           X_train, y_train, X_test, y_test, feature_names,
                           cv_splits=8, cv_scoring=None, select_features=False,
-                          out_dir='results/default', sample_balancing=None, seed=42, test_subject=None):
+                          out_dir='results/default', resample=False, sample_balancing=None, seed=42, test_subject=None):
     subject_out_dir = f'{out_dir}/test_subject_{test_subject}/test/'
     os.makedirs(subject_out_dir, exist_ok=True)
     model_name = str(model.__class__.__name__)
@@ -26,7 +26,7 @@ def evaluate_single_model(model, param_grid,
     pipeline_steps = []
 
     # ================= ADD BALANCING TO PIPELINE IF SELECTED =================
-    if sample_balancing in ['random_undersampling', 'SMOTE']:
+    if resample and sample_balancing in ['random_undersampling', 'SMOTE']:
         logger.info(f'n samples before: {len(y_train[y_train == 0])} vs. {len(y_train[y_train == 1])}')
         if sample_balancing == 'random_undersampling':
             resampler = RandomUnderSampler()

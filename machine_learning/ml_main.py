@@ -42,6 +42,8 @@ def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, con
     out_dir = f"{config.get('ml_results_folder')}/{subject_groups_folder_name}/{ws_folder_name}"
 
     balancing_option = settings.get("balancing_option")
+    resample = settings.get("resample")
+
     if not classic:
         OCDetectDataset.preload(windows, users, labels)
         dl_main(config, settings, users, subject_groups_folder_name)
@@ -64,6 +66,7 @@ def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, con
             test_metrics, curves = evaluate_single_model(model, param_grid,
                                                          X_train, y_train, X_test, y_test, feature_names,
                                                          out_dir=out_dir,
+                                                         resample=resample,
                                                          sample_balancing=balancing_option,
                                                          seed=seed, test_subject=test_subject)
             all_model_metrics[str(model.__class__.__name__)] = (test_metrics, curves)
