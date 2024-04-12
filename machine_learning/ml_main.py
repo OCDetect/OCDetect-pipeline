@@ -7,18 +7,18 @@ from machine_learning.classify.models import get_classification_model_grid
 from machine_learning.classify.evaluate import evaluate_single_model
 from machine_learning.dl.dl_main import dl_main
 from machine_learning.dl.OCDetectDataset import OCDetectDataset
+
 import yaml
 import shutil
 from machine_learning.utils.plots import boxplot, barchart
 
 
-def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, config: dict):
-    # todo test this for case that data is not prepared
+def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, config: dict, classic: bool = True):
     try:
         users.rename(columns={'0': 'user'}, inplace=True)
     except:
         pass
-    if len(feature_names) == 7:
+    if not classic:
         users_rep = users.loc[users.index.repeat(int(settings["window_size"] * 50))].to_numpy()
         features["user"] = users_rep
         windows = []
@@ -31,17 +31,19 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
         X = pd.merge(features, users, left_index=True, right_index=True)
         labels = labels.iloc[:, 0]
 
-    subject_groups_folder_name = "all_subjects" if not settings.get("use_ocd_only") else "ocd_diagnosed_only"
+    subject_groups_folder_name = "all"
+    if settings.get("use_ocd_only", False):
+        subject_groups_folder_name = "ocd_diagnosed_only"
+    if settings.get("use_trustworthy_only", False):
+        subject_groups_folder_name = "trustworthy_only"
     ws_folder_name = f"ws_{settings.get('window_size')}"
     # output folder in form like, e.g.: ml_results/all_subjects/ws_10/
     out_dir = f"{config.get('ml_results_folder')}/{subject_groups_folder_name}/{ws_folder_name}"
 
     balancing_option = settings.get("balancing_option")
-
-    only_dl = False  # TODO: set to false in settings - could also use "Raw" param.
-    if only_dl:
+    if not classic:
         OCDetectDataset.preload(windows, users, labels)
-        dl_main(config, users)
+        dl_main(config, settings, users, subject_groups_folder_name)
         return
 
     # TODO add models to settings and read out which model(s) should be used if not all
