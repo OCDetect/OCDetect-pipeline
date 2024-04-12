@@ -5,13 +5,12 @@ import numpy as np
 from collections import Counter
 from machine_learning.classify.models import get_classification_model_grid
 from machine_learning.classify.evaluate import evaluate_single_model
-from .dl.dl_main import dl_main
-from .dl.OCDetectDataset import OCDetectDataset
-
-from sklearn.model_selection import StratifiedKFold as SKF
+from machine_learning.dl.dl_main import dl_main
+from machine_learning.dl.OCDetectDataset import OCDetectDataset
 
 import yaml
 import shutil
+from machine_learning.utils.plots import boxplot, barchart
 
 
 def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, config: dict, classic: bool = True):
@@ -49,6 +48,9 @@ def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, con
 
     users = users["user"]
     users_outer_cv = list(users.unique())
+
+    subject_metrics = {} # new dictionary to store all_model_metrics for specific test subject
+
     for test_subject in users_outer_cv:
         X_test = X[users == test_subject]
         y_test = labels[users == test_subject]
@@ -68,6 +70,9 @@ def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, con
                                                          sample_balancing=balancing_option,
                                                          seed=seed, test_subject=test_subject)
             all_model_metrics[str(model.__class__.__name__)] = (test_metrics, curves)
+        subject_metrics[test_subject] = all_model_metrics
+
+    barchart(out_dir, subject_metrics, settings.get("barchart_metric"))
 
     export_path = config.get("export_subfolder_ml_prepared")
     window_size = settings.get("window_size")
