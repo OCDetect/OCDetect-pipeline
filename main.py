@@ -28,8 +28,6 @@ def main(config: dict, settings: dict) -> int:
     data_preparation = settings["data_preparation"]
     machine_learning = settings["machine_learning"]
 
-    set_test_settings(settings) if settings["testing"] else None # set subjects and window_size to test settings if testing: True
-
     """
     Function to run the entire preprocessing pipeline, from data loading to cleaning to relabeling etc.
     AND/OR run the data cleansing and machine learning pipeline, respectively.
@@ -98,7 +96,7 @@ def main(config: dict, settings: dict) -> int:
             if resample and balancing_option not in ["random_undersampling", "SMOTE"]:
                 logger.debug(f"You need to set a correct resampling method in: {settings}")
 
-            window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering = get_data_path_variables(
+            window_size, subjects_folder_name, sub_folder_path, export_path, scaling, filtering = get_data_path_variables(
                 use_scaling, use_filter, config, settings)
 
             logger.info(f"Using path: {export_path}{sub_folder_path}")
@@ -126,12 +124,6 @@ def main(config: dict, settings: dict) -> int:
 
 
 copy_lock = threading.Lock()
-
-
-def set_test_settings(settings: dict):
-    settings["all_subjects"] = settings["test_subjects"]
-    settings["ocd_diagnosed_subjects"] = settings["test_subjects"]
-    settings["window_size"] = settings["test_window_size"]
 
 
 def data_cleansing_worker(subject: str, config: dict, settings: dict): # , subjects_loaded: dict):

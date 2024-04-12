@@ -32,11 +32,7 @@ def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, con
         X = pd.merge(features, users, left_index=True, right_index=True)
         labels = labels.iloc[:, 0]
 
-    subject_groups_folder_name = "all"
-    if settings.get("use_ocd_only", False):
-        subject_groups_folder_name = "ocd_diagnosed_only"
-    if settings.get("use_trustworthy_only", False):
-        subject_groups_folder_name = "trustworthy_only"
+    subject_groups_folder_name = settings.get("selected_subject_option")
     ws_folder_name = f"ws_{settings.get('window_size')}"
     # output folder in form like, e.g.: ml_results/all_subjects/ws_10/
     out_dir = f"{config.get('ml_results_folder')}/{subject_groups_folder_name}/{ws_folder_name}"
@@ -59,6 +55,7 @@ def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, con
         X_train = X[users != test_subject]
         y_train = labels[users != test_subject]
 
+        print("left out subject", test_subject)
         all_model_metrics = {}
 
         # model grid
