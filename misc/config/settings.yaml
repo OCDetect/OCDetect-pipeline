@@ -5,15 +5,17 @@ data_cleansing : False
 data_preparation : False
 machine_learning : True
 
-testing: False
-use_ocd_only: True
-#test_n_recs: 10
-#test_n_subs: 10
+# subject selection
+# set out of : ['all_subjects', 'test_subjects', 'relabeled_subjects', 'ocd_diagnosed_subjects', 'trustworthy_subjects']
+selected_subject_option: 'relabeled_subjects'
 
 all_subjects: [1, 2, 3, 4, 5, 7, 9, 10, 11, 12, 13, 15, 18, 19, 20, 21, 22, 24, 25, 27, 29, 30]
-# ocd_diagnosed_subjects: [5, 9, 1, 3, 12, 13, 20, 24, 29, 30]
-ocd_diagnosed_subjects: [1, 3, 4, 18, 20, 30]
+ocd_diagnosed_subjects: [5, 9, 1, 3, 12, 13, 20, 24, 29, 30]
+trustworthy_subjects: [1, 3, 4, 18, 20, 30]  # only 18 without a diagnosis
+relabeled_subjects: [1, 3, 4, 18] #, 20, 30]
 test_subjects : [1, 3, 4] # at least 3 for ml
+
+untrustworthy_subjects : []  # TODO: rename this item and use it in order to e.g. create a different split
 
 seed: 42
 
@@ -41,15 +43,7 @@ resampling_methods:
 undersampling:
   resampling_method: "random_undersampling"
   #add different undersampling methods
-
-oversampling:
-  resampling_method: "smote"
-
-use_filter: True
-use_scaling: True
-
-
-
+  
 ### Filtering Settings
 test_filters : True  # if false, the system will use the first value in the list.
 run_export : False  # actually save the results to the disk
@@ -71,10 +65,11 @@ relabel_offset : 5   # how many seconds before the label did the hand washing en
 ###################################################################
 
 save_data: True
-overwrite_data: True
+overwrite_data: True  # Currently not Implemented!
 
 ### Settings for data windowing
-window_size : 10 # value in seconds
+
+window_size : 5 # value in seconds
 test_window_size: 30
 overlap : 0.5
 labelling_algorithm : "Majority"
@@ -103,4 +98,24 @@ features :
 
 jobs : 32
 
+### plot settings
 
+barchart_metric: "f1_score"
+
+###################################################################
+# MODEL SELECTION SETTINGS
+###################################################################
+
+all_models : False
+
+models:
+  - RandomForestClassifier: True
+  - GradientBoostingClassifier: True
+  - LogisticRegression: True
+  - DummyClassifier: True
+
+###################################################################
+# Machine Learning Pipeline SETTINGS
+###################################################################
+run_deep_learning : False
+run_classic_methods : True

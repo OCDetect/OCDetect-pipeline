@@ -118,48 +118,53 @@ def feature_extraction(subject_windows: pd.DataFrame, settings):
     return features_list
 
 
-def load_data_preparation_settings(settings: dict): # Todo: make sure that not over- AND undersampling are True
+def load_data_preparation_settings(settings: dict):
     use_filter = settings.get("use_filter")
     use_scaling = settings.get("use_scaling")
     resample = settings.get("resample")
-    use_undersampling = settings.get("use_undersampling")
-    use_oversampling = settings.get("use_oversampling")
-    return use_filter, use_scaling, resample, use_undersampling, use_oversampling
+    balancing_option = settings.get("balancing_option")
+
+    return use_filter, use_scaling, resample, balancing_option
 
 
-def get_data_path_variables(use_scaling, use_filter, config:dict, settings: dict):
+def get_data_path_variables(use_scaling: object, use_filter: object, config: dict, settings: dict) -> object:
 
     export_path = config.get("export_subfolder_ml_prepared")
 
     window_size = settings.get("window_size")
-    subjects = settings.get("use_ocd_only")
-
-    subjects_folder_name = "all_subjects" if not subjects else "ocd_diagnosed_only"
+    subjects_folder_name = settings.get("selected_subject_option")
     sub_folder_path = f"ws_{window_size}_s/{subjects_folder_name}"
 
-    raw = "_raw" if settings.get("raw_features") else ""
+    scaling = "scaled" if use_scaling else "not_scaled"
+    filtering = "filtered" if use_filter else "not_filtered"
 
-    scaling = "scaled" if use_scaling and not raw else "not_scaled"
-    filtering = "filtered" if use_filter and not raw else "not_filtered"
-
-    return window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering, raw
+    return window_size, subjects_folder_name, sub_folder_path, export_path, scaling, filtering
 
 
 # main function for data preparation
-def prepare_data(settings: dict, config: dict, raw: bool=False):
+def prepare_data(settings: dict, config: dict, raw: str="both"):
+    """
+    :param settings: Global settings dict
+    :param config:   Global user config dict
+    :param raw:      "both": calculate and return features AND return raw windows
+                     "raw" : only calculate and return raw windows
+                     "features: only calculate and return features
+    :return: The labels, features, users, feature names
+    """
     save_data = settings["save_data"]
     overwrite_data = settings["overwrite_data"]
     use_filter, use_scaling, resample, use_undersampling, use_oversampling = load_data_preparation_settings(settings)
-    all_subjects = True if not settings.get("use_ocd_only") else False
+
 
     logger.info("Preparing data for machine learning")
 
-    folder_path = config.get("export_subfolder")
+    folder_path = config.get("export_subfolder") if settings['selected_subject_option'] != 'relabeled_subjects' else config.get("relabeled_subfolder")
     pattern = r'OCDetect_(\d+)'
 
     dataframes = {}
 
-    subject_numbers = settings.get("all_subjects") if all_subjects else settings.get("ocd_diagnosed_subjects")
+    selected_subject_option = str(settings['selected_subject_option'])
+    subject_numbers = settings[selected_subject_option]
 
     for file_name in tqdm(os.listdir(folder_path)):
         if file_name.endswith('.csv'):
@@ -182,7 +187,7 @@ def prepare_data(settings: dict, config: dict, raw: bool=False):
     start_time = time.time()
 
     # 1. Filter data if desired
-    if use_filter and not raw:
+    if use_filter:
         filtered_data_all = []
         for subject in data:
             filtered_data_subject = []
@@ -192,6 +197,7 @@ def prepare_data(settings: dict, config: dict, raw: bool=False):
         data = filtered_data_all
 
     features = []
+    features_raw = []
     labels = []
     users = []
 
@@ -212,19 +218,31 @@ def prepare_data(settings: dict, config: dict, raw: bool=False):
         logger.info(f"Amount of windows : {windows['tsfresh_id'].iloc[-1]}")
 
         # 4. Extracting features
-        features_user = feature_extraction(windows, settings) if not raw else windows
-        features.append(features_user)
+        if raw in ["both", "raw"]:
+            features_raw.append(windows)
+        if raw in ["both", "features"]:
+            features_user = feature_extraction(windows, settings)
+            features.append(features_user)
 
-        logger.info(f"Subject: {i}, features: {len(features_user)}, labels: {len(user_labels)}")
+        length = max(len(features_user),len(windows))
+        logger.info(f"Subject: {i}, features: {length}, labels: {len(user_labels)}")
 
     labels = pd.concat(labels).reset_index(drop=True).to_frame()
     users = pd.concat(users).reset_index(drop=True).to_frame()
 
-    features = pd.concat(features)
-    feature_names = features.columns.values.tolist()
+    if raw in ["both", "features"]:
+        features = pd.concat(features)
 
-    # 5. Scale data if desired
-    if use_scaling and not raw:
+    if raw in ["both", "raw"]:
+        features_raw = pd.concat(features_raw)
+
+    try:
+        feature_names = features.columns.values.tolist()
+    except:
+        feature_names = features_raw.columns.values.tolist()
+
+    # 5. Scale data if desired (only on features)
+    if use_scaling:
         features = std_scaling_data(features, settings)
 
     end_time = time.time()
@@ -232,7 +250,7 @@ def prepare_data(settings: dict, config: dict, raw: bool=False):
     windowing_time_min = windowing_time_s / 60
 
     if save_data:
-        window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering, raw_str = get_data_path_variables(
+        window_size, subjects_folder_name, sub_folder_path, export_path, scaling, filtering = get_data_path_variables(
             use_scaling, use_filter, config, settings)
 
         today = date.today()
@@ -240,10 +258,13 @@ def prepare_data(settings: dict, config: dict, raw: bool=False):
 
         os.makedirs(f"{export_path}/{sub_folder_path}", exist_ok=True)
 
-        labels.to_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}{raw_str}.csv", index=False)
-        users.to_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}{raw_str}.csv", index=False)
-        features.to_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}{raw_str}.csv", index=False)
-        pd.DataFrame(feature_names).to_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}{raw_str}.csv", index=False)
+        labels.to_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}.csv", index=False)
+        users.to_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}.csv", index=False)
+        if len(features) > 0:
+            features.to_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}.csv", index=False)
+        if len(features_raw) > 0:
+            features_raw.to_csv(f"{export_path}{sub_folder_path}/features_{filtering}_raw.csv", index=False)
+        pd.DataFrame(feature_names).to_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}.csv", index=False)
 
         # create file with meta information for the current window setup
         meta_info = f"Meta information for \"{file_date}\":\n"
@@ -259,4 +280,4 @@ def prepare_data(settings: dict, config: dict, raw: bool=False):
             file.write("Used following settings file: \n")
             file.write(settings_data)
 
-    return labels, features, users, feature_names
+    return labels, [features, features_raw], users, feature_names
