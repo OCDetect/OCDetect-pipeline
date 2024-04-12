@@ -5,13 +5,12 @@ import numpy as np
 from collections import Counter
 from machine_learning.classify.models import get_classification_model_grid
 from machine_learning.classify.evaluate import evaluate_single_model
-from .dl.dl_main import dl_main
-from .dl.OCDetectDataset import OCDetectDataset
-
-from sklearn.model_selection import StratifiedKFold as SKF
+from machine_learning.dl.dl_main import dl_main
+from machine_learning.dl.OCDetectDataset import OCDetectDataset
 
 import yaml
 import shutil
+from machine_learning.utils.plots import boxplot, barchart
 
 
 def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, config: dict, classic: bool = True):
@@ -32,44 +31,48 @@ def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, con
         X = pd.merge(features, users, left_index=True, right_index=True)
         labels = labels.iloc[:, 0]
 
-    subject_groups_folder_name = "all"
-    if settings.get("use_ocd_only", False):
-        subject_groups_folder_name = "ocd_diagnosed_only"
-    if settings.get("use_trustworthy_only", False):
-        subject_groups_folder_name = "trustworthy_only"
+    subject_groups_folder_name = settings.get("selected_subject_option")
     ws_folder_name = f"ws_{settings.get('window_size')}"
     # output folder in form like, e.g.: ml_results/all_subjects/ws_10/
     out_dir = f"{config.get('ml_results_folder')}/{subject_groups_folder_name}/{ws_folder_name}"
 
     balancing_option = settings.get("balancing_option")
-    resample = settings.get("resample")
 
-    if not classic:
+    only_dl = settings.get("raw_features")
+    if only_dl:
         OCDetectDataset.preload(windows, users, labels)
         dl_main(config, settings, users, subject_groups_folder_name)
         return
 
-    # TODO add models to settings and read out which model(s) should be used if not all
+    balancing_option = settings.get("balancing_option")
+
     users = users["user"]
     users_outer_cv = list(users.unique())
+
+    subject_metrics = {} # new dictionary to store all_model_metrics for specific test subject
+
     for test_subject in users_outer_cv:
         X_test = X[users == test_subject]
         y_test = labels[users == test_subject]
         X_train = X[users != test_subject]
         y_train = labels[users != test_subject]
 
+        print("left out subject", test_subject)
         all_model_metrics = {}
 
         # model grid
-        model_grid = get_classification_model_grid(seed=seed)
+        selected_models = [list(classifier.keys())[0] for classifier in settings.get("models") if list(classifier.values())[0]]
+        model_grid = get_classification_model_grid(settings.get("all_models"), selected_models, seed=seed)
         for j, (model, param_grid) in enumerate(model_grid):
             test_metrics, curves = evaluate_single_model(model, param_grid,
                                                          X_train, y_train, X_test, y_test, feature_names,
                                                          out_dir=out_dir,
-                                                         resample=resample,
                                                          sample_balancing=balancing_option,
                                                          seed=seed, test_subject=test_subject)
             all_model_metrics[str(model.__class__.__name__)] = (test_metrics, curves)
+        subject_metrics[test_subject] = all_model_metrics
+
+    barchart(out_dir, subject_metrics, settings.get("barchart_metric"))
 
     export_path = config.get("export_subfolder_ml_prepared")
     window_size = settings.get("window_size")

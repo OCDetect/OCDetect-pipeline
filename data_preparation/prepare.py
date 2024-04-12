@@ -309,36 +309,31 @@ def feature_extraction(subject_windows: pd.DataFrame, settings):
     return features_list
 
 
-def load_data_preparation_settings(settings: dict): # Todo: make sure that not over- AND undersampling are True
+def load_data_preparation_settings(settings: dict):
     use_filter = settings.get("use_filter")
     use_scaling = settings.get("use_scaling")
     resample = settings.get("resample")
-    use_undersampling = settings.get("use_undersampling")
-    use_oversampling = settings.get("use_oversampling")
-    return use_filter, use_scaling, resample, use_undersampling, use_oversampling
+    balancing_option = settings.get("balancing_option")
+
+    return use_filter, use_scaling, resample, balancing_option
 
 
-def get_data_path_variables(use_scaling, use_filter, config:dict, settings: dict):
+def get_data_path_variables(use_scaling: object, use_filter: object, config: dict, settings: dict) -> object:
 
     export_path = config.get("export_subfolder_ml_prepared")
 
     window_size = settings.get("window_size")
-    subjects = settings.get("use_ocd_only")
-    trustworthy_only = settings.get("use_trustworthy_only")
-    subjects_folder_name = "all_subjects" if not subjects else "ocd_diagnosed_only"
-    if trustworthy_only:
-        subjects_folder_name = "trustworthy_only"
+    subjects_folder_name = settings.get("selected_subject_option")
     sub_folder_path = f"ws_{window_size}_s/{subjects_folder_name}"
 
     scaling = "scaled" if use_scaling else "not_scaled"
     filtering = "filtered" if use_filter else "not_filtered"
 
-    return window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering
+    return window_size, subjects_folder_name, sub_folder_path, export_path, scaling, filtering
 
 
 # main function for data preparation
-# todo default raw value
-def prepare_data(settings: dict, config: dict, raw: str="features"):
+def prepare_data(settings: dict, config: dict, raw: str="both"):
     """
     :param settings: Global settings dict
     :param config:   Global user config dict
@@ -350,21 +345,17 @@ def prepare_data(settings: dict, config: dict, raw: str="features"):
     save_data = settings["save_data"]
     overwrite_data = settings["overwrite_data"]
     use_filter, use_scaling, resample, use_undersampling, use_oversampling = load_data_preparation_settings(settings)
-    all_subjects = True if not settings.get("use_ocd_only") else False
+
 
     logger.info("Preparing data for machine learning")
 
-    # folder_path = config.get("export_subfolder")
-    # TODO choose folder differently based on setting?
-    folder_path = config.get("data_folder_relabeled")
-
+    folder_path = config.get("export_subfolder") if settings['selected_subject_option'] != 'relabeled_subjects' else config.get("relabeled_subfolder")
     pattern = r'OCDetect_(\d+)'
 
     dataframes = {}
 
-    subject_numbers = settings.get("all_subjects") if all_subjects else settings.get("ocd_diagnosed_subjects")
-    if settings.get("use_trustworthy_only"):
-        subject_numbers = settings.get("trustworthy_subjects")
+    selected_subject_option = str(settings['selected_subject_option'])
+    subject_numbers = settings[selected_subject_option]
 
     for file_name in tqdm(os.listdir(folder_path)):
         if file_name.endswith('.csv'):
@@ -424,16 +415,22 @@ def prepare_data(settings: dict, config: dict, raw: str="features"):
             features_user = feature_extraction(windows, settings)
             features.append(features_user)
 
-        # ToDo this is wrong I guess
-        length = max(len(features),len(windows))
+        length = max(len(features_user),len(windows))
         logger.info(f"Subject: {i}, features: {length}, labels: {len(user_labels)}")
-
-    print(str(len(labels)))
-    print(str(len(users)))
 
     labels = pd.concat(labels).reset_index(drop=True).to_frame()
     users = pd.concat(users).reset_index(drop=True).to_frame()
 
+    if raw in ["both", "features"]:
+        features = pd.concat(features)
+
+    if raw in ["both", "raw"]:
+        features_raw = pd.concat(features_raw)
+
+    try:
+        feature_names = features.columns.values.tolist()
+    except:
+        feature_names = features_raw.columns.values.tolist()
     print(str(len(features)))
     features = pd.concat(features, ignore_index=True)
     feature_names = features.columns.values.tolist()
@@ -453,7 +450,7 @@ def prepare_data(settings: dict, config: dict, raw: str="features"):
     windowing_time_min = windowing_time_s / 60
 
     if save_data:
-        window_size, subjects, subjects_folder_name, sub_folder_path, export_path, scaling, filtering = get_data_path_variables(
+        window_size, subjects_folder_name, sub_folder_path, export_path, scaling, filtering = get_data_path_variables(
             use_scaling, use_filter, config, settings)
 
         today = date.today()

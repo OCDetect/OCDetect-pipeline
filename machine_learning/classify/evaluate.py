@@ -10,12 +10,14 @@ from sklearn.feature_selection import SelectFromModel, SelectKBest
 from sklearn.model_selection import GridSearchCV, LeaveOneGroupOut
 from imblearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
+from imblearn.combine import SMOTETomek, SMOTEENN
+from imblearn.under_sampling import TomekLinks, EditedNearestNeighbours
 
 
 def evaluate_single_model(model, param_grid,
                           X_train, y_train, X_test, y_test, feature_names,
                           cv_splits=8, cv_scoring=None, select_features=False,
-                          out_dir='results/default', resample=False, sample_balancing=None, seed=42, test_subject=None):
+                          out_dir='results/default', sample_balancing=None, seed=42, test_subject=None):
     subject_out_dir = f'{out_dir}/test_subject_{test_subject}/test/'
     os.makedirs(subject_out_dir, exist_ok=True)
     model_name = str(model.__class__.__name__)
@@ -26,14 +28,20 @@ def evaluate_single_model(model, param_grid,
     pipeline_steps = []
 
     # ================= ADD BALANCING TO PIPELINE IF SELECTED =================
-    if resample and sample_balancing in ['random_undersampling', 'SMOTE']:
+    if sample_balancing in ['random_undersampling', 'SMOTE']:
         logger.info(f'n samples before: {len(y_train[y_train == 0])} vs. {len(y_train[y_train == 1])}')
         if sample_balancing == 'random_undersampling':
             resampler = RandomUnderSampler()
             logger.info("Using random undersampling")
-        else:  # 'SMOTE'
-            resampler = SMOTE(n_jobs=-1, sampling_strategy=0.2689, random_state=seed)
-            logger.info("Using oversampling")
+        # elif sample_balancing == 'SMOTE':  # 'SMOTE'
+        #     resampler = SMOTE(n_jobs=-1, sampling_strategy=0.2689, random_state=seed)
+        #     logger.info("Using oversampling")
+        # elif sample_balancing == 'SMOTETomek':
+        #     resampler = SMOTETomek(sampling_strategy=0.2689, tomek=TomekLinks(sampling_strategy='majority'))
+        #     logger.info("Using SMOTE and Tomek Links")
+        # elif sample_balancing == 'SMOTEENN':
+        #     resampler = SMOTEENN(sampling_strategy=0.2689, enn=EditedNearestNeighbours(sampling_strategy='majority'))
+        #     logger.info("Using SMOTE and edited nearest neighbours")
         pipeline_steps.append(('resampling', resampler))
     else:
         logger.info("No additional balancing selected")
