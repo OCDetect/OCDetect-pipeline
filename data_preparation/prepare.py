@@ -10,6 +10,7 @@ from tsfresh.feature_extraction import extract_features, MinimalFCParameters, Co
 from datetime import date
 from data_preparation.utils.filter import butter_filter
 from data_preparation.utils.scaler import std_scaling_data
+from tsfresh.utilities.dataframe_functions import impute
 
 
 def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: dict):
@@ -300,12 +301,11 @@ def feature_extraction(subject_windows: pd.DataFrame, settings):
     except:
         print("Could not print minimal features")
 
-
     logger.info("Extracting Features")
     features_list = extract_features(subject_windows, column_id=settings.get("id"),
                                               default_fc_parameters=fc_settings,
                                               n_jobs=settings.get("jobs"))
-
+    impute(features_list)  # make sure no NaNs are there
     return features_list
 
 
@@ -333,8 +333,7 @@ def get_data_path_variables(use_scaling: object, use_filter: object, config: dic
 
 
 # main function for data preparation
-# todo default raw value
-def prepare_data(settings: dict, config: dict, raw: str="features"):
+def prepare_data(settings: dict, config: dict, raw: str="both"):
     """
     :param settings: Global settings dict
     :param config:   Global user config dict
@@ -345,15 +344,12 @@ def prepare_data(settings: dict, config: dict, raw: str="features"):
     """
     save_data = settings["save_data"]
     overwrite_data = settings["overwrite_data"]
-    use_filter, use_scaling, resample, use_undersampling, use_oversampling = load_data_preparation_settings(settings)
+    use_filter, use_scaling, resample, _ = load_data_preparation_settings(settings)
 
 
     logger.info("Preparing data for machine learning")
 
-    # folder_path = config.get("export_subfolder")
-    # TODO choose folder differently based on setting?
     folder_path = config.get("export_subfolder") if settings['selected_subject_option'] != 'relabeled_subjects' else config.get("relabeled_subfolder")
-
     pattern = r'OCDetect_(\d+)'
 
     dataframes = {}
@@ -419,19 +415,14 @@ def prepare_data(settings: dict, config: dict, raw: str="features"):
             features_user = feature_extraction(windows, settings)
             features.append(features_user)
 
-        # ToDo this is wrong I guess
-        length = max(len(features),len(windows))
+        length = max(len(features_user),len(windows))
         logger.info(f"Subject: {i}, features: {length}, labels: {len(user_labels)}")
-
-    print(str(len(labels)))
-    print(str(len(users)))
 
     labels = pd.concat(labels).reset_index(drop=True).to_frame()
     users = pd.concat(users).reset_index(drop=True).to_frame()
 
-
     if raw in ["both", "features"]:
-        features = pd.concat(features, ignore_index=True)
+        features = pd.concat(features)
 
     if raw in ["both", "raw"]:
         features_raw = pd.concat(features_raw)
@@ -440,6 +431,10 @@ def prepare_data(settings: dict, config: dict, raw: str="features"):
         feature_names = features.columns.values.tolist()
     except:
         feature_names = features_raw.columns.values.tolist()
+
+    #print(str(len(features)))
+    #features = pd.concat(features, ignore_index=True)
+    #feature_names = features.columns.values.tolist()
 
     # 5. Scale data if desired (only on features)
     if use_scaling:

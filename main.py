@@ -77,7 +77,7 @@ def main(config: dict, settings: dict) -> int:
                 for future in futures:
                     future.result()
 
-        logger.info("Finished running prepocessing")
+            logger.info("Finished running prepocessing")
 
     # Preparation / Data loading and ML:
     run_deep_learning = settings.get("run_deep_learning")
@@ -92,8 +92,8 @@ def main(config: dict, settings: dict) -> int:
 
             use_filter, use_scaling, resample, balancing_option = load_data_preparation_settings(
                 settings)
-            if resample and balancing_option not in ["random_undersampling", "SMOTE"]:
-                logger.debug(f"You need to set a correct resampling method in: {settings}")
+            #if resample and balancing_option not in ["random_undersampling", "SMOTE"]:
+               # logger.debug(f"You need to set a correct resampling method in: {settings}")
 
             window_size, subjects_folder_name, sub_folder_path, export_path, scaling, filtering = get_data_path_variables(
                 use_scaling, use_filter, config, settings)
@@ -101,7 +101,6 @@ def main(config: dict, settings: dict) -> int:
             logger.info(f"Using path: {export_path}{sub_folder_path}")
             logger.info(f"Scaled data: {scaling}; Filtered data: {filtering}")
 
-            # todo: remove column "unnamed: 0" while writing to file instead of when reading in
             logger.info("Reading precalculated windows")
 
             if run_classic_methods:
