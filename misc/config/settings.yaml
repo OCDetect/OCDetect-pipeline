@@ -2,8 +2,11 @@
 sampling_frequency : 50
 
 data_cleansing : False
-data_preparation : True
+data_preparation : False
 machine_learning : True
+
+
+
 
 # subject selection
 # set out of : ['all_subjects', 'test_subjects', 'relabeled_subjects', 'ocd_diagnosed_subjects', 'trustworthy_subjects']
@@ -25,7 +28,7 @@ seed: 42
 
 ### General settings
 resample: True # TODO outdated?
-balancing_option: "random_undersampling"
+balancing_option: "SMOTETomek"
 
 use_filter: True
 use_scaling: True
@@ -92,7 +95,7 @@ barchart_metric: "f1_score"
 # MODEL SELECTION SETTINGS
 ###################################################################
 
-all_models : False
+all_models : True
 
 models:
   - RandomForestClassifier: True

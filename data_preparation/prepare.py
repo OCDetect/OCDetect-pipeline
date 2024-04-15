@@ -10,6 +10,7 @@ from tsfresh.feature_extraction import extract_features, MinimalFCParameters, Co
 from datetime import date
 from data_preparation.utils.filter import butter_filter
 from data_preparation.utils.scaler import std_scaling_data
+from tsfresh.utilities.dataframe_functions import impute
 
 
 def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: dict):
@@ -300,12 +301,13 @@ def feature_extraction(subject_windows: pd.DataFrame, settings):
     except:
         print("Could not print minimal features")
 
-
     logger.info("Extracting Features")
     features_list = extract_features(subject_windows, column_id=settings.get("id"),
                                               default_fc_parameters=fc_settings,
                                               n_jobs=settings.get("jobs"))
-
+    impute(features_list)  # make sure no NaNs are there
+    print("IMPUTED FEATURES")
+    print(features_list)
     return features_list
 
 
@@ -344,7 +346,7 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
     """
     save_data = settings["save_data"]
     overwrite_data = settings["overwrite_data"]
-    use_filter, use_scaling, resample, use_undersampling, use_oversampling = load_data_preparation_settings(settings)
+    use_filter, use_scaling, resample, _ = load_data_preparation_settings(settings)
 
 
     logger.info("Preparing data for machine learning")
@@ -431,15 +433,10 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
         feature_names = features.columns.values.tolist()
     except:
         feature_names = features_raw.columns.values.tolist()
-    print(str(len(features)))
-    features = pd.concat(features, ignore_index=True)
-    feature_names = features.columns.values.tolist()
 
-    # features_raw = pd.concat(features_raw)
-    # try:
-      #  feature_names = features.columns.values.tolist()
-    #except:
-     #   feature_names = features_raw.columns.values.tolist()
+    #print(str(len(features)))
+    #features = pd.concat(features, ignore_index=True)
+    #feature_names = features.columns.values.tolist()
 
     # 5. Scale data if desired (only on features)
     if use_scaling:

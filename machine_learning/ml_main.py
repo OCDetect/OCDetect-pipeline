@@ -36,8 +36,6 @@ def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, con
     # output folder in form like, e.g.: ml_results/all_subjects/ws_10/
     out_dir = f"{config.get('ml_results_folder')}/{subject_groups_folder_name}/{ws_folder_name}"
 
-    balancing_option = settings.get("balancing_option")
-
     only_dl = settings.get("raw_features")
     if only_dl:
         OCDetectDataset.preload(windows, users, labels)

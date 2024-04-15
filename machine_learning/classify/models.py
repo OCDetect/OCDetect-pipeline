@@ -11,19 +11,26 @@ def get_classification_model_grid(all_models, selected_models, seed=42):
                {'n_estimators': [100],
                 'criterion': ['entropy', 'gini'],
                 'max_depth': [10],
-                'max_features': ['sqrt', 'log2']}),
-              (GradientBoostingClassifier(random_state=seed),
-               {'loss': ['log_loss', 'exponential'],
-                'learning_rate': [0.01, 0.3],
-                'n_estimators': [100],
-                'max_depth': [10],
-                'max_features': ['sqrt', 'log2']}),
-              (LogisticRegression(solver='saga', max_iter=5000, class_weight="balanced", penalty='elasticnet',
-                                  random_state=seed),
-               {'l1_ratio': [0.0, 0.5, 1.0],
-                'C': [0.1, 5.0]}),
-              (DummyClassifier(strategy='prior', random_state=seed), {})
+                'max_features': ['sqrt', 'log2']})
               ]
+
+    # models = [(RandomForestClassifier(class_weight="balanced", random_state=seed),
+    #            {'n_estimators': [100],
+    #             'criterion': ['entropy', 'gini'],
+    #             'max_depth': [10],
+    #             'max_features': ['sqrt', 'log2']}),
+    #           (GradientBoostingClassifier(random_state=seed),
+    #            {'loss': ['log_loss', 'exponential'],
+    #             'learning_rate': [0.01, 0.3],
+    #             'n_estimators': [100],
+    #             'max_depth': [10],
+    #             'max_features': ['sqrt', 'log2']}),
+    #           (LogisticRegression(solver='saga', max_iter=5000, class_weight="balanced", penalty='elasticnet',
+    #                               random_state=seed),
+    #            {'l1_ratio': [0.0, 0.5, 1.0],
+    #             'C': [0.1, 5.0]}),
+    #           (DummyClassifier(strategy='prior', random_state=seed), {})
+    #           ]
 
     if all_models:
         return models
