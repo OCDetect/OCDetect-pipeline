@@ -1,5 +1,5 @@
 from data_cleansing.helpers.definitions import Label, LabelMergeParameter
-from data_cleansing.relabeling.label_merge import merge
+from data_cleansing.relabeling.merging import merge
 import pandas as pd
 import pytest
 

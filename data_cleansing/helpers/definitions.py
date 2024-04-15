@@ -15,6 +15,7 @@ class IgnoreReason(IntEnum):
     RepetitionCompToRoutine = 5
     RepetitionRoutineToComp = 6
     BeforeHandWash = 7
+    AfterHandWash = 8
 
 
 class HandWashingType(Enum):
@@ -40,3 +41,9 @@ label_mapping = {
     "Begin uncertain": Label.BeginUncertain,
     "End uncertain": Label.EndUncertain,
     "Begin AND End uncertain": Label.BeginEndUncertain}
+
+parameter_mapping = {
+    "Intersection": LabelMergeParameter.Intersection,
+    "Union": LabelMergeParameter.Union,
+    "IgnoreUncertain": LabelMergeParameter.IgnoreUncertain
+}
