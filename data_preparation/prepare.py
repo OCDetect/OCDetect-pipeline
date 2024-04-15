@@ -306,8 +306,6 @@ def feature_extraction(subject_windows: pd.DataFrame, settings):
                                               default_fc_parameters=fc_settings,
                                               n_jobs=settings.get("jobs"))
     impute(features_list)  # make sure no NaNs are there
-    print("IMPUTED FEATURES")
-    print(features_list)
     return features_list
 
 
