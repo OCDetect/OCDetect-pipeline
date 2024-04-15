@@ -84,7 +84,6 @@ def main(config: dict, settings: dict) -> int:
     run_classic_methods = settings.get("run_classic_methods")
     raw_str = "both" if run_deep_learning and run_classic_methods else ("raw" if run_deep_learning else "features")
     if data_preparation:
-
         labels, (features, features_raw), users, feature_names = prepare_data(settings, config, raw=raw_str)
     if machine_learning:
         if not data_preparation:
@@ -130,7 +129,9 @@ def data_cleansing_worker(subject: str, config: dict, settings: dict): # , subje
     subject = str(subject)
     if len(subject) == 1:
         subject = "0" + subject
-    export_subfolder = config.get("export_subfolder")
+    #export_subfolder = config.get("export_subfolder")
+    # TODO which folder
+    export_subfolder = config.get("data_folder_relabeled")
     if not (os.path.isdir(export_subfolder)):
         os.mkdir(export_subfolder)
     if os.path.isfile(export_subfolder + "exported.txt"):
@@ -167,17 +168,19 @@ def data_cleansing_worker(subject: str, config: dict, settings: dict): # , subje
         del recordings_list, cleaned_data
         gc.collect()
         return
-    labeled_data = relabel(cleaned_data, config, settings, subject)
+    # TODO read from a settings file or manual relabeled data or automatic relabeling should be used
+    # labeled_data = relabel(cleaned_data, config, settings, subject)
     logger.info(f"##### Exporting subject {subject} #####")
-    export_data(labeled_data, config, settings, subject)
+    # export_data(labeled_data, config, settings, subject)
+    export_data(cleaned_data, config, settings, subject)
     logger.info(f"########## Finished running on subject {subject} ##########")
     for item in recordings_list:
         item.clear()
     for item in cleaned_data:
         item.clear()
-    for item in labeled_data:
-        item.clear()
-    del recordings_list, cleaned_data, labeled_data  # hopefully fix memory-caused sigkill...
+    # for item in labeled_data:
+       # item.clear()
+    del recordings_list, cleaned_data  #, labeled_data  # hopefully fix memory-caused sigkill...
     gc.collect()
 
 

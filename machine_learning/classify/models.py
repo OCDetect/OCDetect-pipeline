@@ -3,6 +3,20 @@ from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 
 
+def get_classification_model_grid(seed=42):
+    return [(RandomForestClassifier(class_weight="balanced", random_state=seed),
+             {'n_estimators': [100, 1000],
+              'criterion': ['gini'],
+              'max_depth': [10],
+              'max_features': ['sqrt']}),
+            (GradientBoostingClassifier(random_state=seed),
+              {'loss': ['exponential'],
+               'learning_rate': [0.01],
+               'n_estimators': [100],
+               'max_depth': [10],
+               'max_features': ['log2']})
+            ]
+
 def get_classification_model_grid(all_models, selected_models, seed=42):
 
     selected_models = [globals()[model_string] for model_string in selected_models]
@@ -29,6 +43,7 @@ def get_classification_model_grid(all_models, selected_models, seed=42):
         return models
     else:
         return [(clf, params) for clf, params in models if clf.__class__ in selected_models]
+
 
 
 def positive_class_probability(model, X):
