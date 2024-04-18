@@ -11,7 +11,6 @@ from data_cleansing.helpers.definitions import Sensor
 from data_cleansing.modules.filter import run_data_cleansing
 from misc import logger
 from misc.export import export_data
-from data_cleansing.modules import relabel
 import pandas as pd
 import getpass
 from machine_learning.ml_main import ml_pipeline
@@ -92,8 +91,6 @@ def main(config: dict, settings: dict) -> int:
 
             use_filter, use_scaling, resample, balancing_option = load_data_preparation_settings(
                 settings)
-            #if resample and balancing_option not in ["random_undersampling", "SMOTE"]:
-               # logger.debug(f"You need to set a correct resampling method in: {settings}")
 
             window_size, subjects_folder_name, sub_folder_path, export_path, scaling, filtering = get_data_path_variables(
                 use_scaling, use_filter, config, settings)
@@ -128,8 +125,6 @@ def data_cleansing_worker(subject: str, config: dict, settings: dict): # , subje
     subject = str(subject)
     if len(subject) == 1:
         subject = "0" + subject
-    #export_subfolder = config.get("export_subfolder")
-    # TODO which folder
     export_subfolder = config.get("data_folder_relabeled")
     if not (os.path.isdir(export_subfolder)):
         os.mkdir(export_subfolder)
