@@ -133,8 +133,6 @@ def feature_extraction(subject_windows: pd.DataFrame, settings):
     :return: the extracted features in a list
     """
 
-    minimal_features = MinimalFCParameters()
-
     fc_parameters = {
         "mean": None,
         "standard_deviation": None,
@@ -146,10 +144,9 @@ def feature_extraction(subject_windows: pd.DataFrame, settings):
         "skewness": None,
         "kurtosis": None,
         "fft_aggregated": [{'aggtype': 'centroid'}, {'aggtype': 'variance'}, {'aggtype': 'skew'}, {'aggtype': 'kurtosis'}],
-       # "fft_coefficient": None,
         "fourier_entropy": [{'bins': 2}, {'bins': 10}, {'bins': 100}]
     }
-
+    # this did not bring much better results but took long..
     fc_settings = {'variance_larger_than_standard_deviation': None,
                    'has_duplicate_max': None,
                    'has_duplicate_min': None,
@@ -296,14 +293,9 @@ def feature_extraction(subject_windows: pd.DataFrame, settings):
                                            {'tau': 1, 'dimension': 7}],
                    'query_similarity_count': [{'query': None, 'threshold': 0.0}]}
 
-    try:
-        print(fc_parameters)
-    except:
-        print("Could not print minimal features")
-
     logger.info("Extracting Features")
     features_list = extract_features(subject_windows, column_id=settings.get("id"),
-                                              default_fc_parameters=fc_settings,
+                                              default_fc_parameters=fc_parameters,
                                               n_jobs=settings.get("jobs"))
     impute(features_list)  # make sure no NaNs are there
     return features_list
