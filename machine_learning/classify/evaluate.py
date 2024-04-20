@@ -10,6 +10,7 @@ from sklearn.feature_selection import SelectFromModel, SelectKBest
 from sklearn.model_selection import GridSearchCV, LeaveOneGroupOut
 from imblearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from imblearn.combine import SMOTETomek, SMOTEENN
 from imblearn.under_sampling import TomekLinks, EditedNearestNeighbours
 
@@ -18,6 +19,7 @@ def evaluate_single_model(model, param_grid,
                           X_train, y_train, X_test, y_test, feature_names,
                           cv_splits=8, cv_scoring=None, select_features=False,
                           out_dir='results/default', sample_balancing=None, seed=42, test_subject=None):
+
     subject_out_dir = f'{out_dir}/test_subject_{test_subject}/test/'
     os.makedirs(subject_out_dir, exist_ok=True)
     model_name = str(model.__class__.__name__)
@@ -27,20 +29,29 @@ def evaluate_single_model(model, param_grid,
     # Define list with steps for the pipeline
     pipeline_steps = []
 
+    class_ratio_one = len(y_train[y_train == 1]) / len(y_train)
+    class_ratio_null = len(y_train[y_train == 0]) / len(y_train)
+    logger.info(f"The class ratio is: {class_ratio_one:.2f} vs. {class_ratio_null:.2f}")
+
+    upsampling_value = 0.4
+    downsampling_value = 0.6
+    if sample_balancing in ['SMOTE', 'SMOTETomek', 'SMOTEENN']:
+        logger.info(f"For upsampling the minority class, a class ratio of {upsampling_value} will be achieved.")
+
     # ================= ADD BALANCING TO PIPELINE IF SELECTED =================
     if sample_balancing in ['random_undersampling', 'SMOTE', 'SMOTETomek', 'SMOTEENN']:
         logger.info(f'n samples before: {len(y_train[y_train == 0])} vs. {len(y_train[y_train == 1])}')
         if sample_balancing == 'random_undersampling':
-            resampler = RandomUnderSampler()
+            resampler = RandomUnderSampler(sampling_strategy=downsampling_value)
             logger.info("Using random undersampling")
-        elif sample_balancing == 'SMOTE':  # 'SMOTE'
-            resampler = SMOTE(n_jobs=-1, sampling_strategy=0.2689, random_state=seed)
+        elif sample_balancing == 'SMOTE':  # sampling strategy: corresponds to the desired ratio of the number of samples in the minority class over the number of samples in the majority class after resampling
+            resampler = SMOTE(n_jobs=-1, sampling_strategy=upsampling_value, random_state=seed)  # TODO fyi: settings a float for sampling strategy will raise an error for multiclass
             logger.info("Using oversampling")
         elif sample_balancing == 'SMOTETomek':
-            resampler = SMOTETomek(sampling_strategy=0.2689, tomek=TomekLinks(sampling_strategy='majority'))
+            resampler = SMOTETomek(sampling_strategy=upsampling_value, tomek=TomekLinks(sampling_strategy='majority'))
             logger.info("Using SMOTE and Tomek Links")
         elif sample_balancing == 'SMOTEENN':
-            resampler = SMOTEENN(sampling_strategy=0.2689, enn=EditedNearestNeighbours(sampling_strategy='majority'))
+            resampler = SMOTEENN(sampling_strategy=upsampling_value, enn=EditedNearestNeighbours(sampling_strategy='majority'))
             logger.info("Using SMOTE and edited nearest neighbours")
         pipeline_steps.append(('resampling', resampler))
     else:
@@ -51,9 +62,10 @@ def evaluate_single_model(model, param_grid,
     # prepare param_grid
     param_grid = {'model__' + key: value for (key, value) in param_grid.items()}
 
+    logger.info(f"Amount of features before selection: {len(feature_names)}")
+
     if select_features:
-        param_grid['selector'] = [SelectKBest(k='all'), SelectKBest(k=25),
-                                  SelectFromModel(LinearSVC(C=1, penalty="l1", dual=False, max_iter=5000))]
+        param_grid['selector'] = [SelectKBest(k='all'), SelectKBest(k=10), SelectFromModel(RandomForestClassifier(), threshold='median')]
         pipeline_steps.extend([('selector', 'passthrough'), ('model', model)])
     else:
         pipeline_steps.append(('model', model))
