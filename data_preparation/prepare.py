@@ -146,7 +146,7 @@ def feature_extraction(subject_windows: pd.DataFrame, settings):
         "fft_aggregated": [{'aggtype': 'centroid'}, {'aggtype': 'variance'}, {'aggtype': 'skew'}, {'aggtype': 'kurtosis'}],
         "fourier_entropy": [{'bins': 2}, {'bins': 10}, {'bins': 100}]
     }
-    # this did not bring much better results but took long..
+    # this did not create much better results but took long..
     fc_settings = {'variance_larger_than_standard_deviation': None,
                    'has_duplicate_max': None,
                    'has_duplicate_min': None,
