@@ -31,13 +31,14 @@ def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, con
         X = pd.merge(features, users, left_index=True, right_index=True)
         labels = labels.iloc[:, 0]
 
+    label_type = settings.get("label_type")
     subject_groups_folder_name = settings.get("selected_subject_option")
     ws_folder_name = f"ws_{settings.get('window_size')}"
     # output folder in form like, e.g.: ml_results/all_subjects/ws_10/
-    out_dir = f"{config.get('ml_results_folder')}/{subject_groups_folder_name}/{ws_folder_name}"
+    out_dir = f"{config.get('ml_results_folder')}/{subject_groups_folder_name}/{label_type}/{ws_folder_name}"
 
-    only_dl = settings.get("raw_features")
-    if only_dl:
+
+    if not classic:
         OCDetectDataset.preload(windows, users, labels)
         dl_main(config, settings, users, subject_groups_folder_name)
         return
