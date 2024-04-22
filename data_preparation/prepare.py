@@ -28,7 +28,8 @@ def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: di
     window_size = settings.get("window_size") * settings.get("sampling_frequency")
     overlap = settings.get("overlap")
     labelling_algorithm = settings.get("labelling_algorithm")
-
+    label_type = settings.get("label_type")
+    
     stride = int(window_size * (1 - overlap))
 
     window_labels = []
@@ -52,7 +53,9 @@ def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: di
 
             # Choose label
             if labelling_algorithm == 'Majority':
-                majority_label = perform_majority_voting(curr_window)
+                majority_label = perform_majority_voting(curr_window, label_type)
+                if majority_label == -1:  # discard the label, currently only used for rout vs comp!
+                    continue
                 window_labels.append(majority_label)
 
                 user_list.append(subject_id)
@@ -74,7 +77,7 @@ def check_ignore(current_window):
         return True
 
 
-def perform_majority_voting(current_window, hw_general=True):
+def perform_majority_voting(current_window, label_type="null_vs_hw"):
     #counts = current_window['relabeled'].value_counts()
     # ToDo select column based on relabel mechanism
     counts = current_window['merged_annotation'].value_counts()
@@ -89,7 +92,7 @@ def perform_majority_voting(current_window, hw_general=True):
     routine_hw = counts.get(1, 0)
     compulsive_hw = counts.get(2, 0)
 
-    if hw_general:
+    if label_type == "null_vs_hw":
         null = 0
         hw = 0
         if 0.0 in grouped_counts["index"].values:
@@ -102,18 +105,12 @@ def perform_majority_voting(current_window, hw_general=True):
         else:
             majority_label = 0
 
-        # null_class = counts.get(0, 0)
-        # routine_hw = counts.get(1, 0)
-        # compulsive_hw = counts.get(2, 0)
-        #
-        # if routine_hw + compulsive_hw > null_class:
-        #     majority_label = 1
-        # else:
-        #     majority_label = 0
     else:
         null_class = counts.get(0, 0)
-        routine_hw = counts.get(1, 0)
-        compulsive_hw = counts.get(2, 0)
+        hw = counts.get(1, 0)
+
+        compulsive_hw = current_window["compulsive_relabeled"].sum()
+        routine_hw = hw - compulsive_hw
 
         if routine_hw > compulsive_hw and routine_hw > null_class:
             majority_label = 1  # routine hand washing present
@@ -121,6 +118,10 @@ def perform_majority_voting(current_window, hw_general=True):
             majority_label = 2  # compulsive hand washing present
         else:
             majority_label = 0  # null class
+        if label_type == "rout_vs_comp":
+            majority_label -= 1  # maps 0 to -1 -> discard, 1 to 0 -> routine, 2 to 1 -> compulsive
+        else:
+            assert(label_type == "null_vs_rout_vs_comp")  # Make sure we have a valid value for label_type
             
     return majority_label
 
@@ -345,6 +346,7 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
     save_data = settings["save_data"]
     overwrite_data = settings["overwrite_data"]
     use_filter, use_scaling, resample, _ = load_data_preparation_settings(settings)
+    label_type = settings.get("label_type")
 
 
     logger.info("Preparing data for machine learning")
@@ -453,13 +455,13 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
 
         os.makedirs(f"{export_path}/{sub_folder_path}", exist_ok=True)
 
-        labels.to_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}.csv", index=False)
-        users.to_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}.csv", index=False)
+        labels.to_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}_{label_type}.csv", index=False)
+        users.to_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}_{label_type}.csv", index=False)
         if len(features) > 0:
-            features.to_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}.csv", index=False)
+            features.to_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}_{label_type}.csv", index=False)
         if len(features_raw) > 0:
-            features_raw.to_csv(f"{export_path}{sub_folder_path}/features_{filtering}_raw.csv", index=False)
-        pd.DataFrame(feature_names).to_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}.csv", index=False)
+            features_raw.to_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{label_type}_raw.csv", index=False)
+        pd.DataFrame(feature_names).to_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}_{label_type}.csv", index=False)
 
         # create file with meta information for the current window setup
         meta_info = f"Meta information for \"{file_date}\":\n"
