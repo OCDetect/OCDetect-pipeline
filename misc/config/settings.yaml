@@ -28,7 +28,8 @@ seed: 42
 
 ### General settings
 resample: True # TODO outdated?
-balancing_option: "SMOTETomek"
+balancing_option: "SMOTEENN"
+feature_selection: True
 
 use_filter: True
 use_scaling: True

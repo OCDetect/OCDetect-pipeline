@@ -1,19 +1,15 @@
 import json
-
 import pandas as pd
 import numpy as np
-from collections import Counter
 from machine_learning.classify.models import get_classification_model_grid
 from machine_learning.classify.evaluate import evaluate_single_model
 from machine_learning.dl.dl_main import dl_main
 from machine_learning.dl.OCDetectDataset import OCDetectDataset
-
-import yaml
 import shutil
 from machine_learning.utils.plots import boxplot, barchart
 
 
-def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, config: dict, classic: bool = True):
+def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, config: dict, classic: bool = True):
     try:
         users.rename(columns={'0': 'user'}, inplace=True)
     except:
@@ -44,6 +40,7 @@ def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, con
         return
 
     balancing_option = settings.get("balancing_option")
+    feature_selection = settings.get("feature_selection")
 
     users = users["user"]
     users_outer_cv = list(users.unique())
@@ -66,6 +63,7 @@ def ml_pipeline(features, users, labels, feature_names, seed,settings: dict, con
             test_metrics, curves = evaluate_single_model(model, param_grid,
                                                          X_train, y_train, X_test, y_test, feature_names,
                                                          out_dir=out_dir,
+                                                         select_features=feature_selection,
                                                          sample_balancing=balancing_option,
                                                          seed=seed, test_subject=test_subject)
             all_model_metrics[str(model.__class__.__name__)] = (test_metrics, curves)
