@@ -63,6 +63,7 @@ window_size : 5 # value in seconds
 test_window_size: 30
 overlap : 0.5
 labelling_algorithm : "Majority"
+label_type : "null_vs_hw"  # Options: null_vs_hw, null_vs_rout_vs_comp, rout_vs_comp
 
 ### Settings for butterworth filter
 upper_threshold : 18
