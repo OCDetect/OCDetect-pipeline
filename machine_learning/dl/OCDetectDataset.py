@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
 import torch
+from sklearn.model_selection import train_test_split as tts
 
 
 class OCDetectDataset(Dataset):
@@ -28,7 +29,7 @@ class OCDetectDataset(Dataset):
             cls.preloaded_data[user][0] = np.stack(cls.preloaded_data[user][0])
             cls.preloaded_data[user][1] = np.array(cls.preloaded_data[user][1])
 
-    def __init__(self, subjects, window_size=250, model=""):
+    def __init__(self, subjects, window_size=250, model="", retrain=False, idx=None):
         if OCDetectDataset.preloaded_data is None:
             raise Exception("DatasetClass must be initialized using preload first!")
         self.channels = 6
@@ -41,18 +42,32 @@ class OCDetectDataset(Dataset):
         for subject in subjects:
             windows.append(OCDetectDataset.preloaded_data[subject][0])
             labels.append(OCDetectDataset.preloaded_data[subject][1])
+
         self.features = np.concatenate(windows)
         self.labels = np.concatenate(labels)
+        if retrain:  # Select n_samples occurrences of 1 and same amount of 0 labels
+            assert len(subjects) == 1
+            n_samples = 50
+            if idx is None:
+                feat_train, _, label_train, _, idx, _ = tts(self.features, self.labels,
+                                                                np.arange(len(self.features)), stratify=self.labels,
+                                                            train_size=0.3)
+
+                self.idx = idx
+            else:
+                # use the inverse of the already used idx:
+                tmp_idx = np.ones(len(self.features), np.bool)
+                tmp_idx[idx] = 0
+                idx = tmp_idx
+            self.features = self.features[idx]
+            self.labels = self.labels[idx]
         self.length = len(self.features)
 
     def __len__(self):
         return self.length
 
     def __getitem__(self, idx):
-        reduce = False
         if type(idx) == int:
             idx = slice(idx, idx + 1)
-            reduce = True
-        if reduce:
             return torch.FloatTensor(self.features[idx])[0], torch.LongTensor(self.labels[idx])[0]
         return torch.FloatTensor(self.features[idx]), torch.LongTensor(self.labels[idx])

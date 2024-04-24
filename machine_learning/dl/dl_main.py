@@ -10,12 +10,13 @@ import numpy as np
 import pandas as pd
 import torch.cuda
 from sklearn.model_selection import LeaveOneOut, StratifiedKFold
+from ..utils.plots import plot_confusion_matrix
 
 from .train import *
 from torch.utils.data import DataLoader
 
 
-def dl_main(config: dict, settings: dict, users, subset="all"):
+def dl_main(config: dict, settings: dict, users, subset="all", out_dir=None):
     # ---------------------------------------------------------------------------------------------------------
     # 1. Prepare the Dataset according to the config
     if type(users) == pd.DataFrame:
@@ -49,18 +50,25 @@ def dl_main(config: dict, settings: dict, users, subset="all"):
                 if len(results_df[results_df.splitname==split_name]) == 2:
                     logger.info(f"Split {split_name} already finished, skipping...")
                     continue
-            #train_dataset = OCDetectDataset(train_subs, dl_config['dataset']['window_size'], model=dl_config['name'])
-            #test_dataset = OCDetectDataset(test_subs, dl_config['dataset']['window_size'], model=dl_config['name'])
+            window_size = settings.get("window_size") * settings.get("sampling_frequency")
+            train_dataset = OCDetectDataset(train_subs, window_size, model=dl_config['name'])
+            test_dataset = OCDetectDataset(test_subs, window_size, model=dl_config['name'])
 
-            train_dataset = OCDetectDataset(train_subs, dl_config['dataset']['window_size'], model=dl_config['name'])
-            test_dataset = OCDetectDataset(test_subs, dl_config['dataset']['window_size'], model=dl_config['name'])
-
-            t_losses, v_losses, v_preds, v_gt = run_inertial_network(train_dataset, test_dataset, dl_config,
+            tr_losses, v_losses, te_preds, te_gt = run_inertial_network(train_dataset, test_dataset, dl_config,
                                  ckpt_folder, 10, resume=False, split_name=split_name)
 
+            sub_out_dir = f'{out_dir}/test_subject_{test_subs[0]}/test/'
+            plot_confusion_matrix(test_subs[0], confusion_matrix(te_gt, te_preds), model_name, sub_out_dir)
+            retrain_dataset = OCDetectDataset(test_subs, dl_config['dataset']['window_size'], model=dl_config['name'], retrain=True)
+            retest_dataset = OCDetectDataset(test_subs, dl_config['dataset']['window_size'], model=dl_config['name'], retrain=True, idx=retrain_dataset.idx)
+
+            tr_losses, v_losses, te_preds, te_gt = run_inertial_network(retrain_dataset, retest_dataset, dl_config,
+                                                                        ckpt_folder, 10, resume=False,
+                                                                        split_name=split_name + "_retrain")
+            plot_confusion_matrix(test_subs[0], confusion_matrix(te_gt, te_preds), model_name + "_retrain", sub_out_dir)
+
     # ---------------------------------------------------------------------------------------------------------
-    # 3. Generation of relevant plots and tables in tex, according to plan
-    # TODO
+
 
 
 dl_config = {
@@ -91,20 +99,18 @@ dl_config = {
         "dropout": 0.5
     },
     "loader": {
-        "batch_size": 4096,
+        "batch_size": 256,
     },
     "train_cfg": {
         "lr": 0.001,
         "lr_decay": 0.8,
         "lr_step": 5,
-        "epochs": 30,
+        "epochs": 10,
         "weight_decay": 0.000001,
         "weight_init": 'xavier_uniform',
         "weighted_loss": True,
         "beta": 1,  # for attentanddiscriminate
         "lr_cent": 1.0  # for attentanddiscrimate
-    },
-    "dataset": {"window_size": 250  # TODO: parameterise
     }
 }  # Config and hyperparameters by Marius Bock (marius.bock(at)uni-siegen.de)
 

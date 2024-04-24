@@ -48,7 +48,7 @@ def plot_roc_pr_curve(X_test, y_test, model, model_name, out_dir):
     return roc_curve, roc_auc, precision_recall_curve, prc_auc, average_precision
 
 
-def plot_confusion_matrix(test_subject, confusion_matrix, model_name, out_dir, phase):
+def plot_confusion_matrix(test_subject, confusion_matrix, model_name, out_dir):
     cm_fig, ax = plt.subplots()
     cm_fig.suptitle(f'{model_name}')
     disp = ConfusionMatrixDisplay(confusion_matrix=confusion_matrix,

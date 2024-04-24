@@ -78,11 +78,11 @@ def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_fre
         scheduler = torch.optim.lr_scheduler.StepLR(opt, step_size=cfg['train_cfg']['lr_step'], gamma=cfg['train_cfg']['lr_decay'])
     
     # use weighted loss if selected
-    """if cfg['train_cfg']['weighted_loss']:
+    if cfg['train_cfg']['weighted_loss']:
         class_weights = compute_class_weight('balanced', classes=np.unique(train_dataset.labels), y=train_dataset.labels)
         if len(class_weights) < 2:
             class_weights = list(class_weights) + [1.0]
-        criterion.weight = torch.tensor(class_weights).float().to(cfg['devices'][0])"""
+        criterion.weight = torch.tensor(class_weights).float().to(cfg['devices'][0])
 
     if resume:
         resume = os.path.join(ckpt_folder, 'ckpts', resume)
@@ -108,9 +108,9 @@ def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_fre
         start_time = time.time()
         # training
         if cfg['name'] == 'attendanddiscriminate':
-            net, t_losses, _, _ = train_one_epoch(train_loader, net, opt, criterion, cfg['devices'][0], cfg['train_cfg']['beta'], cfg['train_cfg']['lr_cent'], cfg['name'])
+            net, t_losses, t_preds, t_gt = train_one_epoch(train_loader, net, opt, criterion, cfg['devices'][0], cfg['train_cfg']['beta'], cfg['train_cfg']['lr_cent'], cfg['name'])
         else:
-            net, t_losses, _, _, = train_one_epoch(train_loader, net, opt, criterion, cfg['devices'][0])
+            net, t_losses, t_preds, t_gt, = train_one_epoch(train_loader, net, opt, criterion, cfg['devices'][0])
         print("--- %s seconds ---" % (time.time() - start_time))
         # save ckpt once in a while
         if (((ckpt_freq > 0) and ((epoch + 1) % ckpt_freq == 0))):
@@ -134,7 +134,7 @@ def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_fre
 
 
         # calculate validation metrics
-        conf_mat = confusion_matrix(v_gt, v_preds, normalize='true')
+        conf_mat = confusion_matrix(v_gt, v_preds)
         v_acc = conf_mat.diagonal()/conf_mat.sum(axis=1)
         v_prec = precision_score(v_gt, v_preds, average=None, zero_division=1)
         v_rec = recall_score(v_gt, v_preds, average=None, zero_division=1)
@@ -153,6 +153,9 @@ def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_fre
             np.save(os.path.join(ckpt_folder, 'unprocessed_results', 'v_preds_' + cfg['name'] + "_" + split_name), v_preds)
             np.save(os.path.join(ckpt_folder, 'unprocessed_results', 'v_gt_' + cfg['name'] + "_" + split_name), v_gt)
             np.save(os.path.join(ckpt_folder, 'unprocessed_results', 'v_raw_' + cfg['name'] + "_" + split_name), v_preds_raw)
+            np.save(os.path.join(ckpt_folder, 'unprocessed_results', 't_preds_' + cfg['name'] + "_" + split_name), t_preds)
+            np.save(os.path.join(ckpt_folder, 'unprocessed_results', 't_gt_' + cfg['name'] + "_" + split_name),
+                    t_gt)
             os.makedirs(os.path.join(ckpt_folder, 'processed_results'), exist_ok=True)
 
             results_filename = os.path.join(ckpt_folder, 'processed_results', "results.csv")

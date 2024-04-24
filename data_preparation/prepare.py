@@ -410,9 +410,11 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
             features_user = feature_extraction(windows, settings)
             features.append(features_user)
 
-        length = max(len(features_user),len(windows))
-        logger.info(f"Subject: {i}, features: {length}, labels: {len(user_labels)}")
-
+        try:
+            length = max(len(features_user),len(windows))
+            logger.info(f"Subject: {i}, features: {length}, labels: {len(user_labels)}")
+        except:
+            pass
     labels = pd.concat(labels).reset_index(drop=True).to_frame()
     users = pd.concat(users).reset_index(drop=True).to_frame()
 
@@ -432,7 +434,7 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
     #feature_names = features.columns.values.tolist()
 
     # 5. Scale data if desired (only on features)
-    if use_scaling:
+    if use_scaling and raw in ["both", "features"]:
         features = std_scaling_data(features, settings)
 
     end_time = time.time()

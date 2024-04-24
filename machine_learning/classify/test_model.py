@@ -41,7 +41,7 @@ def test_classification_model(model, X_train, y_train, X_test, y_test, feature_n
     plt.close()
 
     # ===== Confusion Matrix ====
-    plot_confusion_matrix(test_subject, test_metrics['confusion_matrix'], model_name, out_dir, "test")
+    plot_confusion_matrix(test_subject, test_metrics['confusion_matrix'], model_name, out_dir)
 
     # ===== Feature Importances =====
     feature_importances = get_feature_importance(model)
