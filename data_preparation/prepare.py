@@ -74,7 +74,7 @@ def check_ignore(current_window):
         return True
 
 
-def perform_majority_voting(current_window, hw_general=True):
+def perform_majority_voting(current_window, hw_general=True, hw_type=False):
     #counts = current_window['relabeled'].value_counts()
     # ToDo select column based on relabel mechanism
     counts = current_window['merged_annotation'].value_counts()
@@ -82,8 +82,12 @@ def perform_majority_voting(current_window, hw_general=True):
     # Count occurrences of N/A and 0, and 1, 2, 3, 4
     count_result = current_window['merged_annotation'].value_counts().reset_index(name='count')
 
-    # Sum counts for N/A and 0, and 1, 2, 3, 4
-    grouped_counts = count_result.groupby(lambda x: '0' if x in [float('nan'), 0] else '1').sum()
+    grouped_counts = []
+    if hw_general:
+        # Sum counts for N/A and 0, and 1, 2, 3, 4
+        grouped_counts = count_result.groupby(lambda x: '0' if x in [float('nan'), 0] else '1').sum()
+    if hw_type:
+        grouped_counts = count_result.groupby(lambda x: '0' if x in [float('nan'), 0] else '1').sum()
 
     null_class = counts.get(0, 0)
     routine_hw = counts.get(1, 0)
