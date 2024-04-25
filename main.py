@@ -82,6 +82,7 @@ def main(config: dict, settings: dict) -> int:
     run_deep_learning = settings.get("run_deep_learning")
     run_classic_methods = settings.get("run_classic_methods")
     raw_str = "both" if run_deep_learning and run_classic_methods else ("raw" if run_deep_learning else "features")
+    label_type = settings.get("label_type")
     if data_preparation:
         labels, (features, features_raw), users, feature_names = prepare_data(settings, config, raw=raw_str)
     if machine_learning:
@@ -101,12 +102,12 @@ def main(config: dict, settings: dict) -> int:
             logger.info("Reading precalculated windows")
 
             if run_classic_methods:
-                features = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}.csv")
+                features = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}_{label_type}.csv")
             if run_deep_learning:
-                features_raw = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_raw.csv")
-            labels = pd.read_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}.csv")
-            users = pd.read_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}.csv")
-            feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}.csv").iloc[:, 0].tolist()
+                features_raw = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{label_type}_raw.csv")
+            labels = pd.read_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}_{label_type}.csv")
+            users = pd.read_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}_{label_type}.csv")
+            feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}_{label_type}.csv").iloc[:, 0].tolist()
             logger.info("Finished loading precalculated windows")
 
         seed = settings.get("seed")
