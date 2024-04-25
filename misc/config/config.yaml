@@ -66,7 +66,7 @@
       export_subfolder: ../OCDetect_results/preprocessed/
       export_subfolder_ml_prepared: ../OCDetect/
       plots_folder: ../OCDetect/Analysis/plots/
-      ml_results_folder: ../OCDetect/Analysis/ml_results/
+      ml_results_folder: ../OCDetect/Analysis/ml_results
       prefix: OCDetect_
       relabeled_subfolder: /dhc/groups/ocdetect/preprocessed_relabeled
 

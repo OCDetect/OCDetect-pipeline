@@ -53,7 +53,7 @@ def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: di
 
             # Choose label
             if labelling_algorithm == 'Majority':
-                majority_label = perform_majority_voting(curr_window, label_type)
+                majority_label = perform_majority_voting(settings, curr_window, label_type)
                 if majority_label == -1:  # discard the label, currently only used for rout vs comp!
                     continue
                 window_labels.append(majority_label)
@@ -77,14 +77,15 @@ def check_ignore(current_window):
         return True
 
 
-def perform_majority_voting(current_window, label_type="null_vs_hw"):
-    #counts = current_window['relabeled'].value_counts()
-    # ToDo select column based on relabel mechanism
-    counts = current_window['merged_annotation'].value_counts()
-
+def perform_majority_voting(settings, current_window, label_type="null_vs_hw"):
+    if settings.get('selected_subject_option') == 'relabeled_subjects':
+        counts = current_window['merged_annotation'].value_counts()
+        count_result = current_window['merged_annotation'].value_counts().reset_index(name='count')
+    else:
+        counts = current_window['relabeled'].value_counts()
+        count_result = current_window['relabeled'].value_counts().reset_index(name='count')
     # Count occurrences of N/A and 0, and 1, 2, 3, 4
-    count_result = current_window['merged_annotation'].value_counts().reset_index(name='count')
-    current_window['compulsive_relabeled'].to_numpy()
+
 
     # Sum counts for N/A and 0, and 1, 2, 3, 4
     grouped_counts = count_result.groupby(lambda x: '0' if x in [float('nan'), 0] else '1').sum()
@@ -110,8 +111,12 @@ def perform_majority_voting(current_window, label_type="null_vs_hw"):
         null_class = counts.get(0, 0)
         hw = counts.get(1, 0)
 
-        compulsive_hw = current_window["compulsive_relabeled"].sum()
-        routine_hw = hw - compulsive_hw
+        if settings.get('selected_subject_option') == 'relabeled_subjects':
+            compulsive_hw = current_window["compulsive_relabeled"].sum()
+            routine_hw = hw - compulsive_hw
+        else:
+            compulsive_hw = counts.get(2, 0)
+            routine_hw = hw
 
         if routine_hw > compulsive_hw and routine_hw > null_class:
             majority_label = 1  # routine hand washing present

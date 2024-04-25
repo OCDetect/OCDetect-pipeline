@@ -4,6 +4,7 @@
 # Robin Burchard
 # Email: robin.burchard(at)uni-siegen.de
 # ------------------------------------------------------------------------
+import os.path
 
 from misc.logger import logger
 import numpy as np
@@ -34,7 +35,7 @@ def dl_main(config: dict, settings: dict, users, subset="all", out_dir=None):
     # ---------------------------------------------------------------------------------------------------------
     # 2. Cross-Validation loop and results-gathering.
     dl_config["devices"] = ["cuda"] if torch.cuda.is_available() else ["cpu"]
-    ckpt_folder = config.get("ml_results_folder") + "dl_checkpoints/"
+    ckpt_folder = config.get("ml_results_folder") + "/dl_checkpoints/"
     try:
         results_df = pd.read_csv(os.path.join(ckpt_folder, 'processed_results', "results.csv"))
     except FileNotFoundError:
@@ -42,7 +43,7 @@ def dl_main(config: dict, settings: dict, users, subset="all", out_dir=None):
     for train_idx, test_idx in split:
         train_subs = users[train_idx]
         test_subs = users[test_idx]
-        for model_name in ["ShallowDeepConvLSTM"]: # , "tinyhar"]: TODO
+        for model_name in ["ShallowDeepConvLSTM", "tinyhar"]:
             dl_config["name"] = model_name
             dl_config["model"] = dl_config[model_name]
             split_name = f"train_{str(train_subs)}_test_{str(test_subs)}"
@@ -54,17 +55,19 @@ def dl_main(config: dict, settings: dict, users, subset="all", out_dir=None):
             train_dataset = OCDetectDataset(train_subs, window_size, model=dl_config['name'])
             test_dataset = OCDetectDataset(test_subs, window_size, model=dl_config['name'])
 
-            tr_losses, v_losses, te_preds, te_gt = run_inertial_network(train_dataset, test_dataset, dl_config,
+            tr_losses, v_losses, te_preds, te_gt, model = run_inertial_network(train_dataset, test_dataset, dl_config,
                                  ckpt_folder, 10, resume=False, split_name=split_name)
 
-            sub_out_dir = f'{out_dir}/test_subject_{test_subs[0]}/test/'
+            sub_out_dir = f'{out_dir}/test_subject_{test_subs[0]}/test'
+            if not os.path.isdir(sub_out_dir):
+                os.makedirs(sub_out_dir, exist_ok=True)
             plot_confusion_matrix(test_subs[0], confusion_matrix(te_gt, te_preds), model_name, sub_out_dir)
-            retrain_dataset = OCDetectDataset(test_subs, dl_config['dataset']['window_size'], model=dl_config['name'], retrain=True)
-            retest_dataset = OCDetectDataset(test_subs, dl_config['dataset']['window_size'], model=dl_config['name'], retrain=True, idx=retrain_dataset.idx)
+            retrain_dataset = OCDetectDataset(test_subs, window_size, model=dl_config['name'], retrain=True)
+            retest_dataset = OCDetectDataset(test_subs, window_size, model=dl_config['name'], retrain=True, idx=retrain_dataset.idx)
 
-            tr_losses, v_losses, te_preds, te_gt = run_inertial_network(retrain_dataset, retest_dataset, dl_config,
+            tr_losses, v_losses, te_preds, te_gt, final_model = run_inertial_network(retrain_dataset, retest_dataset, dl_config,
                                                                         ckpt_folder, 10, resume=False,
-                                                                        split_name=split_name + "_retrain")
+                                                                        split_name=split_name + "_retrain", net=model)
             plot_confusion_matrix(test_subs[0], confusion_matrix(te_gt, te_preds), model_name + "_retrain", sub_out_dir)
 
     # ---------------------------------------------------------------------------------------------------------
@@ -93,9 +96,9 @@ dl_config = {
         "sa_div": 1
     },
     "tinyhar": {
-        "conv_kernels": 20,
+        "conv_kernels": 64,
         "conv_layers": 4,
-        "conv_kernel_size": 9,
+        "conv_kernel_size": 15,
         "dropout": 0.5
     },
     "loader": {
