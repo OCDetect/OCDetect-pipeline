@@ -12,7 +12,10 @@ class OCDetectDataset(Dataset):
     def preload(cls, windows, users, labels):
         cls.preloaded_data = dict()
         if type(users) == pd.DataFrame:
-            users = users["user"]
+            try:
+                users = users["user"]
+            except:
+                users = users[0]
         if type(labels) == pd.DataFrame:
             try:
                 labels = labels["0"]

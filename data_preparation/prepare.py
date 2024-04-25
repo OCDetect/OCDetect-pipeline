@@ -65,7 +65,8 @@ def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: di
             curr_window = curr_window[['acc x', 'acc y', 'acc z', 'gyro x', 'gyro y', 'gyro z', 'tsfresh_id']]
             # pythons list append is much faster than pandas concat (time increased exponentially with concat)
             window_list.append(curr_window)
-
+    if len(window_list) == 0:
+        return window_list, None, None
     return pd.concat(window_list), pd.Series(window_labels, index=None), pd.Series(user_list, index=None)
 
 
@@ -402,6 +403,8 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
 
         # 3. Window data
         windows, user_labels, user_id = window_data(subject_data, i, settings)
+        if len(windows) == 0:
+            continue
         labels.append(user_labels)
         users.append(user_id)
 
