@@ -6,12 +6,14 @@ from tqdm import tqdm
 from visualizations.line_plotter import plot_idle_regions
 from data_cleansing.helpers.misc import get_initial_hw_datetime, calc_magnitude
 from misc.csv_loader import initial_handwash_time
+import threading
+
+lock = threading.Lock()
 
 
 def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config: dict, sensor: Sensor,
                        settings: dict) -> List[pd.DataFrame]:
     """
-
     :param sensor: which sensor to be used for calculating idle regions (gyroscope or accelerometer)
     :param recordings_list: all original recordings from one subject
     :param subject: the subject from the recordings
@@ -29,7 +31,6 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
 
     initial_hw_time = initial_handwash_time(subject, config)
     for counter, recording in enumerate(recordings_list):
-
         ################################
         # Filter out complete recordings
         ################################
@@ -74,7 +75,7 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
         # 3. label was set too early in file that was cannot be hand washing before
         recording = check_for_too_early_label(recording, settings)
 
-        recording_ignore_regions = len(recording[recording["ignore"] == IgnoreReason.DontIgnore])
+        recording_ignore_regions = len(recording[recording["ignore"] != IgnoreReason.DontIgnore])
         overall_idle_regions += recording_ignore_regions
 
         percentage_ignore_regions = (recording_ignore_regions*100)/len(recording)
@@ -82,7 +83,7 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
 
         logger.info(f"Percentage of the file to be ignored: {percentage_ignore_regions:.2f}%")
 
-        plot_idle_regions(config, recording, Sensor.ACCELEROMETER, title=f"percentage of ignored regions: {percentage_ignore_regions:.2f}%", save_fig=True, fig_name=f"{subject}_{counter}")
+        # TODO plot_idle_regions(config, recording, Sensor.ACCELEROMETER, title=f"percentage of ignored regions: {percentage_ignore_regions:.2f}%", save_fig=True, fig_name=f"{subject}_{counter}")
         # 4. find and handle labels placed by the subjects in short succession
         recording = check_for_short_succession_of_labels(recording, settings)
 
@@ -96,7 +97,16 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
     logger.info(f"Complete recordings filtered out: {filtered_out_files} out of {len(recordings_list)} ({percentage_filtered_out:.2f}%)")
     logger.info(f"Overall regions marked as to be ignored: {percentage_ignore_overall_regions:.2f}%")
     logger.info(f"###############################################################")
-
+    # title line
+    # subject,filtered_out_files,total_files,percentage_filtered,percentage_ignore_regions,short_succession_time,magnitude_window_size,magnitude_overlap,min_time_before_label
+    if settings["test_filters"]:
+        with lock:
+            output_line = f"{subject},{filtered_out_files},{len(recordings_list)},{percentage_filtered_out}" +f",{percentage_ignore_overall_regions}"
+            output_line += f",{settings['short_succession_time']},{settings['magnitude_window_size']},{settings['magnitude_threshold']},{settings['magnitude_overlap']},{settings['min_time_in_s_before_label']}"
+            with open(config["output_folder"] + "prep_params.csv", "a") as out_file:
+                out_file.write(f"{output_line}\n")
+                logger.info("#### WROTE TO FILE ####")
+    return []
     return cleaned_recordings_list
 
 
@@ -144,8 +154,10 @@ def calc_idle_time(data: pd.DataFrame, sensor: Sensor, settings: dict) -> pd.Dat
     window_size = settings.get("magnitude_window_size", 500)
     threshold = settings.get("magnitude_threshold", 0.2)
     overlap = settings.get("magnitude_overlap", 0.5)
-
-    data["idle"] = 0.0
+    try:
+        data.insert(len(data.columns), "idle", 0.0)
+    except Exception as e:
+        print(e, data.shape)
     stride = int(window_size * overlap)
 
     for i in tqdm(range(0, len(data) - window_size + 1, stride)):
