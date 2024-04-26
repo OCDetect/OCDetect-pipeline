@@ -88,8 +88,12 @@ def perform_majority_voting(settings, current_window, label_type="null_vs_hw"):
     # Count occurrences of N/A and 0, and 1, 2, 3, 4
 
 
-    # Sum counts for N/A and 0, and 1, 2, 3, 4
-    grouped_counts = count_result.groupby(lambda x: '0' if x in [float('nan'), 0] else '1').sum()
+    grouped_counts = []
+    if hw_general:
+        # Sum counts for N/A and 0, and 1, 2, 3, 4
+        grouped_counts = count_result.groupby(lambda x: '0' if x in [float('nan'), 0] else '1').sum()
+    if hw_type:
+        grouped_counts = count_result.groupby(lambda x: '0' if x in [float('nan'), 0] else '1').sum()
 
     null_class = counts.get(0, 0)
     routine_hw = counts.get(1, 0)

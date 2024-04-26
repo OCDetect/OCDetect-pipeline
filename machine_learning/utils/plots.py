@@ -10,7 +10,7 @@ model_name_replacements = {
     'RandomForestClassifier': 'Random forest'
 }
 
-def plot_roc_pr_curve(X_test, y_test, model, model_name, out_dir):
+def plot_roc_pr_curve(y_test, proba, model_name, out_dir, info):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
     ax1.set_aspect('equal')
     ax2.set_aspect('equal')
@@ -18,33 +18,34 @@ def plot_roc_pr_curve(X_test, y_test, model, model_name, out_dir):
     ax2.set(xlim=[-0.05, 1.05], ylim=[0.0, 1.05])
     fig.suptitle(f'{model_name}')
 
+
     # Calculate ROC curve and ROC AUC
-    fpr, tpr, _ = roc_curve(y_test, model.predict_proba(X_test)[:, 1])
+    fpr, tpr, _ = roc_curve(y_test, proba)
     roc_auc = auc(fpr, tpr)
 
     # Calculate Average Precision
-    average_precision = average_precision_score(y_test, model.predict_proba(X_test)[:, 1])
+    average_precision = average_precision_score(y_test, proba)
 
     # Plot ROC curve
     ax1.plot(fpr, tpr, color='darkorange', lw=1, label=f'ROC curve (AUC = {roc_auc:.2f})')
     ax1.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')
     ax1.set_xlabel('False Positive Rate')
     ax1.set_ylabel('True Positive Rate')
-    ax1.set_title('Receiver Operating Characteristic')
+    ax1.set_title(f'Receiver Operating Characteristic ({info})')
     ax1.legend(loc='lower right')
 
     # Calculate Precision-Recall curve and PR AUC
-    precision, recall, _ = precision_recall_curve(y_test, model.predict_proba(X_test)[:, 1])
+    precision, recall, _ = precision_recall_curve(y_test, proba)
     prc_auc = auc(recall, precision)
 
     # Plot Precision-Recall curve
     ax2.plot(recall, precision, color='darkorange', lw=1, label=f'PR curve (AUC = {prc_auc:.2f})')
     ax2.set_xlabel('Recall')
     ax2.set_ylabel('Precision')
-    ax2.set_title('Precision-Recall Curve')
+    ax2.set_title(f'Precision-Recall Curve  ({info})')
     ax2.legend(loc='lower left')
 
-    plt.savefig(f'{out_dir}/{model_name}_roc_prc_curves'.replace(' ', '_'), bbox_inches='tight', dpi=300)
+    plt.savefig(f'{out_dir}/{model_name}_roc_prc_curves_{info}'.replace(' ', '_'), bbox_inches='tight', dpi=300)
 
     return roc_curve, roc_auc, precision_recall_curve, prc_auc, average_precision
 

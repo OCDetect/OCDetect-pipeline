@@ -42,7 +42,7 @@ def evaluate_single_model(model, param_grid,
     if sample_balancing in ['random_undersampling', 'SMOTE', 'SMOTETomek', 'SMOTEENN']:
         logger.info(f'n samples before: {len(y_train[y_train == 0])} vs. {len(y_train[y_train == 1])}')
         if sample_balancing == 'random_undersampling':
-            resampler = RandomUnderSampler(sampling_strategy=downsampling_value)
+            resampler = RandomUnderSampler(random_state=42, sampling_strategy=downsampling_value)
             logger.info("Using random undersampling")
         elif sample_balancing == 'SMOTE':  # sampling strategy: corresponds to the desired ratio of the number of samples in the minority class over the number of samples in the majority class after resampling
             resampler = SMOTE(n_jobs=-1, sampling_strategy=upsampling_value, random_state=seed)  # TODO fyi: settings a float for sampling strategy will raise an error for multiclass
@@ -65,7 +65,7 @@ def evaluate_single_model(model, param_grid,
     logger.info(f"Amount of features before selection: {len(feature_names)}")
 
     if select_features:
-        param_grid['selector'] = [SelectKBest(k='all'), SelectKBest(k=10), SelectFromModel(RandomForestClassifier(), threshold='median')]
+        param_grid['selector'] = [SelectKBest(k='all'), SelectKBest(k=10), SelectFromModel(RandomForestClassifier(random_state=42), threshold='median')]
         pipeline_steps.extend([('selector', 'passthrough'), ('model', model)])
     else:
         pipeline_steps.append(('model', model))

@@ -53,7 +53,7 @@
     export_subfolder: ../../datasets/OCDetect/preprocessed/
     export_subfolder_ml_prepared: ../../datasets/OCDetect/windowed/
     plots_folder: ../../datasets/OCDetect/plots/
-    ml_results_folder: ../../datasets/OCDetect/ml_results
+    ml_results_folder: ../../datasets/OCDetect/ml_results/oversampled
     relabeled_subfolder: /dhc/groups/ocdetect/preprocessed_relabeled
 
 - robin-atlas:
