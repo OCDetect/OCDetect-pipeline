@@ -54,7 +54,7 @@ class OCDetectDataset(Dataset):
             if idx is None:
                 feat_train, _, label_train, _, idx, _ = tts(self.features, self.labels,
                                                                 np.arange(len(self.features)), stratify=self.labels,
-                                                            train_size=0.3)
+                                                            train_size=0.3, random_state=42)
 
                 self.idx = idx
             else:
