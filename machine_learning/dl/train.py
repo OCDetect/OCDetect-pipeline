@@ -129,6 +129,7 @@ def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_fre
             }
 
             file_name = 'epoch_{:03d}_{}.pth.tar'.format(epoch + 1, split_name)
+            os.makedirs(os.path.join(ckpt_folder, 'ckpts'), exist_ok=True)
             save_checkpoint(save_states, False, file_folder=os.path.join(ckpt_folder, 'ckpts'), file_name=file_name)
 
         # validation
@@ -153,6 +154,7 @@ def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_fre
             for i, (inputs, targets) in enumerate(train_loader):
                 batch_gt = targets.cpu().numpy().flatten()
                 v_train_gt = np.concatenate((v_train_gt, batch_gt))
+            os.makedirs(os.path.join(ckpt_folder, 'unprocessed_results'), exist_ok=True)
             np.save(os.path.join(ckpt_folder, 'unprocessed_results', 'v_train_' + cfg['name'] + "_" + split_name), v_train_gt)
 
         if epoch == (start_epoch + cfg['train_cfg']['epochs']) - 1:
@@ -189,7 +191,7 @@ def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_fre
         if run is not None:
             run[split_name].append({"train_loss": np.nanmean(t_losses), "val_loss": np.nanmean(v_losses), "accuracy": v_acc, "precision": np.nanmean(v_prec), "recall": np.nanmean(v_rec), 'f1': np.nanmean(v_f1)})
 
-    return t_losses, v_losses, v_preds, v_gt, net
+    return t_losses, v_losses, v_preds, v_preds_raw, v_gt, net
 
 
 def train_one_epoch(loader, network, opt, criterion, gpu=None, beta=0.0003, lr_cent=0.001, network_name='deepconvlstm'):

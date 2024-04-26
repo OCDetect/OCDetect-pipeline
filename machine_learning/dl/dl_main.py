@@ -12,6 +12,7 @@ import pandas as pd
 import torch.cuda
 from sklearn.model_selection import LeaveOneOut, StratifiedKFold
 from ..utils.plots import plot_confusion_matrix
+from .test_dl_model import test_dl_model
 
 from .train import *
 from torch.utils.data import DataLoader
@@ -55,20 +56,21 @@ def dl_main(config: dict, settings: dict, users, subset="all", out_dir=None):
             train_dataset = OCDetectDataset(train_subs, window_size, model=dl_config['name'])
             test_dataset = OCDetectDataset(test_subs, window_size, model=dl_config['name'])
 
-            tr_losses, v_losses, te_preds, te_gt, model = run_inertial_network(train_dataset, test_dataset, dl_config,
+            tr_losses, v_losses, te_preds, te_preds_raw, te_gt, model = run_inertial_network(train_dataset, test_dataset, dl_config,
                                  ckpt_folder, 10, resume=False, split_name=split_name)
 
             sub_out_dir = f'{out_dir}/test_subject_{test_subs[0]}/test'
             if not os.path.isdir(sub_out_dir):
                 os.makedirs(sub_out_dir, exist_ok=True)
-            plot_confusion_matrix(test_subs[0], confusion_matrix(te_gt, te_preds), model_name, sub_out_dir)
+            test_dl_model(te_gt, te_preds, te_preds_raw, test_subs[0], model_name, sub_out_dir)
             retrain_dataset = OCDetectDataset(test_subs, window_size, model=dl_config['name'], retrain=True)
             retest_dataset = OCDetectDataset(test_subs, window_size, model=dl_config['name'], retrain=True, idx=retrain_dataset.idx)
 
-            tr_losses, v_losses, te_preds, te_gt, final_model = run_inertial_network(retrain_dataset, retest_dataset, dl_config,
+            tr_losses, v_losses, te_preds, te_preds_raw, te_gt, final_model = run_inertial_network(retrain_dataset, retest_dataset, dl_config,
                                                                         ckpt_folder, 10, resume=False,
                                                                         split_name=split_name + "_retrain", net=model)
-            plot_confusion_matrix(test_subs[0], confusion_matrix(te_gt, te_preds), model_name + "_retrain", sub_out_dir)
+            #plot_confusion_matrix(test_subs[0], confusion_matrix(te_gt, te_preds), model_name + "_retrain", sub_out_dir)
+            test_dl_model(te_gt, te_preds, te_preds_raw, test_subs[0], model_name + "_retrain", sub_out_dir)
 
     # ---------------------------------------------------------------------------------------------------------
 
