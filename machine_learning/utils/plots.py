@@ -58,7 +58,7 @@ def plot_confusion_matrix(test_subject, confusion_matrix, model_name, out_dir):
         disp.plot(include_values=True, cmap='Blues', ax=ax,
               xticks_rotation='horizontal', values_format='d')
     except:
-        logger.logerror("plot_confusion_matrix::Empty confusion matrix")
+        logger.error("plot_confusion_matrix::Empty confusion matrix")
     plt.savefig(f'{out_dir}/{model_name}_cm'.replace(' ', '_'))
     plt.close()
 
