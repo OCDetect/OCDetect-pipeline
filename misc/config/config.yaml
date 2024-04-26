@@ -39,6 +39,17 @@
     ml_results_folder: ../../datasets/OCDetect/ml_results
     relabeled_subfolder: /dhc/groups/ocdetect/preprocessed_relabeled
 
+- lorenz-laptop:
+    hostname: kottos
+    data_folder: ../../datasets/OCDetect/
+    meta_subfolder: metadata/
+    evals_subfolder: allEvaluations/
+    dailies_subfolder: dailyQuestionnaire/
+    annotations_subfolder: annotations/
+    first_hw_subfolder: labels_first_handwashes/
+    export_subfolder: ../../../../Datasets/OCDetect_Export/
+
+
 - kristina-mac:
     username: kristina.kirsten
     hostname: [atlas, kottos, gyges, briareos]

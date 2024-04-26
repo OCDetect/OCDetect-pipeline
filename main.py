@@ -21,7 +21,7 @@ import concurrent.futures
 from multiprocessing import Manager, Lock
 
 
-def main(config: dict, settings: dict) -> int:
+def main(config: dict, settings: dict, relabeling_settings : dict) -> int:
 
     data_cleansing = settings["data_cleansing"]
     data_preparation = settings["data_preparation"]
@@ -84,7 +84,7 @@ def main(config: dict, settings: dict) -> int:
     raw_str = "both" if run_deep_learning and run_classic_methods else ("raw" if run_deep_learning else "features")
     label_type = settings.get("label_type")
     if data_preparation:
-        labels, (features, features_raw), users, feature_names = prepare_data(settings, config, raw=raw_str)
+        labels, (features, features_raw), users, feature_names = prepare_data(settings, config, relabeling_settings, raw=raw_str)
     if machine_learning:
         if not data_preparation:
             # load prepared data
@@ -197,11 +197,13 @@ if __name__ == "__main__":
         with open("misc/config/settings.yaml", "r") as settings_stream:
             # settings = list(yaml.load_all(settings_stream, Loader=yaml.SafeLoader))
             settings = yaml.safe_load(settings_stream)
+        with open("data_cleansing/relabeling/relabeling_settings.yaml", "r") as settings_stream:
+            relabeling_settings = yaml.safe_load(settings_stream)
     except FileNotFoundError:
         logger.error(f"Could not load config file {config_file_name}, exiting...")
         sys.exit(1)
     except IndexError:
         logger.error(f"Hostname {socket.gethostname()} not contained in config file '{config_file_name}', exiting...")
         sys.exit(1)
-    main(config=active_config, settings=settings)
+    main(config=active_config, settings=settings, relabeling_settings=relabeling_settings)
     sys.exit(0)

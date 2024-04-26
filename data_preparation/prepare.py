@@ -11,6 +11,7 @@ from datetime import date
 from data_preparation.utils.filter import butter_filter
 from data_preparation.utils.scaler import std_scaling_data
 from tsfresh.utilities.dataframe_functions import impute
+from data_cleansing.helpers.definitions import IgnoreReason
 
 
 def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: dict):
@@ -333,7 +334,7 @@ def get_data_path_variables(use_scaling: object, use_filter: object, config: dic
 
 
 # main function for data preparation
-def prepare_data(settings: dict, config: dict, raw: str="both"):
+def prepare_data(settings: dict, config: dict, relabeling_settings: dict, raw: str="both"):
     """
     :param settings: Global settings dict
     :param config:   Global user config dict
@@ -363,10 +364,13 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
             match = re.search(pattern, file_name)
             if match:
                 subject_number = int(match.group(1))
-
                 if subject_number in subject_numbers:
                     file_path = os.path.join(folder_path, file_name)
                     df = pd.read_csv(file_path, )
+
+                    if selected_subject_option != "relabeled_subjects":
+                        df = set_ignore_around_hw(df, before_duration = relabeling_settings['ignore_before_hw'],
+                                         after_duration = relabeling_settings['ignore_after_hw'])
 
                     if subject_number in dataframes:
                         dataframes[subject_number].append(df)
@@ -481,3 +485,27 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
             file.write(settings_data)
 
     return labels, [features, features_raw], users, feature_names
+
+
+def set_ignore_around_hw(df, before_duration, after_duration):
+    changed_relabeled = df['relabeled'].diff()
+    changed_relabeled_filtered = changed_relabeled[(changed_relabeled != 0) & pd.notna(changed_relabeled)]
+
+    pre_offset = before_duration * 50 * 60
+    post_offset = after_duration * 50 * 60
+
+    for index, change in changed_relabeled_filtered.iteritems():
+        if change > 0:
+            start_ignore_index = index - pre_offset
+            end_ignore_index = index - 1
+            df.loc[(df['relabeled'] == 0) &
+                    (df.index >= start_ignore_index) &
+                    (df.index <= end_ignore_index),  'ignore'] = IgnoreReason.BeforeHandWash
+
+        elif change < 0:
+            start_ignore_index = index
+            end_ignore_index = index + post_offset
+            df.loc[(df['relabeled'] == 0) &
+                   (df.index >= start_ignore_index) &
+                   (df.index <= end_ignore_index), 'ignore'] = IgnoreReason.AfterHandWash
+    return df
