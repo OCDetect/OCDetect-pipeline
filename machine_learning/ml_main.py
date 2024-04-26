@@ -36,7 +36,7 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
 
     if not classic:
         OCDetectDataset.preload(windows, users, labels)
-        dl_main(config, settings, users, subject_groups_folder_name)
+        dl_main(config, settings, users, subject_groups_folder_name, out_dir)
         return
 
     balancing_option = settings.get("balancing_option")

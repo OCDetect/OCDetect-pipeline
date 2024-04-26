@@ -33,8 +33,8 @@ def evaluate_single_model(model, param_grid,
     class_ratio_null = len(y_train[y_train == 0]) / len(y_train)
     logger.info(f"The class ratio is: {class_ratio_one:.2f} vs. {class_ratio_null:.2f}")
 
-    upsampling_value = 0.4
-    downsampling_value = 0.6
+    upsampling_value = 0.5
+    downsampling_value = 0.5
     if sample_balancing in ['SMOTE', 'SMOTETomek', 'SMOTEENN']:
         logger.info(f"For upsampling the minority class, a class ratio of {upsampling_value} will be achieved.")
 

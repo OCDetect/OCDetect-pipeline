@@ -10,7 +10,8 @@ import time
 import numpy as np
 import pandas as pd
 
-from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
+from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, accuracy_score
+from imblearn.metrics import specificity_score
 from sklearn.utils import compute_class_weight
 import torch
 from torch.utils.data import DataLoader
@@ -46,31 +47,38 @@ def worker_init_reset_seed(worker_id):
     torch.manual_seed(seed)
 
 
-def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_freq, resume, run=None, split_name="split_name"):
+def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_freq, resume, run=None, split_name="split_name", net=None):
     # define dataloaders
     train_loader = DataLoader(train_dataset, cfg['loader']['batch_size'], shuffle=True, num_workers=4, worker_init_fn=worker_init_reset_seed, persistent_workers=True)
     test_loader = DataLoader(test_dataset, cfg['loader']['batch_size'], shuffle=False, num_workers=4, worker_init_fn=worker_init_reset_seed, persistent_workers=True)
     
     # define network
-    if cfg['name'] == 'ShallowDeepConvLSTM':
-        net = DeepConvLSTM(
-            train_dataset.channels, train_dataset.classes, train_dataset.window_size,
-            cfg['model']['conv_kernels'], cfg['model']['conv_kernel_size'], 
-            cfg['model']['lstm_units'], cfg['model']['lstm_layers'], cfg['model']['dropout']
-            )
-        print("Number of learnable parameters for DeepConvLSTM: {}".format(sum(p.numel() for p in net.parameters() if p.requires_grad)))
-        criterion = nn.CrossEntropyLoss()
-    elif cfg['name'] == 'attendanddiscriminate':
-        net = AttendAndDiscriminate(
-            train_dataset.channels, train_dataset.classes, cfg['model']['hidden_dim'], cfg['model']['conv_kernels'], cfg['model']['conv_kernel_size'], cfg['model']['enc_layers'], cfg['model']['enc_is_bidirectional'], cfg['model']['dropout'], cfg['model']['dropout_rnn'], cfg['model']['dropout_cls'], cfg['model']['activation'], cfg['model']['sa_div']
-            )
-        print("Number of learnable parameters for A-and-D: {}".format(sum(p.numel() for p in net.parameters() if p.requires_grad)))
-        criterion = nn.CrossEntropyLoss(reduction="mean")
-    elif cfg['name'] == 'tinyhar':
-        net = TinyHAR((100, 1, train_dataset.features.shape[1], train_dataset.channels), train_dataset.classes, cfg['model']['conv_kernels'], cfg['model']['conv_layers'], cfg['model']['conv_kernel_size'], dropout=cfg['model']['dropout'])
-        print("Number of learnable parameters for TinyHAR: {}".format(sum(p.numel() for p in net.parameters() if p.requires_grad)))
-        criterion = nn.CrossEntropyLoss()
+    if net is None:
+        if cfg['name'] == 'ShallowDeepConvLSTM':
+            net = DeepConvLSTM(
+                train_dataset.channels, train_dataset.classes, train_dataset.window_size,
+                cfg['model']['conv_kernels'], cfg['model']['conv_kernel_size'],
+                cfg['model']['lstm_units'], cfg['model']['lstm_layers'], cfg['model']['dropout']
+                )
+            print("Number of learnable parameters for DeepConvLSTM: {}".format(sum(p.numel() for p in net.parameters() if p.requires_grad)))
+            criterion = nn.CrossEntropyLoss()
+        elif cfg['name'] == 'attendanddiscriminate':
+            net = AttendAndDiscriminate(
+                train_dataset.channels, train_dataset.classes, cfg['model']['hidden_dim'], cfg['model']['conv_kernels'], cfg['model']['conv_kernel_size'], cfg['model']['enc_layers'], cfg['model']['enc_is_bidirectional'], cfg['model']['dropout'], cfg['model']['dropout_rnn'], cfg['model']['dropout_cls'], cfg['model']['activation'], cfg['model']['sa_div']
+                )
+            print("Number of learnable parameters for A-and-D: {}".format(sum(p.numel() for p in net.parameters() if p.requires_grad)))
+            criterion = nn.CrossEntropyLoss(reduction="mean")
+        elif cfg['name'] == 'tinyhar':
+            net = TinyHAR((100, 1, train_dataset.features.shape[1], train_dataset.channels), train_dataset.classes, cfg['model']['conv_kernels'], cfg['model']['conv_layers'], cfg['model']['conv_kernel_size'], dropout=cfg['model']['dropout'])
+            print("Number of learnable parameters for TinyHAR: {}".format(sum(p.numel() for p in net.parameters() if p.requires_grad)))
+            criterion = nn.CrossEntropyLoss()
     # define criterion and optimizer
+    else:  # Net is not none, define criterion only:
+        if cfg['name'] == 'ShallowDeepConvLSTM' or cfg['name'] == 'tinyhar':
+            criterion = nn.CrossEntropyLoss()
+        elif cfg['name'] == 'attendanddiscriminate':
+            criterion = nn.CrossEntropyLoss(reduction="mean")
+
     opt = torch.optim.Adam(net.parameters(), lr=cfg['train_cfg']['lr'], weight_decay=cfg['train_cfg']['weight_decay'])
 
     # use lr schedule if selected
@@ -78,11 +86,11 @@ def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_fre
         scheduler = torch.optim.lr_scheduler.StepLR(opt, step_size=cfg['train_cfg']['lr_step'], gamma=cfg['train_cfg']['lr_decay'])
     
     # use weighted loss if selected
-    """if cfg['train_cfg']['weighted_loss']:
+    if cfg['train_cfg']['weighted_loss']:
         class_weights = compute_class_weight('balanced', classes=np.unique(train_dataset.labels), y=train_dataset.labels)
         if len(class_weights) < 2:
             class_weights = list(class_weights) + [1.0]
-        criterion.weight = torch.tensor(class_weights).float().to(cfg['devices'][0])"""
+        criterion.weight = torch.tensor(class_weights).float().to(cfg['devices'][0])
 
     if resume:
         resume = os.path.join(ckpt_folder, 'ckpts', resume)
@@ -108,9 +116,9 @@ def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_fre
         start_time = time.time()
         # training
         if cfg['name'] == 'attendanddiscriminate':
-            net, t_losses, _, _ = train_one_epoch(train_loader, net, opt, criterion, cfg['devices'][0], cfg['train_cfg']['beta'], cfg['train_cfg']['lr_cent'], cfg['name'])
+            net, t_losses, t_preds, t_gt = train_one_epoch(train_loader, net, opt, criterion, cfg['devices'][0], cfg['train_cfg']['beta'], cfg['train_cfg']['lr_cent'], cfg['name'])
         else:
-            net, t_losses, _, _, = train_one_epoch(train_loader, net, opt, criterion, cfg['devices'][0])
+            net, t_losses, t_preds, t_gt, = train_one_epoch(train_loader, net, opt, criterion, cfg['devices'][0])
         print("--- %s seconds ---" % (time.time() - start_time))
         # save ckpt once in a while
         if (((ckpt_freq > 0) and ((epoch + 1) % ckpt_freq == 0))):
@@ -121,6 +129,7 @@ def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_fre
             }
 
             file_name = 'epoch_{:03d}_{}.pth.tar'.format(epoch + 1, split_name)
+            os.makedirs(os.path.join(ckpt_folder, 'ckpts'), exist_ok=True)
             save_checkpoint(save_states, False, file_folder=os.path.join(ckpt_folder, 'ckpts'), file_name=file_name)
 
         # validation
@@ -134,17 +143,18 @@ def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_fre
 
 
         # calculate validation metrics
-        conf_mat = confusion_matrix(v_gt, v_preds, normalize='true')
-        v_acc = conf_mat.diagonal()/conf_mat.sum(axis=1)
-        v_prec = precision_score(v_gt, v_preds, average=None, zero_division=1)
-        v_rec = recall_score(v_gt, v_preds, average=None, zero_division=1)
-        v_f1 = f1_score(v_gt, v_preds, average=None, zero_division=1)
+        v_acc = accuracy_score(v_gt, v_preds)
+        v_prec = precision_score(v_gt, v_preds)
+        v_rec = recall_score(v_gt, v_preds)
+        v_f1 = f1_score(v_gt, v_preds)
+        v_spec = specificity_score(v_gt, v_preds)
 
         if epoch == 0:
             v_train_gt = []
             for i, (inputs, targets) in enumerate(train_loader):
                 batch_gt = targets.cpu().numpy().flatten()
                 v_train_gt = np.concatenate((v_train_gt, batch_gt))
+            os.makedirs(os.path.join(ckpt_folder, 'unprocessed_results'), exist_ok=True)
             np.save(os.path.join(ckpt_folder, 'unprocessed_results', 'v_train_' + cfg['name'] + "_" + split_name), v_train_gt)
 
         if epoch == (start_epoch + cfg['train_cfg']['epochs']) - 1:
@@ -153,31 +163,35 @@ def run_inertial_network(train_dataset, test_dataset, cfg, ckpt_folder, ckpt_fre
             np.save(os.path.join(ckpt_folder, 'unprocessed_results', 'v_preds_' + cfg['name'] + "_" + split_name), v_preds)
             np.save(os.path.join(ckpt_folder, 'unprocessed_results', 'v_gt_' + cfg['name'] + "_" + split_name), v_gt)
             np.save(os.path.join(ckpt_folder, 'unprocessed_results', 'v_raw_' + cfg['name'] + "_" + split_name), v_preds_raw)
+            np.save(os.path.join(ckpt_folder, 'unprocessed_results', 't_preds_' + cfg['name'] + "_" + split_name), t_preds)
+            np.save(os.path.join(ckpt_folder, 'unprocessed_results', 't_gt_' + cfg['name'] + "_" + split_name),
+                    t_gt)
             os.makedirs(os.path.join(ckpt_folder, 'processed_results'), exist_ok=True)
 
             results_filename = os.path.join(ckpt_folder, 'processed_results', "results.csv")
             write_headline = not os.path.isfile(results_filename)
             with open(results_filename, "a") as f:
                 if write_headline:
-                    f.write("model_name,epoch,acc,prec,recall,f1,splitname\n")
-                f.write(f"{cfg['name']}, {epoch + 1}, {np.nanmean(v_acc)}, {np.nanmean(v_prec)}, {np.nanmean(v_rec)}, {np.nanmean(v_f1)}, {split_name} \n")
+                    f.write("model_name,epoch,acc,prec,recall,f1,spec,splitname\n")
+                f.write(f"{cfg['name']}, {epoch + 1}, {v_acc}, {v_prec}, {v_rec}, {v_f1}, {v_spec}, {split_name} \n")
 
         # print results to terminal
         block1 = 'Epoch: [{:03d}/{:03d}]'.format(epoch, cfg['train_cfg']['epochs'])
         block2 = 'TRAINING:\tavg. loss {:.4f}'.format(np.nanmean(t_losses))
         block3 = 'VALIDATION:\tavg. loss {:.4f}'.format(np.nanmean(v_losses))
         block4 = ''
-        block4  += '\n\t\tAcc {:>4.4f} (%)'.format(np.nanmean(v_acc) * 100)
-        block4  += ' Prec {:>4.4f} (%)'.format(np.nanmean(v_prec) * 100)
-        block4  += ' Rec {:>4.4f} (%)'.format(np.nanmean(v_rec) * 100)
-        block4  += ' F1 {:>4.4f} (%)'.format(np.nanmean(v_f1) * 100)
+        block4  += '\n\t\tAcc {:>4.4f} (%)'.format(v_acc * 100)
+        block4  += ' Prec {:>4.4f} (%)'.format(v_prec * 100)
+        block4  += ' Rec/Sens {:>4.4f} (%)'.format(v_rec * 100)
+        block4 += ' Spec {:>4.4f} (%)'.format(v_spec * 100)
+        block4  += ' F1 {:>4.4f} (%)'.format(v_f1 * 100)
 
         print('\n'.join([block1, block2, block3, block4]))
 
         if run is not None:
             run[split_name].append({"train_loss": np.nanmean(t_losses), "val_loss": np.nanmean(v_losses), "accuracy": v_acc, "precision": np.nanmean(v_prec), "recall": np.nanmean(v_rec), 'f1': np.nanmean(v_f1)})
 
-    return t_losses, v_losses, v_preds, v_gt
+    return t_losses, v_losses, v_preds, v_preds_raw, v_gt, net
 
 
 def train_one_epoch(loader, network, opt, criterion, gpu=None, beta=0.0003, lr_cent=0.001, network_name='deepconvlstm'):

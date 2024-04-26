@@ -1,3 +1,4 @@
+from misc import logger
 import matplotlib.pyplot as plt
 from sklearn.metrics import ConfusionMatrixDisplay, PrecisionRecallDisplay, precision_recall_curve, roc_curve, auc, \
     average_precision_score
@@ -49,13 +50,16 @@ def plot_roc_pr_curve(y_test, proba, model_name, out_dir, info):
     return roc_curve, roc_auc, precision_recall_curve, prc_auc, average_precision
 
 
-def plot_confusion_matrix(test_subject, confusion_matrix, model_name, out_dir, phase):
+def plot_confusion_matrix(test_subject, confusion_matrix, model_name, out_dir):
     cm_fig, ax = plt.subplots()
     cm_fig.suptitle(f'{model_name}')
     disp = ConfusionMatrixDisplay(confusion_matrix=confusion_matrix,
                                   display_labels=[0, 1])
-    disp.plot(include_values=True, cmap='Blues', ax=ax,
+    try:
+        disp.plot(include_values=True, cmap='Blues', ax=ax,
               xticks_rotation='horizontal', values_format='d')
+    except:
+        logger.error("plot_confusion_matrix::Empty confusion matrix")
     plt.savefig(f'{out_dir}/{model_name}_cm'.replace(' ', '_'))
     plt.close()
 
