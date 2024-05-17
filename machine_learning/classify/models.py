@@ -14,6 +14,7 @@ def get_classification_model_grid(all_models, selected_models, seed=42):
                 'max_features': ['sqrt', 'log2']})
               ]
 
+
     # models = [(RandomForestClassifier(class_weight="balanced", random_state=seed),
     #            {'n_estimators': [100],
     #             'criterion': ['entropy', 'gini'],

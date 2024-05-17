@@ -7,7 +7,7 @@ from machine_learning.dl.dl_main import dl_main
 from machine_learning.dl.OCDetectDataset import OCDetectDataset
 import shutil
 from machine_learning.utils.plots import boxplot, barchart
-
+from misc import logger
 
 def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, config: dict, classic: bool = True):
     try:
@@ -36,7 +36,7 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
 
     if not classic:
         OCDetectDataset.preload(windows, users, labels)
-        dl_main(config, settings, users, subject_groups_folder_name)
+        dl_main(config, settings, users, subject_groups_folder_name, out_dir)
         return
 
     balancing_option = settings.get("balancing_option")
@@ -53,7 +53,7 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
         X_train = X[users != test_subject]
         y_train = labels[users != test_subject]
 
-        print("left out subject", test_subject)
+        logger.info(f"Current Test Subject: {test_subject}")
         all_model_metrics = {}
 
         # model grid
@@ -86,14 +86,61 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
 
     # ===== Save aggregate plots across models =====
     # Generate Boxplots for Metrics
-    json_metric_data = {}
+    # json_metric_data = {}
+    # for subject in subject_metrics:
+    #     all_metrics_per_subject = subject_metrics[subject]
+    #     for metric_name in all_metrics_per_subject[str(model.__class__.__name__)][0].keys():
+    #         if metric_name == 'confusion_matrix':
+    #             json_metric_data[metric_name] = {model_name: (test_metrics[metric_name].tolist())
+    #                                              for model_name, (test_metrics, _) in all_metrics_per_subject.items()}
+    #             continue
+    #         metric_data = {model_name: (test_metrics[metric_name])
+    #                        for model_name, (test_metrics, _) in all_metrics_per_subject.items()}
+    #         json_metric_data[metric_name] = metric_data
+    #         # boxplot(out_dir, metric_data, metric_name, "hand washing", ymin=(-1 if metric_name == 'mcc' else 0))
+    # json.dump(json_metric_data, open(f'{out_dir}/all_model_metrics.json', 'w'), indent=4)
+
+    # Initialize a dictionary to store average metric values
+    average_metrics = {}
+
+    # Iterate through each metric name
     for metric_name in all_model_metrics[str(model.__class__.__name__)][0].keys():
         if metric_name == 'confusion_matrix':
-            json_metric_data[metric_name] = {model_name: (test_metrics[metric_name].tolist())
-                                             for model_name, (test_metrics, _) in all_model_metrics.items()}
-            continue
-        metric_data = {model_name: (test_metrics[metric_name])
-                       for model_name, (test_metrics, _) in all_model_metrics.items()}
-        json_metric_data[metric_name] = metric_data
-        # boxplot(out_dir, metric_data, metric_name, "hand washing", ymin=(-1 if metric_name == 'mcc' else 0))
-    json.dump(json_metric_data, open(f'{out_dir}/all_model_metrics.json', 'w'), indent=4)
+            # For confusion matrix, concatenate all matrices for each model across subjects
+            confusion_matrices = {}
+            for subject, metrics_per_subject in subject_metrics.items():
+                for model_name, (test_metrics, _) in metrics_per_subject.items():
+                    if model_name not in confusion_matrices:
+                        confusion_matrices[model_name] = []
+                    confusion_matrices[model_name].append(test_metrics[metric_name])
+
+            # Calculate the average confusion matrix for each model
+            average_confusion_matrices = {
+                model_name: np.mean(confusion_matrices[model_name], axis=0).tolist()
+                for model_name in confusion_matrices
+            }
+
+            # Store the average confusion matrices in the average_metrics dictionary
+            average_metrics[metric_name] = average_confusion_matrices
+        else:
+            # For other metrics, calculate the average value across all subjects for each model
+            metric_data = {}
+            for subject, metrics_per_subject in subject_metrics.items():
+                for model_name, (test_metrics, _) in metrics_per_subject.items():
+                    if model_name not in metric_data:
+                        metric_data[model_name] = []
+                    print(metric_data.keys())
+                    metric_data[model_name].append(test_metrics[metric_name])
+
+            # Calculate the average metric value for each model
+            average_metric_data = {
+                model_name: np.mean(metric_data[model_name])
+                for model_name in metric_data
+            }
+
+            # Store the average metric values in the average_metrics dictionary
+            average_metrics[metric_name] = average_metric_data
+
+    # Store the average metrics in a JSON file
+    with open(f'{out_dir}/average_metrics.json', 'w') as f:
+        json.dump(average_metrics, f, indent=4)

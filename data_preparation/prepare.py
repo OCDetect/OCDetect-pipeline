@@ -11,6 +11,7 @@ from datetime import date
 from data_preparation.utils.filter import butter_filter
 from data_preparation.utils.scaler import std_scaling_data
 from tsfresh.utilities.dataframe_functions import impute
+from data_cleansing.helpers.definitions import IgnoreReason
 
 
 def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: dict):
@@ -53,7 +54,7 @@ def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: di
 
             # Choose label
             if labelling_algorithm == 'Majority':
-                majority_label = perform_majority_voting(curr_window, label_type)
+                majority_label = perform_majority_voting(settings, curr_window, label_type)
                 if majority_label == -1:  # discard the label, currently only used for rout vs comp!
                     continue
                 window_labels.append(majority_label)
@@ -65,7 +66,8 @@ def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: di
             curr_window = curr_window[['acc x', 'acc y', 'acc z', 'gyro x', 'gyro y', 'gyro z', 'tsfresh_id']]
             # pythons list append is much faster than pandas concat (time increased exponentially with concat)
             window_list.append(curr_window)
-
+    if len(window_list) == 0:
+        return window_list, None, None
     return pd.concat(window_list), pd.Series(window_labels, index=None), pd.Series(user_list, index=None)
 
 
@@ -77,16 +79,17 @@ def check_ignore(current_window):
         return True
 
 
-def perform_majority_voting(current_window, label_type="null_vs_hw"):
-    #counts = current_window['relabeled'].value_counts()
-    # ToDo select column based on relabel mechanism
-    counts = current_window['merged_annotation'].value_counts()
-
+def perform_majority_voting(settings, current_window, label_type="null_vs_hw"):
+    if settings.get('selected_subject_option') == 'relabeled_subjects':
+        counts = current_window['merged_annotation'].value_counts()
+        count_result = current_window['merged_annotation'].value_counts().reset_index(name='count')
+    else:
+        counts = current_window['relabeled'].value_counts()
+        count_result = current_window['relabeled'].value_counts().reset_index(name='count')
     # Count occurrences of N/A and 0, and 1, 2, 3, 4
-    count_result = current_window['merged_annotation'].value_counts().reset_index(name='count')
-    current_window['compulsive_relabeled'].to_numpy()
 
-    # Sum counts for N/A and 0, and 1, 2, 3, 4
+
+    grouped_counts = []
     grouped_counts = count_result.groupby(lambda x: '0' if x in [float('nan'), 0] else '1').sum()
 
     null_class = counts.get(0, 0)
@@ -110,8 +113,12 @@ def perform_majority_voting(current_window, label_type="null_vs_hw"):
         null_class = counts.get(0, 0)
         hw = counts.get(1, 0)
 
-        compulsive_hw = current_window["compulsive_relabeled"].sum()
-        routine_hw = hw - compulsive_hw
+        if settings.get('selected_subject_option') == 'relabeled_subjects':
+            compulsive_hw = current_window["compulsive_relabeled"].sum()
+            routine_hw = hw - compulsive_hw
+        else:
+            compulsive_hw = counts.get(2, 0)
+            routine_hw = hw
 
         if routine_hw > compulsive_hw and routine_hw > null_class:
             majority_label = 1  # routine hand washing present
@@ -327,7 +334,7 @@ def get_data_path_variables(use_scaling: object, use_filter: object, config: dic
 
 
 # main function for data preparation
-def prepare_data(settings: dict, config: dict, raw: str="both"):
+def prepare_data(settings: dict, config: dict, relabeling_settings: dict, raw: str="both"):
     """
     :param settings: Global settings dict
     :param config:   Global user config dict
@@ -357,10 +364,13 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
             match = re.search(pattern, file_name)
             if match:
                 subject_number = int(match.group(1))
-
                 if subject_number in subject_numbers:
                     file_path = os.path.join(folder_path, file_name)
                     df = pd.read_csv(file_path, )
+
+                    if selected_subject_option != "relabeled_subjects":
+                        df = set_ignore_around_hw(df, before_duration = relabeling_settings['ignore_before_hw'],
+                                         after_duration = relabeling_settings['ignore_after_hw'])
 
                     if subject_number in dataframes:
                         dataframes[subject_number].append(df)
@@ -397,6 +407,8 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
 
         # 3. Window data
         windows, user_labels, user_id = window_data(subject_data, i, settings)
+        if len(windows) == 0:
+            continue
         labels.append(user_labels)
         users.append(user_id)
 
@@ -410,9 +422,11 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
             features_user = feature_extraction(windows, settings)
             features.append(features_user)
 
-        length = max(len(features_user),len(windows))
-        logger.info(f"Subject: {i}, features: {length}, labels: {len(user_labels)}")
-
+        try:
+            length = max(len(features_user),len(windows))
+            logger.info(f"Subject: {i}, features: {length}, labels: {len(user_labels)}")
+        except:
+            pass
     labels = pd.concat(labels).reset_index(drop=True).to_frame()
     users = pd.concat(users).reset_index(drop=True).to_frame()
 
@@ -432,7 +446,7 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
     #feature_names = features.columns.values.tolist()
 
     # 5. Scale data if desired (only on features)
-    if use_scaling:
+    if use_scaling and raw in ["both", "features"]:
         features = std_scaling_data(features, settings)
 
     end_time = time.time()
@@ -471,3 +485,27 @@ def prepare_data(settings: dict, config: dict, raw: str="both"):
             file.write(settings_data)
 
     return labels, [features, features_raw], users, feature_names
+
+
+def set_ignore_around_hw(df, before_duration, after_duration):
+    changed_relabeled = df['relabeled'].diff()
+    changed_relabeled_filtered = changed_relabeled[(changed_relabeled != 0) & pd.notna(changed_relabeled)]
+
+    pre_offset = before_duration * 50 * 60
+    post_offset = after_duration * 50 * 60
+
+    for index, change in changed_relabeled_filtered.iteritems():
+        if change > 0:
+            start_ignore_index = index - pre_offset
+            end_ignore_index = index - 1
+            df.loc[(df['relabeled'] == 0) &
+                    (df.index >= start_ignore_index) &
+                    (df.index <= end_ignore_index),  'ignore'] = IgnoreReason.BeforeHandWash
+
+        elif change < 0:
+            start_ignore_index = index
+            end_ignore_index = index + post_offset
+            df.loc[(df['relabeled'] == 0) &
+                   (df.index >= start_ignore_index) &
+                   (df.index <= end_ignore_index), 'ignore'] = IgnoreReason.AfterHandWash
+    return df

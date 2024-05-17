@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import scipy.special
 from matplotlib import pyplot as plt
 from sklearn.metrics import f1_score, auc
 from machine_learning.classify.metrics import compute_classification_metrics
@@ -7,20 +8,12 @@ from machine_learning.classify.models import positive_class_probability, get_fea
 from machine_learning.utils.plots import plot_confusion_matrix, plot_coefficients, plot_roc_pr_curve
 from misc import logger
 
-
-def test_classification_model(model, X_train, y_train, X_test, y_test: pd.DataFrame, feature_names, test_subject, model_name, select_features, out_dir):
-    # Re-fit complete training set
-    # Reason: it is advisable to retrain the model on the entire training set (including the validation set)
-    # after finding the best hyperparameters using GridSearchCV
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    X_train.columns = feature_names
-
+def test_dl_model(y_test, pred, pred_raw, test_subject, model_name, out_dir):
     # Determine optimal decision boundary threshold
     def to_labels(pos_probs, threshold):
         return (pos_probs >= threshold).astype('int')
 
-    y_probas = positive_class_probability(model, X_test)
+    y_probas = scipy.special.softmax(pred_raw, axis=1)[:,1]
     thresholds = np.linspace(0, 1, 101)
     scores = [f1_score(y_test, to_labels(y_probas, t)) for t in thresholds]
     ix = np.argmax(scores)
@@ -62,21 +55,5 @@ def test_classification_model(model, X_train, y_train, X_test, y_test: pd.DataFr
 
     # ===== Confusion Matrix ====
     plot_confusion_matrix(test_subject, test_metrics['confusion_matrix'], model_name, out_dir)
-
-    # ===== Feature Importances =====
-    feature_importances = get_feature_importance(model)
-    if select_features:
-        feature_names = X_train.columns[model.named_steps['selector'].get_support()]
-        with open(f'{out_dir}/best_parameters.txt', 'a+') as f:
-            f.write(f'selected features: {feature_names}\n')
-    else:
-        feature_names = X_train.columns
-
-    if feature_importances is not None:
-        feature_importance = pd.DataFrame([feature_importances], columns=feature_names.values)
-        feature_importance.to_csv(f'{out_dir}/{model_name}_feature_importance.csv')
-        plot_coefficients(out_dir, feature_importances, feature_names, model_name, y_test.name)
-
-    # interp_tpr = np.interp(thresholds, roc_plot.fpr, roc_plot.tpr, left=0.0) TODO: see ROC above (also for return)
 
     return test_metrics, None
