@@ -47,6 +47,9 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
 
     subject_metrics = {} # new dictionary to store all_model_metrics for specific test subject
 
+    binary_classification = True if label_type != "null_vs_rout_vs_comp" else False
+    cv_scoring = "f1" if binary_classification else "f1_macro"
+
     for test_subject in users_outer_cv:
         X_test = X[users == test_subject]
         y_test = labels[users == test_subject]
@@ -58,11 +61,13 @@ def ml_pipeline(features, users, labels, feature_names, seed, settings: dict, co
 
         # model grid
         selected_models = [list(classifier.keys())[0] for classifier in settings.get("models") if list(classifier.values())[0]]
-        model_grid = get_classification_model_grid(settings.get("all_models"), selected_models, seed=seed)
+        model_grid = get_classification_model_grid(settings.get("all_models"), selected_models, settings, seed=seed)
         for j, (model, param_grid) in enumerate(model_grid):
             test_metrics, curves = evaluate_single_model(model, param_grid,
                                                          X_train, y_train, X_test, y_test, feature_names,
                                                          out_dir=out_dir,
+                                                         binary_classification=binary_classification,
+                                                         cv_scoring=cv_scoring,
                                                          select_features=feature_selection,
                                                          sample_balancing=balancing_option,
                                                          seed=seed, test_subject=test_subject)

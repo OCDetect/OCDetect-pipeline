@@ -22,7 +22,7 @@ def test_classification_model(model, X_train, y_train, X_test, y_test: pd.DataFr
 
     y_probas = positive_class_probability(model, X_test)
     thresholds = np.linspace(0, 1, 101)
-    scores = [f1_score(y_test, to_labels(y_probas, t)) for t in thresholds]
+    scores = [f1_score(y_test, to_labels(y_probas, t), average='macro') for t in thresholds]
     ix = np.argmax(scores)
     optimal_threshold = thresholds[ix]
     optimal_f1 = scores[ix]
