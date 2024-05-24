@@ -65,7 +65,8 @@ def evaluate_single_model(model, param_grid,
     if binary_classification and sample_balancing in ['SMOTE', 'SMOTETomek', 'SMOTEENN']:
         logger.info(f"For upsampling the minority class, a class ratio of {upsampling_ratio} will be achieved.")
 
-    # ================= ADD BALANCING TO PIPELINE IF SELECTED =================
+    # ================= ADD BALANCING IF SELECTED =================
+    resampler = None
     if sample_balancing in ['random_undersampling', 'SMOTE', 'SMOTETomek', 'SMOTEENN']:
         if binary_classification:
             logger.info(f'n samples before: {len(y_train[y_train == 0])} vs. {len(y_train[y_train == 1])}')
@@ -83,9 +84,11 @@ def evaluate_single_model(model, param_grid,
         elif sample_balancing == 'SMOTEENN':
             resampler = SMOTEENN(sampling_strategy=upsampling_ratio, enn=EditedNearestNeighbours(sampling_strategy='majority'))
             logger.info("Using SMOTE and edited nearest neighbours")
-        pipeline_steps.append(('resampling', resampler))
     else:
         logger.info("No additional balancing selected")
+
+    if resampler is not None:
+        X_train, y_train = resampler.fit_resample(X_train, y_train)
 
     # ================= SELECT OPTIMAL MODEL AND FEATURE SET THROUGH CV =================
 
@@ -109,8 +112,6 @@ def evaluate_single_model(model, param_grid,
     # Default CV scoring
     if cv_scoring is None:
         cv_scoring = "f1"
-
-
 
     # extract user column for cv and remove it for model training
     users = X_train['user']
