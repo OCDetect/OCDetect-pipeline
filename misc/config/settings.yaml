@@ -93,7 +93,7 @@ barchart_metric: "f1_score"
 # MODEL SELECTION SETTINGS
 ###################################################################
 
-all_models : True
+all_models : False
 
 models:
   - RandomForestClassifier: True

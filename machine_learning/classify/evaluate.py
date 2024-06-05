@@ -44,7 +44,6 @@ def evaluate_single_model(model, param_grid,
 
     if not binary_classification:
         counts = Counter(y_train)
-        print(counts)
         if sample_balancing in ['SMOTE', 'SMOTETomek', 'SMOTEENN']:
             upsampling_ratio = {0: 1.0, 1: 0.5, 2: 0.5}
             logger.info(f"For upsampling the minority class, a class ratio of {upsampling_ratio} will be achieved.")
@@ -55,11 +54,6 @@ def evaluate_single_model(model, param_grid,
             logger.info(f"For downsampling the majority class, a class ratio of {downsampling_value} will be achieved.")
             min_count = min(counts.values())
             downsampling_ratio = {cls: min(int(min_count * ratio), counts[cls]) for cls, ratio in downsampling_value.items()}
-            print(downsampling_ratio)
-    #downsampling_ratio = {0: 616, 1: 56, 2: 252}
-    # print(len(X_train))
-    # print(len(y_train))
-    # print(X_train['user'].value_counts())
 
 
     if binary_classification and sample_balancing in ['SMOTE', 'SMOTETomek', 'SMOTEENN']:
@@ -152,5 +146,5 @@ def evaluate_single_model(model, param_grid,
     #  =================== Final Model Testing ===============
     X_test = X_test.drop(columns=["user"])
     test_metrics, test_curves = test_classification_model(best_model, X_train, y_train, X_test, y_test, feature_names, test_subject,
-                                                          model_name, select_features, subject_out_dir)
+                                                          model_name, select_features, subject_out_dir, binary_classification)
     return test_metrics, test_curves

@@ -315,20 +315,22 @@ def load_data_preparation_settings(settings: dict):
     use_scaling = settings.get("use_scaling")
     resample = settings.get("resample")
     balancing_option = settings.get("balancing_option")
+    label_type = settings.get("label_type")
 
-    return use_filter, use_scaling, resample, balancing_option
+    return use_filter, use_scaling, resample, balancing_option, label_type
 
 
-def get_data_path_variables(use_scaling: object, use_filter: object, config: dict, settings: dict) -> object:
+def get_data_path_variables(use_scaling: object, use_filter: object, label_type: object, config: dict, settings: dict) -> object:
 
     export_path = config.get("export_subfolder_ml_prepared")
 
-    window_size = settings.get("window_size")
-    subjects_folder_name = settings.get("selected_subject_option")
-    sub_folder_path = f"ws_{window_size}_s/{subjects_folder_name}"
-
     scaling = "scaled" if use_scaling else "not_scaled"
     filtering = "filtered" if use_filter else "not_filtered"
+
+    window_size = settings.get("window_size")
+    subjects_folder_name = settings.get("selected_subject_option")
+    sub_folder_path = f"ws_{window_size}_s/{subjects_folder_name}/{filtering}/{scaling}/{label_type}"
+
 
     return window_size, subjects_folder_name, sub_folder_path, export_path, scaling, filtering
 
@@ -345,8 +347,7 @@ def prepare_data(settings: dict, config: dict, relabeling_settings: dict, raw: s
     """
     save_data = settings["save_data"]
     overwrite_data = settings["overwrite_data"]
-    use_filter, use_scaling, resample, _ = load_data_preparation_settings(settings)
-    label_type = settings.get("label_type")
+    use_filter, use_scaling, resample, _, label_type = load_data_preparation_settings(settings)
 
 
     logger.info("Preparing data for machine learning")
@@ -455,27 +456,27 @@ def prepare_data(settings: dict, config: dict, relabeling_settings: dict, raw: s
 
     if save_data:
         window_size, subjects_folder_name, sub_folder_path, export_path, scaling, filtering = get_data_path_variables(
-            use_scaling, use_filter, config, settings)
+            use_scaling, use_filter, label_type, config, settings)
 
         today = date.today()
         file_date = today.strftime("%Y-%m-%d")  # Format the date as "YYYY-MM-DD"
 
         os.makedirs(f"{export_path}/{sub_folder_path}", exist_ok=True)
 
-        labels.to_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}_{label_type}.csv", index=False)
-        users.to_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}_{label_type}.csv", index=False)
+        labels.to_csv(f"{export_path}{sub_folder_path}/labels.csv", index=False)
+        users.to_csv(f"{export_path}{sub_folder_path}/users.csv", index=False)
         if len(features) > 0:
-            features.to_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}_{label_type}.csv", index=False)
+            features.to_csv(f"{export_path}{sub_folder_path}/features.csv", index=False)
         if len(features_raw) > 0:
-            features_raw.to_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{label_type}_raw.csv", index=False)
-        pd.DataFrame(feature_names).to_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}_{label_type}.csv", index=False)
+            features_raw.to_csv(f"{export_path}{sub_folder_path}/features_raw.csv", index=False)
+        pd.DataFrame(feature_names).to_csv(f"{export_path}{sub_folder_path}/feature_names.csv", index=False)
 
         # create file with meta information for the current window setup
         meta_info = f"Meta information for \"{file_date}\":\n"
         meta_info += "=" * 40 + "\n"
         meta_info += f"Time needed for window data: {windowing_time_s:.2f} seconds ({windowing_time_min:.2f} minutes) \n"
         meta_info += "-" * 40 + "\n"
-
+        
         settings_data = yaml.dump(settings)
 
         meta_file = "meta_info.txt"
@@ -483,6 +484,7 @@ def prepare_data(settings: dict, config: dict, relabeling_settings: dict, raw: s
             file.write(meta_info)
             file.write("Used following settings file: \n")
             file.write(settings_data)
+
 
     return labels, [features, features_raw], users, feature_names
 
