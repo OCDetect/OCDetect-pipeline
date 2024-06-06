@@ -44,7 +44,6 @@ def test_classification_model(model, X_train, y_train, X_test, y_test: pd.DataFr
     padding = (N - 1) // 2
     kernel = np.ones(N) / N
 
-
     if binary_classification:
         probas_classes = to_labels(y_probas, optimal_threshold, binary_classification)
         y_pred_smoothed = np.convolve(probas_classes, kernel, mode='valid')
@@ -56,17 +55,16 @@ def test_classification_model(model, X_train, y_train, X_test, y_test: pd.DataFr
         for i in range(y_probas.shape[1]):
             y_pred_smoothed_probas[:, i] = np.convolve(y_probas[:, i], kernel, mode='valid')
 
+    # smoothing für classes majority voting
+
+    # alternative: fenstergröße summe probabilities meiste klasse reinschreiben
+
     y_pred_postprocessed_probas = np.concatenate([y_probas[:padding], y_pred_smoothed_probas, y_probas[-padding:]])
 
     test_metrics = compute_classification_metrics(y_test, to_labels(y_pred_postprocessed_probas, optimal_threshold, binary_classification), binary_classification)
     orig_test_metrics = compute_classification_metrics(y_test, to_labels(y_probas, optimal_threshold, binary_classification), binary_classification)
 
-    # test_metrics = compute_classification_metrics(y_test, y_pred_postprocessed)
-    # test_metrics_probas = compute_classification_metrics(y_test,
-    #                                                      to_labels(y_pred_postprocessed_probas, optimal_threshold, binary_classification))
-    # orig_test_metrics = compute_classification_metrics(y_test, to_labels(y_probas, optimal_threshold, binary_classification))
-    #
-    # print(f"orig f1: {orig_test_metrics}, class-base f1: {test_metrics}, probas-base f1: {test_metrics_probas}")
+
 
     with open(f'{out_dir}/best_parameters.txt', 'a+') as f:
         f.write(f'optimal classification threshold: {optimal_threshold} with F1-Score {optimal_f1}\n\n')
@@ -97,7 +95,7 @@ def test_classification_model(model, X_train, y_train, X_test, y_test: pd.DataFr
     # aucprs = auc(prc_plot.recall, prc_plot.precision)
     test_metrics['prc_auc'] = auprc
 
-    plt.close()
+    plt.close('all')
 
     # ===== Confusion Matrix ====
     plot_confusion_matrix(test_subject, test_metrics['confusion_matrix'], model_name, out_dir, binary_classification)
