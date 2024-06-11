@@ -16,7 +16,7 @@ from imblearn.under_sampling import TomekLinks, EditedNearestNeighbours
 from collections import Counter
 
 
-def evaluate_single_model(model, param_grid,
+def evaluate_single_model(settings, model, param_grid,
                           X_train, y_train, X_test, y_test, feature_names, binary_classification,
                           cv_splits=8, cv_scoring=None, select_features=False,
                           out_dir='results/default', sample_balancing=None, seed=42, test_subject=None):
@@ -145,6 +145,6 @@ def evaluate_single_model(model, param_grid,
 
     #  =================== Final Model Testing ===============
     X_test = X_test.drop(columns=["user"])
-    test_metrics, test_curves = test_classification_model(best_model, X_train, y_train, X_test, y_test, feature_names, test_subject,
+    test_metrics, test_curves = test_classification_model(settings, best_model, X_train, y_train, X_test, y_test, feature_names, test_subject,
                                                           model_name, select_features, subject_out_dir, binary_classification)
     return test_metrics, test_curves

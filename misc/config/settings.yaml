@@ -106,3 +106,9 @@ models:
 ###################################################################
 run_deep_learning : False
 run_classic_methods : True
+
+# postprocessing
+
+postprocessing_window_size: 7
+postprocessing_stride: 2
+multiclass_pred_smoothing: "majority_classes" # Options: "majority_proba", "majority_classes"

@@ -7,9 +7,14 @@ from machine_learning.classify.models import positive_class_probability, get_fea
 from machine_learning.utils.plots import plot_confusion_matrix, plot_coefficients, plot_roc_pr_curve
 from misc import logger
 from sklearn.preprocessing import label_binarize
+from collections import Counter
 
 
-def test_classification_model(model, X_train, y_train, X_test, y_test: pd.DataFrame, feature_names, test_subject, model_name, select_features, out_dir, binary_classification):
+def test_classification_model(settings, model, X_train, y_train, X_test, y_test: pd.DataFrame, feature_names, test_subject, model_name, select_features, out_dir, binary_classification):
+    multiclass_smoothing = settings.get("multiclass_pred_smoothing")
+    window_size = settings.get("postprocessing_window_size")
+    stride = settings.get("postprocessing_stride")
+
     # Re-fit complete training set
     # Reason: it is advisable to retrain the model on the entire training set (including the validation set)
     # after finding the best hyperparameters using GridSearchCV
@@ -40,30 +45,39 @@ def test_classification_model(model, X_train, y_train, X_test, y_test: pd.DataFr
     optimal_threshold = thresholds[ix]
     optimal_f1 = scores[ix]
 
-    N = 7
-    padding = (N - 1) // 2
-    kernel = np.ones(N) / N
+
+    padding = (window_size - 1) // 2 if window_size % 2 == 1 else window_size // 2
+    kernel = np.ones(window_size) / window_size
+
+    probas_classes = to_labels(y_probas, optimal_threshold, binary_classification)
 
     if binary_classification:
-        probas_classes = to_labels(y_probas, optimal_threshold, binary_classification)
         y_pred_smoothed = np.convolve(probas_classes, kernel, mode='valid')
         y_pred_postprocessed = np.concatenate([probas_classes[:padding], np.round(y_pred_smoothed), probas_classes[-padding:]])
         y_pred_smoothed_probas = np.convolve(y_probas, kernel, mode='valid')
 
     else:
-        y_pred_smoothed_probas = np.zeros((y_probas.shape[0] - N + 1, y_probas.shape[1]))
+        y_pred_smoothed_probas = np.zeros((y_probas.shape[0] - window_size + 1, y_probas.shape[1]))
         for i in range(y_probas.shape[1]):
             y_pred_smoothed_probas[:, i] = np.convolve(y_probas[:, i], kernel, mode='valid')
-
-    # smoothing für classes majority voting
-
-    # alternative: fenstergröße summe probabilities meiste klasse reinschreiben
+        y_pred_postprocessed = y_pred
+        if multiclass_smoothing == "majority_class":
+            for i in range(0, len(probas_classes) - window_size + 1, stride):
+                window = probas_classes[i:i+window_size]
+                counter = Counter(window)
+                majority_value = counter.most_common(1)[0][0]
+                y_pred_postprocessed[i:i+window_size] = [majority_value] * window_size
+        elif multiclass_smoothing == "majority_proba":
+            for i in range(0, len(y_probas) - window_size + 1, stride):
+                window = y_probas[i:i + window_size]
+                probas_sums = window.sum(axis=0)
+                majority_proba_class = np.argmax(probas_sums)
+                y_pred_postprocessed[i:i + window_size] = [majority_proba_class] * window_size
 
     y_pred_postprocessed_probas = np.concatenate([y_probas[:padding], y_pred_smoothed_probas, y_probas[-padding:]])
 
-    test_metrics = compute_classification_metrics(y_test, to_labels(y_pred_postprocessed_probas, optimal_threshold, binary_classification), binary_classification)
+    test_metrics = compute_classification_metrics(y_test, y_pred_postprocessed, binary_classification)
     orig_test_metrics = compute_classification_metrics(y_test, to_labels(y_probas, optimal_threshold, binary_classification), binary_classification)
-
 
 
     with open(f'{out_dir}/best_parameters.txt', 'a+') as f:
