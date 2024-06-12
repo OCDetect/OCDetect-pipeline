@@ -13,7 +13,6 @@ from collections import Counter
 def test_classification_model(settings, model, X_train, y_train, X_test, y_test: pd.DataFrame, feature_names, test_subject, model_name, select_features, out_dir, binary_classification):
     multiclass_smoothing = settings.get("multiclass_pred_smoothing")
     window_size = settings.get("postprocessing_window_size")
-    stride = settings.get("postprocessing_stride")
 
     # Re-fit complete training set
     # Reason: it is advisable to retrain the model on the entire training set (including the validation set)
@@ -56,23 +55,24 @@ def test_classification_model(settings, model, X_train, y_train, X_test, y_test:
         y_pred_postprocessed = np.concatenate([probas_classes[:padding], np.round(y_pred_smoothed), probas_classes[-padding:]])
         y_pred_smoothed_probas = np.convolve(y_probas, kernel, mode='valid')
 
+# window_size = 7 -> padding = 3
     else:
         y_pred_smoothed_probas = np.zeros((y_probas.shape[0] - window_size + 1, y_probas.shape[1]))
         for i in range(y_probas.shape[1]):
             y_pred_smoothed_probas[:, i] = np.convolve(y_probas[:, i], kernel, mode='valid')
-        y_pred_postprocessed = y_pred
+        y_pred_postprocessed = probas_classes
         if multiclass_smoothing == "majority_class":
-            for i in range(0, len(probas_classes) - window_size + 1, stride):
-                window = probas_classes[i:i+window_size]
+            for i in range(padding, len(probas_classes) - padding):
+                window = probas_classes[i-padding:i+padding+1]
                 counter = Counter(window)
                 majority_value = counter.most_common(1)[0][0]
-                y_pred_postprocessed[i:i+window_size] = [majority_value] * window_size
+                y_pred_postprocessed[i] = majority_value
         elif multiclass_smoothing == "majority_proba":
-            for i in range(0, len(y_probas) - window_size + 1, stride):
-                window = y_probas[i:i + window_size]
+            for i in range(padding, len(y_probas) - padding):
+                window = y_probas[i-padding:i+padding+1]
                 probas_sums = window.sum(axis=0)
                 majority_proba_class = np.argmax(probas_sums)
-                y_pred_postprocessed[i:i + window_size] = [majority_proba_class] * window_size
+                y_pred_postprocessed[i] = majority_proba_class
 
     y_pred_postprocessed_probas = np.concatenate([y_probas[:padding], y_pred_smoothed_probas, y_probas[-padding:]])
 
