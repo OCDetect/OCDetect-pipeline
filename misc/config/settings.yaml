@@ -1,9 +1,9 @@
 ### fixed values due to data collection settings
 sampling_frequency : 50
 
-data_cleansing : False
+data_cleansing : True
 data_preparation : True
-machine_learning : False
+machine_learning : True
 
 # subject selection
 # set out of : ['all_subjects', 'test_subjects', 'relabeled_subjects', 'ocd_diagnosed_subjects', 'trustworthy_subjects']
@@ -25,7 +25,7 @@ seed: 42
 
 ### General settings
 resample: True # TODO outdated?
-balancing_option: "SMOTEENN" # possible options: 'random_undersampling', 'SMOTE', 'SMOTETomek', 'SMOTEENN'
+balancing_option: "random_undersampling" # possible options: 'random_undersampling', 'SMOTE', 'SMOTETomek', 'SMOTEENN'
 feature_selection: True
 
 use_filter: True

@@ -14,6 +14,7 @@ from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from imblearn.combine import SMOTETomek, SMOTEENN
 from imblearn.under_sampling import TomekLinks, EditedNearestNeighbours
 
+grid_search = False
 
 def evaluate_single_model(model, param_grid,
                           X_train, y_train, X_test, y_test, feature_names,
@@ -64,9 +65,14 @@ def evaluate_single_model(model, param_grid,
 
     logger.info(f"Amount of features before selection: {len(feature_names)}")
 
-    if select_features:
+    if select_features and grid_search:
         param_grid['selector'] = [SelectKBest(k='all'), SelectKBest(k=10), SelectFromModel(RandomForestClassifier(random_state=42), threshold='median')]
         pipeline_steps.extend([('selector', 'passthrough'), ('model', model)])
+    elif select_features and not grid_search:
+        pipeline_steps.extend([
+            ('selector', SelectFromModel(RandomForestClassifier(random_state=42), threshold='median')),
+            ('model', model)
+        ])
     else:
         pipeline_steps.append(('model', model))
 
@@ -76,6 +82,7 @@ def evaluate_single_model(model, param_grid,
     # Define metrics used
     all_metrics_list = all_classification_metrics_list
 
+
     # Default CV scoring
     if cv_scoring is None:
         cv_scoring = "f1"
@@ -84,37 +91,40 @@ def evaluate_single_model(model, param_grid,
     users = X_train['user']
     X_train = X_train.drop(columns=["user"])
 
-    logger.info("Grid search cv running....")
-    start_time = time.time()
+    if grid_search:
+        logger.info("Grid search cv running....")
+        start_time = time.time()
 
-    # n_jobs=-1 -> all CPUs are used to perform parallel tasks
-    grid_model = GridSearchCV(pipeline, param_grid=param_grid, scoring=cv_scoring, cv=cv, n_jobs=-1)
-    grid_model.fit(X_train, y_train, groups=users)
+        # n_jobs=-1 -> all CPUs are used to perform parallel tasks
+        grid_model = GridSearchCV(pipeline, param_grid=param_grid, scoring=cv_scoring, cv=cv, n_jobs=-1)
+        grid_model.fit(X_train, y_train, groups=users)
 
-    end_time = time.time()
-    logger.info("Grid search completed")
+        end_time = time.time()
+        logger.info("Grid search completed")
 
-    training_time_seconds = end_time - start_time
-    training_time_minutes = training_time_seconds / 60
-    logger.info(f"Training time: {training_time_seconds:.2f} seconds ({training_time_minutes:.2f} minutes)")
-
-    try:
-        pass
-    except ValueError as ve:
-        logger.error(ve)
+        training_time_seconds = end_time - start_time
+        training_time_minutes = training_time_seconds / 60
+        logger.info(f"Training time: {training_time_seconds:.2f} seconds ({training_time_minutes:.2f} minutes)")
+        try:
+            pass
+        except ValueError as ve:
+            logger.error(ve)
+            with open(f'{subject_out_dir}/best_parameters.txt', 'a+') as f:
+                f.write('\n' + model_name)
+                f.write(f'GridSearch Failed due to incompatible options in best selected model.\n')
+            logger.error("Warning: 'GridSearch Failed due to incompatible options in best selected model.")
+            empty_cm = np.zeros((2, 2))
+            return {metric: ([0.0] if metric != 'confusion_matrix' else [empty_cm] * cv_splits) for metric in all_metrics_list}, \
+                   {metric: (0.0 if metric != 'confusion_matrix' else empty_cm) for metric in all_metrics_list}, \
+                   (([0] * 101, [0] * 101, [0] * 101), ([0] * 101, [0] * 101, [0] * 101))
         with open(f'{subject_out_dir}/best_parameters.txt', 'a+') as f:
             f.write('\n' + model_name)
-            f.write(f'GridSearch Failed due to incompatible options in best selected model.\n')
-        logger.error("Warning: 'GridSearch Failed due to incompatible options in best selected model.")
-        empty_cm = np.zeros((2, 2))
-        return {metric: ([0.0] if metric != 'confusion_matrix' else [empty_cm] * cv_splits) for metric in all_metrics_list}, \
-               {metric: (0.0 if metric != 'confusion_matrix' else empty_cm) for metric in all_metrics_list}, \
-               (([0] * 101, [0] * 101, [0] * 101), ([0] * 101, [0] * 101, [0] * 101))
-    with open(f'{subject_out_dir}/best_parameters.txt', 'a+') as f:
-        f.write('\n' + model_name)
-        f.write(f'\nBest Params: {grid_model.best_params_}\n')
-    logger.info(f'Best Params: {grid_model.best_params_} - {cv_scoring}: {grid_model.best_score_}')
-    best_model = grid_model.best_estimator_
+            f.write(f'\nBest Params: {grid_model.best_params_}\n')
+        logger.info(f'Best Params: {grid_model.best_params_} - {cv_scoring}: {grid_model.best_score_}')
+        best_model = grid_model.best_estimator_
+
+    else:
+        best_model = pipeline
 
     #  =================== Final Model Testing ===============
     X_test = X_test.drop(columns=["user"])

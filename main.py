@@ -6,6 +6,7 @@ import yaml
 import sys
 import socket
 from data_preparation.prepare import prepare_data, get_data_path_variables, load_data_preparation_settings
+from data_cleansing.modules.relabel import relabel
 from misc.csv_loader import load_subject
 from data_cleansing.helpers.definitions import Sensor
 from data_cleansing.modules.filter import run_data_cleansing
@@ -164,10 +165,10 @@ def data_cleansing_worker(subject: str, config: dict, settings: dict): # , subje
         gc.collect()
         return
     # TODO read from a settings file or manual relabeled data or automatic relabeling should be used
-    # labeled_data = relabel(cleaned_data, config, settings, subject)
+    labeled_data = relabel(cleaned_data, config, settings, subject)
     logger.info(f"##### Exporting subject {subject} #####")
-    # export_data(labeled_data, config, settings, subject)
-    export_data(cleaned_data, config, settings, subject)
+    export_data(labeled_data, config, settings, subject)
+    #export_data(cleaned_data, config, settings, subject)
     logger.info(f"########## Finished running on subject {subject} ##########")
     for item in recordings_list:
         item.clear()

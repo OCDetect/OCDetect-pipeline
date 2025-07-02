@@ -7,11 +7,12 @@ def get_classification_model_grid(all_models, selected_models, seed=42):
 
     selected_models = [globals()[model_string] for model_string in selected_models]
 
-    models = [(RandomForestClassifier(class_weight="balanced", random_state=seed),
-               {'n_estimators': [100],
-                'criterion': ['entropy', 'gini'],
-                'max_depth': [10],
-                'max_features': ['sqrt', 'log2']})
+    models = [(GradientBoostingClassifier(random_state=seed),
+                {'loss': ['log_loss', 'exponential'],
+                 'learning_rate': [0.01, 0.3],
+                 'n_estimators': [100],
+                 'max_depth': [10],
+                 'max_features': ['sqrt', 'log2']})
               ]
 
 

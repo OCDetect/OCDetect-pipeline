@@ -42,6 +42,7 @@ def test_classification_model(model, X_train, y_train, X_test, y_test: pd.DataFr
     orig_test_metrics = compute_classification_metrics(y_test, to_labels(y_probas, optimal_threshold))
 
     with open(f'{out_dir}/best_parameters.txt', 'a+') as f:
+        f.write(f'used model: {model_name} without grid search ')
         f.write(f'optimal classification threshold: {optimal_threshold} with F1-Score {optimal_f1}\n\n')
         logger.info(f'optimal classification threshold: {optimal_threshold} with F1-Score {optimal_f1}\n\n')
         f.write(f"original metrics: {orig_test_metrics}\n\n")
