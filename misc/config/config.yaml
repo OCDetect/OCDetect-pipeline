@@ -26,17 +26,17 @@
 
 - lorenz-mac:
     username: lorenz.kautzsch
-    hostname: [cx29]
-    data_folder: ../../datasets/OCDetect/
+    hostname: [cx01, cx02, cx03, cx04, cx05, cx06, cx07, cx08, cx09, cx10, cx11, cx12, cx13, cx14, cx15, cx16, cx17, cx18, cx19, cx20, cx21, cx22, cx23, cx24, cx25, cx26, cx27, cx28, cx29, cx30, cx31, cx32, cx33, cx34, cx35, cx36, cx37, cx38, cx39, cx40, cx41, cx42, cx43, cx44, cx45]
+    data_folder: /sc/home/lorenz.kautzsch/datasets/OCDetect/
     meta_subfolder: metadata/
     first_hw_subfolder: labels_first_handwashes/
     prefix: OCDetect_
-    output_folder: ../../OCDetect/Analysis/plots/idle_regions/
+    output_folder: /sc/projects/sci-arnrich/ocdetect/plots/idle_regions
     # export_subfolder: ../../datasets/OCDetect/preprocessed/OCDetect_Export/
-    export_subfolder: /sc/projects/sci-arnrich/ocdetect/preprocessed/
+    export_subfolder: /sc/projects/sci-arnrich/ocdetect/preprocessed_zenodo/preprocessed/
     export_subfolder_ml_prepared: /sc/projects/sci-arnrich/ocdetect/windowed/
-    plots_folder: ../../datasets/OCDetect/plots/
-    ml_results_folder: ../../datasets/OCDetect/ml_results
+    plots_folder: /sc/projects/sci-arnrich/ocdetect/plots/
+    ml_results_folder: /sc/projects/sci-arnrich/ocdetect/ml_results/
     relabeled_subfolder: /dhc/groups/ocdetect/preprocessed_relabeled
 
 - lorenz-laptop:

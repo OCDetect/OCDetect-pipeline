@@ -14,12 +14,12 @@ from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from imblearn.combine import SMOTETomek, SMOTEENN
 from imblearn.under_sampling import TomekLinks, EditedNearestNeighbours
 
-grid_search = False
 
 def evaluate_single_model(model, param_grid,
                           X_train, y_train, X_test, y_test, feature_names,
-                          cv_splits=8, cv_scoring=None, select_features=False,
+                          cv_splits=8, cv_scoring=None, select_features=False, grid_search=True,
                           out_dir='results/default', sample_balancing=None, seed=42, test_subject=None):
+
 
     subject_out_dir = f'{out_dir}/test_subject_{test_subject}/test/'
     os.makedirs(subject_out_dir, exist_ok=True)

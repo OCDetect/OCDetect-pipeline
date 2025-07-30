@@ -1,7 +1,7 @@
 ### fixed values due to data collection settings
 sampling_frequency : 50
 
-data_cleansing : True
+data_cleansing : False
 data_preparation : True
 machine_learning : True
 
@@ -93,13 +93,14 @@ barchart_metric: "f1_score"
 # MODEL SELECTION SETTINGS
 ###################################################################
 
-all_models : True
+all_models : False
+grid_search : True # attention, when grid_search is set to false the model will be created as a random instance from model.py. If you want a specific model without parameter search set it in machine_learning/classify/models.py explicitly
 
 models:
-  - RandomForestClassifier: True
+  - RandomForestClassifier: False
   - GradientBoostingClassifier: True
-  - LogisticRegression: True
-  - DummyClassifier: True
+  - LogisticRegression: False
+  - DummyClassifier: False
 
 ###################################################################
 # Machine Learning Pipeline SETTINGS
