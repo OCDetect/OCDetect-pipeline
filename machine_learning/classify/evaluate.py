@@ -13,10 +13,11 @@ from sklearn.svm import LinearSVC
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from imblearn.combine import SMOTETomek, SMOTEENN
 from imblearn.under_sampling import TomekLinks, EditedNearestNeighbours
+from collections import Counter
 
 
-def evaluate_single_model(model, param_grid,
-                          X_train, y_train, X_test, y_test, feature_names,
+def evaluate_single_model(settings, model, param_grid,
+                          X_train, y_train, X_test, y_test, feature_names, binary_classification,
                           cv_splits=8, cv_scoring=None, select_features=False,
                           out_dir='results/default', sample_balancing=None, seed=42, test_subject=None):
 
@@ -31,31 +32,57 @@ def evaluate_single_model(model, param_grid,
 
     class_ratio_one = len(y_train[y_train == 1]) / len(y_train)
     class_ratio_null = len(y_train[y_train == 0]) / len(y_train)
-    logger.info(f"The class ratio is: {class_ratio_one:.2f} vs. {class_ratio_null:.2f}")
+    if binary_classification:
+        logger.info(f"The class ratio is: {class_ratio_one:.2f} vs. {class_ratio_null:.2f}")
+    else:
+        class_ratio_two = len(y_train[y_train == 2]) / len(y_train)
+        logger.info(f"The class ratio is: {class_ratio_one:.2f} vs. {class_ratio_null:.2f} vs. {class_ratio_two:.2f} ")
 
-    upsampling_value = 0.5
-    downsampling_value = 0.5
-    if sample_balancing in ['SMOTE', 'SMOTETomek', 'SMOTEENN']:
-        logger.info(f"For upsampling the minority class, a class ratio of {upsampling_value} will be achieved.")
 
-    # ================= ADD BALANCING TO PIPELINE IF SELECTED =================
+    upsampling_ratio = 0.5
+    downsampling_ratio = 0.5
+
+    if not binary_classification:
+        counts = Counter(y_train)
+        if sample_balancing in ['SMOTE', 'SMOTETomek', 'SMOTEENN']:
+            upsampling_ratio = {0: 1.0, 1: 0.5, 2: 0.5}
+            logger.info(f"For upsampling the minority class, a class ratio of {upsampling_ratio} will be achieved.")
+            max_count = max(counts.values())
+            upsampling_ratio = {cls: int(max_count * ratio) for cls, ratio in upsampling_ratio.items()}
+        elif sample_balancing == 'random_undersampling':
+            downsampling_value = {0: 2.0, 1: 1.0, 2: 1.0}
+            logger.info(f"For downsampling the majority class, a class ratio of {downsampling_value} will be achieved.")
+            min_count = min(counts.values())
+            downsampling_ratio = {cls: min(int(min_count * ratio), counts[cls]) for cls, ratio in downsampling_value.items()}
+
+
+    if binary_classification and sample_balancing in ['SMOTE', 'SMOTETomek', 'SMOTEENN']:
+        logger.info(f"For upsampling the minority class, a class ratio of {upsampling_ratio} will be achieved.")
+
+    # ================= ADD BALANCING IF SELECTED =================
+    resampler = None
     if sample_balancing in ['random_undersampling', 'SMOTE', 'SMOTETomek', 'SMOTEENN']:
-        logger.info(f'n samples before: {len(y_train[y_train == 0])} vs. {len(y_train[y_train == 1])}')
+        if binary_classification:
+            logger.info(f'n samples before: {len(y_train[y_train == 0])} vs. {len(y_train[y_train == 1])}')
+        else:
+            logger.info(f'n samples before: {len(y_train[y_train == 0])} vs. {len(y_train[y_train == 1])} vs. {len(y_train[y_train == 2])}')
         if sample_balancing == 'random_undersampling':
-            resampler = RandomUnderSampler(random_state=42, sampling_strategy=downsampling_value)
+            resampler = RandomUnderSampler(random_state=42, sampling_strategy=downsampling_ratio)
             logger.info("Using random undersampling")
         elif sample_balancing == 'SMOTE':  # sampling strategy: corresponds to the desired ratio of the number of samples in the minority class over the number of samples in the majority class after resampling
-            resampler = SMOTE(n_jobs=-1, sampling_strategy=upsampling_value, random_state=seed)  # TODO fyi: settings a float for sampling strategy will raise an error for multiclass
+            resampler = SMOTE(n_jobs=-1, sampling_strategy=upsampling_ratio, random_state=seed)
             logger.info("Using oversampling")
         elif sample_balancing == 'SMOTETomek':
-            resampler = SMOTETomek(sampling_strategy=upsampling_value, tomek=TomekLinks(sampling_strategy='majority'))
+            resampler = SMOTETomek(sampling_strategy=upsampling_ratio, tomek=TomekLinks(sampling_strategy='majority'))
             logger.info("Using SMOTE and Tomek Links")
         elif sample_balancing == 'SMOTEENN':
-            resampler = SMOTEENN(sampling_strategy=upsampling_value, enn=EditedNearestNeighbours(sampling_strategy='majority'))
+            resampler = SMOTEENN(sampling_strategy=upsampling_ratio, enn=EditedNearestNeighbours(sampling_strategy='majority'))
             logger.info("Using SMOTE and edited nearest neighbours")
-        pipeline_steps.append(('resampling', resampler))
     else:
         logger.info("No additional balancing selected")
+
+    if resampler is not None:
+        X_train, y_train = resampler.fit_resample(X_train, y_train)
 
     # ================= SELECT OPTIMAL MODEL AND FEATURE SET THROUGH CV =================
 
@@ -118,6 +145,6 @@ def evaluate_single_model(model, param_grid,
 
     #  =================== Final Model Testing ===============
     X_test = X_test.drop(columns=["user"])
-    test_metrics, test_curves = test_classification_model(best_model, X_train, y_train, X_test, y_test, feature_names, test_subject,
-                                                          model_name, select_features, subject_out_dir)
+    test_metrics, test_curves = test_classification_model(settings, best_model, X_train, y_train, X_test, y_test, feature_names, test_subject,
+                                                          model_name, select_features, subject_out_dir, binary_classification)
     return test_metrics, test_curves

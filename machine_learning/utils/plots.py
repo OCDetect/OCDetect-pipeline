@@ -46,25 +46,27 @@ def plot_roc_pr_curve(y_test, proba, model_name, out_dir, info):
     ax2.legend(loc='lower left')
 
     plt.savefig(f'{out_dir}/{model_name}_roc_prc_curves_{info}'.replace(' ', '_'), bbox_inches='tight', dpi=300)
+    plt.close('all')
 
     return roc_curve, roc_auc, precision_recall_curve, prc_auc, average_precision
 
 
-def plot_confusion_matrix(test_subject, confusion_matrix, model_name, out_dir):
+def plot_confusion_matrix(test_subject, confusion_matrix, model_name, out_dir, binary_classification):
     cm_fig, ax = plt.subplots()
     cm_fig.suptitle(f'{model_name}')
+    display_labels = [0, 1] if binary_classification else [0,1,2]
     disp = ConfusionMatrixDisplay(confusion_matrix=confusion_matrix,
-                                  display_labels=[0, 1])
+                                  display_labels=display_labels)
     try:
         disp.plot(include_values=True, cmap='Blues', ax=ax,
               xticks_rotation='horizontal', values_format='d')
     except:
         logger.error("plot_confusion_matrix::Empty confusion matrix")
     plt.savefig(f'{out_dir}/{model_name}_cm'.replace(' ', '_'))
-    plt.close()
+    plt.close('all')
 
 
-def plot_coefficients(out_dir, coefs, feature_names, model_name, label_name, top_features=None):
+def plot_coefficients(out_dir, coefs, feature_names, model_name, label_name, top_features=None, class_number=None):
     # filter out 0 values
     filter_mask = (abs(coefs) > 1e-3)
     coefs = coefs[filter_mask]
@@ -79,13 +81,16 @@ def plot_coefficients(out_dir, coefs, feature_names, model_name, label_name, top
     feature_names = feature_names[sort_mask]
     # plot
     plt.figure(figsize=(30, 10))
-    plt.suptitle(f'Feature importance - {model_name} predicting {label_name}')
+    suptitle = f'Feature importance - {model_name} predicting {label_name}'
+    if class_number is not None:
+        suptitle += f'feature importance for class {class_number}'
+    plt.suptitle(f'{suptitle}')
     colors = ['red' if c < 0 else 'blue' for c in coefs]
     plt.bar(np.arange(len(coefs)), coefs, color=colors)
     plt.xticks(np.arange(len(coefs)), feature_names, rotation=60, ha='right')
     plt.tight_layout()
-    plt.savefig(f'{out_dir}/{model_name}_feature_importance', dpi=300)
-    plt.close()
+    plt.savefig(f'{out_dir}/{model_name}_feature_importance_{class_number}', dpi=300)
+    plt.close('all')
 
 
 def boxplot(out_dir, data, metric_name, y_label, ymin=0, ymax=1):
