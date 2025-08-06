@@ -5,8 +5,7 @@ validation results.
 
 ### Requirements:
 
-- The downloaded dataset: (url goes here TODO)
-___
+- The downloaded dataset: [Can be downloaded here](https://doi.org/10.5281/zenodo.10138158)
 #### Personal "skills":
 In order to reproduce the results of our dataset creation and evaluation you should feel confident that you 
 are able to do the following:
