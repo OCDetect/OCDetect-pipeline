@@ -91,11 +91,11 @@ def main(config: dict, settings: dict, relabeling_settings : dict) -> int:
             # load prepared data
             logger.info("Read in prepared data")
 
-            use_filter, use_scaling, resample, balancing_option = load_data_preparation_settings(
+            use_filter, use_scaling, resample, balancing_option, label_type = load_data_preparation_settings(
                 settings)
 
             window_size, subjects_folder_name, sub_folder_path, export_path, scaling, filtering = get_data_path_variables(
-                use_scaling, use_filter, config, settings)
+                use_scaling, use_filter, label_type, config, settings)
 
             logger.info(f"Using path: {export_path}{sub_folder_path}")
             logger.info(f"Scaled data: {scaling}; Filtered data: {filtering}")
@@ -103,12 +103,12 @@ def main(config: dict, settings: dict, relabeling_settings : dict) -> int:
             logger.info("Reading precalculated windows")
 
             if run_classic_methods:
-                features = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{scaling}_{label_type}.csv")
+                features = pd.read_csv(f"{export_path}{sub_folder_path}/features.csv")
             if run_deep_learning:
-                features_raw = pd.read_csv(f"{export_path}{sub_folder_path}/features_{filtering}_{label_type}_raw.csv")
-            labels = pd.read_csv(f"{export_path}{sub_folder_path}/labels_{filtering}_{scaling}_{label_type}.csv")
-            users = pd.read_csv(f"{export_path}{sub_folder_path}/users_{filtering}_{scaling}_{label_type}.csv")
-            feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names_{filtering}_{scaling}_{label_type}.csv").iloc[:, 0].tolist()
+                features_raw = pd.read_csv(f"{export_path}{sub_folder_path}/features_raw.csv")
+            labels = pd.read_csv(f"{export_path}{sub_folder_path}/labels.csv")
+            users = pd.read_csv(f"{export_path}{sub_folder_path}/users.csv")
+            feature_names = pd.read_csv(f"{export_path}{sub_folder_path}/feature_names.csv").iloc[:, 0].tolist()
             logger.info("Finished loading precalculated windows")
 
         seed = settings.get("seed")
