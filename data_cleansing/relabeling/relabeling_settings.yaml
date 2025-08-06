@@ -1,0 +1,10 @@
+
+relabeled_subjects: ['01','03','30','04','18','20'] # specify in files e.g. OCDetect_03 run_subject = "03", OCDetect_30 run_subject = "30"
+# Merging settings
+d_type_certain : Intersection # LabelMergeParameter.Intersection or LabelMergeParameter.Union
+d_type_uncertain : Union # LabelMergeParameter.Intersection or LabelMergeParameter.Union
+d_type_un_cert : IgnoreUncertain # LabelMergeParameter.Intersection or LabelMergeParameter.IgnoreUncertain
+
+
+ignore_before_hw : 5
+ignore_after_hw : 1

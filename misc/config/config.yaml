@@ -1,0 +1,96 @@
+- robin-pc:
+    hostname: Robin-PC-Ubuntu
+    data_folder: ../../../OCDetect_DATA/
+    meta_subfolder: metadata/
+    evals_subfolder: allEvaluations/
+    dailies_subfolder: dailyQuestionnaire/
+    annotations_subfolder: annotations/
+    first_hw_subfolder: labels_first_handwashes/
+    export_subfolder: ../../../OCDetect_Export/
+    export_subfolder_ml_prepared: ../OCDetect/  # @robin you may want to change this :)
+    test_n_recs: 3
+    test_n_subs: 3
+    relabeled_subfolder: /dhc/groups/ocdetect/preprocessed_relabeled
+
+- robin-laptop:
+    hostname: thinkbook
+    data_folder: ../../../../Datasets/OCDetect_DATA/
+    meta_subfolder: metadata/
+    evals_subfolder: allEvaluations/
+    dailies_subfolder: dailyQuestionnaire/
+    annotations_subfolder: annotations/
+    first_hw_subfolder: labels_first_handwashes/
+    export_subfolder: ../../../../Datasets/OCDetect_Export/
+    relabeled_subfolder: /dhc/groups/ocdetect/preprocessed_relabeled
+
+
+- lorenz-mac:
+    username: lorenz.kautzsch
+    hostname: [cx01, cx02, cx03, cx04, cx05, cx06, cx07, cx08, cx09, cx10, cx11, cx12, cx13, cx14, cx15, cx16, cx17, cx18, cx19, cx20, cx21, cx22, cx23, cx24, cx25, cx26, cx27, cx28, cx29, cx30, cx31, cx32, cx33, cx34, cx35, cx36, cx37, cx38, cx39, cx40, cx41, cx42, cx43, cx44, cx45]
+    data_folder: /sc/home/lorenz.kautzsch/datasets/OCDetect/
+    meta_subfolder: metadata/
+    first_hw_subfolder: labels_first_handwashes/
+    prefix: OCDetect_
+    output_folder: /sc/projects/sci-arnrich/ocdetect/plots/idle_regions
+    # export_subfolder: ../../datasets/OCDetect/preprocessed/OCDetect_Export/
+    export_subfolder: /sc/projects/sci-arnrich/ocdetect/preprocessed_zenodo/preprocessed/
+    export_subfolder_ml_prepared: /sc/projects/sci-arnrich/ocdetect/windowed/
+    plots_folder: /sc/projects/sci-arnrich/ocdetect/plots/
+    ml_results_folder: /sc/projects/sci-arnrich/ocdetect/ml_results/
+    relabeled_subfolder: /dhc/groups/ocdetect/preprocessed_relabeled
+
+- lorenz-laptop:
+    hostname: kottos
+    data_folder: ../../datasets/OCDetect/
+    meta_subfolder: metadata/
+    evals_subfolder: allEvaluations/
+    dailies_subfolder: dailyQuestionnaire/
+    annotations_subfolder: annotations/
+    first_hw_subfolder: labels_first_handwashes/
+    export_subfolder: ../../../../Datasets/OCDetect_Export/
+
+
+- kristina-mac:
+    username: kristina.kirsten
+    hostname: [atlas, kottos, gyges, briareos]
+    data_folder_relabeled: /dhc/groups/ocdetect/preprocessed_relabeled
+    data_folder: ../../datasets/OCDetect/
+    meta_subfolder: metadata/
+    first_hw_subfolder: labels_first_handwashes/
+    prefix: OCDetect_
+    output_folder: ../../OCDetect/Analysis/plots/idle_regions/
+    # export_subfolder: ../../datasets/OCDetect/preprocessed/OCDetect_Export/
+    # TODO export klingt iwie nach output folder
+    export_subfolder: ../../datasets/OCDetect/preprocessed/
+    export_subfolder_ml_prepared: ../../datasets/OCDetect/windowed/
+    plots_folder: ../../datasets/OCDetect/plots/
+    ml_results_folder: ../../datasets/OCDetect/ml_results/oversampled
+    relabeled_subfolder: /dhc/groups/ocdetect/preprocessed_relabeled
+
+- robin-atlas:
+      username: robin.burchard
+      hostname: [atlas, artemis, hermes, hestia]
+      data_folder: ../../../groups/ocdetect/orig_data/
+      meta_subfolder: ../metadata/
+      first_hw_subfolder: ../labels_first_handwashes/
+      output_folder: ../OCDetect_results/Analysis/plots/idle_regions/
+      export_subfolder: ../OCDetect_results/preprocessed/
+      export_subfolder_ml_prepared: ../OCDetect/
+      plots_folder: ../OCDetect/Analysis/plots/
+      ml_results_folder: ../OCDetect/Analysis/ml_results
+      prefix: OCDetect_
+      relabeled_subfolder: /dhc/groups/ocdetect/preprocessed_relabeled
+
+- lea-laptop:
+    username: lea.liekenbrock
+    hostname: atlas
+    data_folder: ../../datasets/OCDetect/
+    meta_subfolder: metadata/
+    first_hw_subfolder: labels_first_handwashes/
+    prefix: OCDetect_
+    output_folder: ../../OCDetect/Analysis/plots/idle_regions/
+    export_subfolder: /dhc/groups/ocdetect/preprocessed/
+    export_subfolder_ml_prepared: /dhc/groups/ocdetect/windowed/
+    plots_folder: ../../datasets/OCDetect/plots/
+    ml_results_folder: ../../datasets/OCDetect/ml_results
+    relabeled_subfolder: /dhc/groups/ocdetect/preprocessed_relabeled
