@@ -40,7 +40,7 @@ def main(config: dict, settings: dict, relabeling_settings : dict) -> int:
     try:
         already_done = pd.read_csv(config["output_folder"] + "prep_params.csv", index_col=False)
     except FileNotFoundError:
-        already_done = []  # TODO to be tested for data_cleansing = True
+        already_done = []
     if data_cleansing:
         with Manager() as manager:
             #subj_loaded = manager.dict()
@@ -67,7 +67,7 @@ def main(config: dict, settings: dict, relabeling_settings : dict) -> int:
                             t = TPE.submit(data_cleansing_worker, *(subject, config, cur_settings))#, subj_loaded))
                             futures.append(t)
 
-                    else:  # TODO: repair filters with lists to single value
+                    else:
                         t = threading.Thread(target=data_cleansing_worker, args=(subject, config, settings))
                         threads.append(t)
                         t.start()
@@ -164,7 +164,6 @@ def data_cleansing_worker(subject: str, config: dict, settings: dict): # , subje
         del recordings_list, cleaned_data
         gc.collect()
         return
-    # TODO read from a settings file or manual relabeled data or automatic relabeling should be used
     labeled_data = relabel(cleaned_data, config, settings, subject)
     logger.info(f"##### Exporting subject {subject} #####")
     export_data(labeled_data, config, settings, subject)

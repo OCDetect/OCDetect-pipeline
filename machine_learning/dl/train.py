@@ -3,7 +3,7 @@
 # ------------------------------------------------------------------------
 # Author: Marius Bock
 # E-mail: marius.bock(at)uni-siegen.de
-# Adapted by .... TODO
+# Adapted by Robin Burchard, robin.burchard(at)uni-siegen.de
 # ------------------------------------------------------------------------
 import os
 import time
@@ -31,7 +31,7 @@ def init_weights(net, method):
             elif method == "xavier_uniform":
                 torch.nn.init.xavier_uniform_(m.weight)
     net.apply(init_layer)
-    return net  # TODO: ask marius for original code
+    return net
 
 
 def save_checkpoint(save_states, _, file_folder, file_name):

@@ -15,7 +15,7 @@ trustworthy_subjects: [1, 3, 4, 18, 20, 30]  # only 18 without a diagnosis
 relabeled_subjects: [1, 3, 4, 18, 20, 30]
 test_subjects : [1, 3, 4] # at least 3 for ml
 
-untrustworthy_subjects : []  # TODO: rename this item and use it in order to e.g. create a different split
+untrustworthy_subjects : []
 
 seed: 42
 
@@ -24,7 +24,7 @@ seed: 42
 ###################################################################
 
 ### General settings
-resample: True # TODO outdated?
+resample: True
 balancing_option: "random_undersampling" # possible options: 'random_undersampling', 'SMOTE', 'SMOTETomek', 'SMOTEENN'
 feature_selection: True
 
@@ -39,7 +39,6 @@ magnitude_window_size : [200, 500, 2000]
 magnitude_threshold : [0.1, 0.2, 0.3, 0.4, 0.5]
 magnitude_overlap : [0, 0.5]
 min_time_in_s_before_label: [5, 10]
-# TODO: band filter settings? (where does it happen?)
 
 ### Relabel settings
 relabel_duration : 38

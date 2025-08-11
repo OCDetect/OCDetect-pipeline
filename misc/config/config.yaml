@@ -60,7 +60,6 @@
     prefix: OCDetect_
     output_folder: ../../OCDetect/Analysis/plots/idle_regions/
     # export_subfolder: ../../datasets/OCDetect/preprocessed/OCDetect_Export/
-    # TODO export klingt iwie nach output folder
     export_subfolder: ../../datasets/OCDetect/preprocessed/
     export_subfolder_ml_prepared: ../../datasets/OCDetect/windowed/
     plots_folder: ../../datasets/OCDetect/plots/

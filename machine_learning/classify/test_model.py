@@ -140,6 +140,4 @@ def test_classification_model(settings, model, X_train, y_train, X_test, y_test:
             for one_class in range(feature_importances.shape[0]):
                 plot_coefficients(out_dir, feature_importance_df.iloc[one_class].values, feature_names, model_name, y_test.name, class_number=one_class)
 
-    # interp_tpr = np.interp(thresholds, roc_plot.fpr, roc_plot.tpr, left=0.0) TODO: see ROC above (also for return)
-
     return test_metrics, None

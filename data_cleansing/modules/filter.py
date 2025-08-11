@@ -83,7 +83,7 @@ def run_data_cleansing(recordings_list: List[pd.DataFrame], subject: str, config
 
         logger.info(f"Percentage of the file to be ignored: {percentage_ignore_regions:.2f}%")
 
-        # TODO plot_idle_regions(config, recording, Sensor.ACCELEROMETER, title=f"percentage of ignored regions: {percentage_ignore_regions:.2f}%", save_fig=True, fig_name=f"{subject}_{counter}")
+        # plot_idle_regions(config, recording, Sensor.ACCELEROMETER, title=f"percentage of ignored regions: {percentage_ignore_regions:.2f}%", save_fig=True, fig_name=f"{subject}_{counter}")
         # 4. find and handle labels placed by the subjects in short succession
         recording = check_for_short_succession_of_labels(recording, settings)
 

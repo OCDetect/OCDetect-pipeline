@@ -73,7 +73,7 @@ def window_data(subject_recordings: List[pd.DataFrame], subject_id, settings: di
 
 def check_ignore(current_window):
     counts = current_window['ignore'].value_counts()
-    if counts.get(0, 0) > 0 or counts.get(1, 0) > 0:  # Todo: @ Robin, is that check sufficient?
+    if counts.get(0, 0) > 0 or counts.get(1, 0) > 0:
         return False
     else:
         return True
